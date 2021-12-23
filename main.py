@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import re
 import discord
 import os
 from replit import db
