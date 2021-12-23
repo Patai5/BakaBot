@@ -3,7 +3,6 @@ import discord
 import os
 from replit import db
 import json
-import asyncio
 from keep_alive import keep_alive
 
 username = os.environ['username']
