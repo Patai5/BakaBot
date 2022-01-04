@@ -7,21 +7,21 @@ from replit import db
 import json
 import asyncio
 from keep_alive import keep_alive
-
-username = os.environ['username']
-password = os.environ['password']
-token = os.environ['token']
+import time
+import datetime
 
 
 def main():
     keep_alive()
-    
     client = discord.Client()
 
     @client.event
     async def on_ready():
         print('Ready!')
-        await rozvrhchange(client)
+        reminder_task = asyncio.create_task(createReminder(client))
+        rozvrhchange_task = asyncio.create_task(rozvrhchange(client))
+        await reminder_task
+        await rozvrhchange_task
 
     @client.event
     async def on_message(message):
@@ -30,27 +30,27 @@ def main():
 
     @client.event
     async def on_reaction_add(reaction, user):
-        if reaction.message.author.id == 917505805216010271:
-            if not user.bot:
-                async for user in reaction.users():
-                    if user.id == 917505805216010271:
-                        await reaction.remove(user)
-                        if reaction.message.embeds[0].fields[0].name.startswith("Tento týden, "):
-                            await reaction.message.channel.send(rozvrhshow(1, 5, showden=True, showtrida=True))
-                        else:
-                            await reaction.message.channel.send(rozvrhshow(1, 5, nextweek=True, showden=True, showtrida=True))
-                        break
+        if not user.bot:
+            async for user in reaction.users():
+                await reaction.remove(user)
+                if reaction.message.embeds[0].fields[0].name.startswith("Tento týden, "):
+                    await reaction.message.channel.send(
+                        rozvrhshow(1, 5, showden=True, showtrida=True))
+                else:
+                    await reaction.message.channel.send(
+                        rozvrhshow(1, 5, nextweek=True, showden=True, showtrida=True))
+                break
 
-
+    token = os.environ['token']
     client.run(token)
 
 
 async def botcommands(message, client):
     async def gethelp(function=""):
-        general = "Nedokázal jsem rozluštit váš příkaz.\nPužijte \"TestBot Help\" pro nápovědu"
-        rozvrhhelp = "Špatný argument pro funkci Rozvrh\nBakaBot Rozvrh den(jeden den(DEN)|více dní(DEN-DEN)|" \
-                    "celý týden(TÝDEN)) ?příští(jaký týden(PŘÍŠTÍ))\nDEN = \"pondělí|monday|1\", " \
-                    "DEN-DEN = \"DEN-DEN|týden|week\", PŘÍŠTÍ = \"příští|aktuální|now|next|1|2\""
+        general = "Nedokázal jsem rozluštit váš příkaz.\nPužijte \"BakaBot Help\" pro nápovědu"
+        rozvrhhelp = "Špatný argument pro funkci Rozvrh\nBakaBot Rozvrh den(jeden den(DEN)|více dní(DEN-DEN)|celý " \
+                     "týden(TÝDEN)) ?příští(jaký týden(PŘÍŠTÍ))\nDEN = \"pondělí|monday|1\", DEN-DEN = " \
+                     "\"DEN-DEN|týden|week\", PŘÍŠTÍ = \"příští|aktuální|now|next|1|2\" "
         if function == "rozvrhhelp":
             await message.channel.send(rozvrhhelp)
         else:
@@ -83,10 +83,17 @@ async def botcommands(message, client):
             elif args[0].startswith("channelzmeneno"):
                 db["channelZmeneno"] = message.channel.id
                 await message.channel.send("channelZmeneno = This channel")
+            elif args[0].startswith("channelznamky"):
+                db["channelZnamky"] = message.channel.id
+                await message.channel.send("channelZnamky = This channel")
+            elif args[0].startswith("channelhodiny"):
+                db["channelHodiny"] = message.channel.id
+                await message.channel.send("channelHodiny = This channel")
             else:
                 await gethelp("settings")
         else:
-            await message.channel.send("Můj majitel je Patai5 ty mrdko!") 
+            await message.channel.send("Můj majitel je Patai5 ty mrdko!")
+
     async def rozvrh(message, command):
         if re.search("^rozvrh", command.lower()):
             command = command.replace("rozvrh ", "")
@@ -159,16 +166,17 @@ async def botcommands(message, client):
             elif re.match("(p[řr][íi][šs]t[íi]|next|2)", args[1]):
                 nextweek = True
             else:
-                crashed =True
+                crashed = True
                 await gethelp("rozvrhhelp")
         if not crashed:
             zprava = rozvrhshow(daystart, dayend, nextweek)
             await message.channel.send(zprava)
 
-
-    if re.search("^([ -/]*?[Bb][Aa][Kk][Aa][Bb][Oo][Tt]|[ -/]*?[Bb])", message.content):
+    if re.search("^([ -/]*?[Bb][Aa][Kk][Aa][Bb][Oo][Tt]|[ -/]*?[Bb])",
+                 message.content):
         if re.search("^[ -/]*?[Bb][Aa][Kk][Aa][Bb][Oo][Tt]", message.content):
-            command = re.split("^[ -/]*?[Bb][Aa][Kk][Aa][Bb][Oo][Tt] ", message.content)[1]
+            command = re.split("^[ -/]*?[Bb][Aa][Kk][Aa][Bb][Oo][Tt] ",
+                               message.content)[1]
         else:
             command = re.split("^[ -/]*?[Bb] ", message.content)[1]
         if re.search("^(rozvrh|r)", command.lower()):
@@ -177,6 +185,176 @@ async def botcommands(message, client):
             await settings(message, command)
         else:
             await gethelp()
+
+
+class Lesson:
+    def __init__(self, hodina, predmet, trida):
+        self.hodina = hodina
+        self.predmet = predmet
+        self.trida = trida
+        # self.changeinfo = changeinfo
+
+
+class Day:
+    def __init__(self, lessons, den, prazdny):
+        self.lessons = lessons
+        self.den = den
+        self.prazdny = prazdny
+
+
+class Rozvrh:
+    def __init__(self, days, pristi):
+        self.days = days
+        self.pristi = pristi
+
+
+def getrozvrh(nextweek):
+    url = "https://bakalari.ceskolipska.cz/Login"
+    session = login(url)
+    if nextweek:
+        result = session.get(
+            "https://bakalari.ceskolipska.cz/next/rozvrh.aspx?s=next")
+    else:
+        result = session.get(
+            "https://bakalari.ceskolipska.cz/next/rozvrh.aspx")
+    session.close()
+
+    html = BeautifulSoup(result.text, "html.parser")
+    days = html.find_all("div", {"class": "day-row"})
+    for i, day in enumerate(days):
+        lessons = day.div.div.find_all("div", {"class": "day-item"})
+        prazdny = False
+        if not lessons:
+            prazdny = True
+            for i2 in range(13):
+                lessons.append(Lesson(i2, " ", " "))
+        else:
+            for i2, lesson in enumerate(lessons):
+                name = lesson.find("div", {"class": "middle"})
+                if name:
+                    reg = re.findall("(?<=>).*(?=</)", str(name))[0]
+                    if reg != "":
+                        data = lesson.find_all("div",
+                                               {"class": "day-item-hover"})
+                        reg2 = re.findall("(?<=\"room\":\").*?(?=\")",
+                                          str(data))
+                        if reg2:
+                            reg2 = reg2[0]
+                        else:
+                            reg2 = " "
+                        lessons[i2] = Lesson(i2, reg, reg2)
+                    else:
+                        lessons[i2] = Lesson(i2, " ", " ")
+                else:
+                    lessons[i2] = Lesson(i2, " ", " ")
+        lessons.pop(6)
+        for i2, lesson in enumerate(lessons):
+            lessons[i2] = Lesson(i2, lesson.predmet, lesson.trida)
+        daynazev = day.div.div.div.div
+        daynazev = re.findall("(?<=<div>)\s*?(..)(?=<br/>)", str(daynazev))[0]
+        if prazdny:
+            days[i] = Day(lessons, daynazev, True)
+        else:
+            days[i] = Day(lessons, daynazev, False)
+    rozvrh = Rozvrh(days, nextweek)
+    return rozvrh
+
+
+def rozvrhshow(daystart, dayend, nextweek=False, showden=None, showtrida=None):
+    if showden == None:
+        showden = readdb("showden")
+        if showden == None:
+            showden = False
+    if showtrida == None:
+        showtrida = readdb("showtrida")
+        if showtrida == None:
+            showtrida = False
+
+    rozvrh = getrozvrh(nextweek)
+    rozvrh.days = rozvrh.days[daystart - 1:dayend]
+
+    neprazdnyDen = None
+    for i, day in enumerate(rozvrh.days):
+        if not day.prazdny:
+            neprazdnyDen, startNeprazdnyDen = day, i
+            break
+    if neprazdnyDen:
+        lowest = 0
+        for i, lesson in enumerate(rozvrh.days[startNeprazdnyDen].lessons):
+            if lesson.predmet != " ":
+                lowest = i
+                break
+        for day in rozvrh.days:
+            if not day.prazdny:
+                largest = 0
+                for i, lesson in enumerate(day.lessons):
+                    if lesson.predmet != " ":
+                        if largest < i:
+                            largest = i
+                        break
+                if lowest > largest:
+                    lowest = largest
+        for day in rozvrh.days:
+            if not day.prazdny:
+                day.lessons = day.lessons[lowest:]
+
+        lowest = 0
+        for i, lesson in enumerate(
+                reversed(rozvrh.days[startNeprazdnyDen].lessons)):
+            if lesson.predmet != " ":
+                lowest = i
+                break
+        for day in rozvrh.days:
+            if not day.prazdny:
+                largest = 0
+                for i, lesson in enumerate(reversed(day.lessons)):
+                    if lesson.predmet != " ":
+                        if largest < i:
+                            largest = i
+                        break
+                if lowest > largest:
+                    lowest = largest
+        for day in rozvrh.days:
+            if not day.prazdny:
+                if lowest == 0:
+                    lowest = 1
+                day.lessons = day.lessons[:-lowest]
+
+        columns = []
+        if showden:
+            column = [ColumnItem(" ", True)]
+            for day in rozvrh.days:
+                if showtrida:
+                    column.append(ColumnItem(day.den, False))
+                    column.append(ColumnItem(" ", True))
+                else:
+                    column.append(ColumnItem(day.den, True))
+            columns.append(column)
+        for i in range(len(rozvrh.days[0].lessons)):
+            column = [
+                ColumnItem(str(rozvrh.days[0].lessons[i].hodina) + ".", True)
+            ]
+            for day in rozvrh.days:
+                if showtrida:
+                    column.append(ColumnItem(day.lessons[i].predmet, False))
+                    column.append(ColumnItem(day.lessons[i].trida, True))
+                else:
+                    column.append(ColumnItem(day.lessons[i].predmet, True))
+            columns.append(column)
+
+        output = "```" + table(columns) + "```"
+        return output
+    else:
+        return "```V rozvrhu nic není```"
+
+
+def login(url):
+    username = os.environ['username']
+    password = os.environ['password']
+    data = {"username": username, "password": password}
+    session = requests.Session()
+    session.post(url, data)
+    return session
 
 
 def repeat(char, times):
@@ -257,8 +435,6 @@ def table(columns):
         else:
             rows[z] = "║" + rows[z][:-1] + "║"
 
-
-
     output = ""
     for row in rows:
         output = output + row + "\n"
@@ -272,157 +448,83 @@ def readdb(name):
         return db[name]
 
 
-class Lesson:
-    def __init__(self, hodina, predmet, trida):
-        self.hodina = hodina
-        self.predmet = predmet
-        self.trida = trida
-        #self.changeinfo = changeinfo
+def getSec():
+    timeX = time.localtime()
+    sec = timeX.tm_hour * 3600 + timeX.tm_min * 60 + timeX.tm_sec
+    return sec
 
 
-class Day:
-    def __init__(self, lessons, den, prazdny):
-        self.lessons = lessons
-        self.den = den
-        self.prazdny = prazdny
+def from_sec_to_time(sec: int):
+    hour = int(sec / 3600)
+    min = int((sec - hour * 3600) / 60)
+    sec = sec - hour * 3600 - min * 60
 
-
-class Rozvrh:
-    def __init__(self, days, pristi):
-        self.days = days
-        self.pristi = pristi
-
-
-def getrozvrh(nextweek):
-    url = "https://bakalari.ceskolipska.cz/Login"
-    session = login(username, password, url)
-    if nextweek:
-        result = session.get("https://bakalari.ceskolipska.cz/next/rozvrh.aspx?s=next")
+    if min < 10:
+        minPrint = "0" + str(min)
     else:
-        result = session.get("https://bakalari.ceskolipska.cz/next/rozvrh.aspx")
-    session.close()
-
-    html = BeautifulSoup(result.text, "html.parser")
-    days = html.find_all("div", {"class": "day-row"})
-    for i, day in enumerate(days):
-        lessons = day.div.div.find_all("div", {"class": "day-item"})
-        prazdny = False
-        if not lessons:
-            prazdny = True
-            for i2 in range(13):
-                lessons.append(Lesson(i2, " ", " "))
-        else:
-            for i2, lesson in enumerate(lessons):
-                name = lesson.find("div", {"class": "middle"})
-                if name:
-                    reg = re.findall("(?<=>).*(?=</)", str(name))[0]
-                    if reg != "":
-                        data = lesson.find_all("div", {"class": "day-item-hover"})
-                        reg2 = re.findall("(?<=\"room\":\").*?(?=\")", str(data))
-                        if reg2:
-                            reg2 = reg2[0]
-                        else:
-                            reg2 = " "
-                        lessons[i2] = Lesson(i2, reg, reg2)
-                    else:
-                        lessons[i2] = Lesson(i2, " ", " ")
-                else:
-                    lessons[i2] = Lesson(i2, " ", " ")
-        lessons.pop(6)
-        for i2, lesson in enumerate(lessons):
-            lessons[i2] = Lesson(i2, lesson.predmet, lesson.trida)
-        daynazev = day.div.div.div.div
-        daynazev = re.findall("(?<=<div>)\s*?(..)(?=<br/>)", str(daynazev))[0]
-        if prazdny:
-            days[i] = Day(lessons, daynazev, True)
-        else:
-            days[i] = Day(lessons, daynazev, False)
-    rozvrh = Rozvrh(days, nextweek)
-    return rozvrh
-  
+        minPrint = min
+    output = str(hour) + ":" + minPrint
+    return output
 
 
-def rozvrhshow(daystart, dayend, nextweek=False, showden=None, showtrida=None):
-    if showden == None:
-        showden = readdb("showden")
-        if showden == None:
-            showden = False
-    if showtrida == None:
-        showtrida = readdb("showtrida")
-        if showtrida == None:
-            showtrida = False
+async def createReminder(client):
+    REMIND = [18000, 22500, 25800, 29100, 33000, 36300, 39600, 42900, 44100, 47400, 50400, 53400, 56400]
 
-    rozvrh = getrozvrh(nextweek)
-    rozvrh.days = rozvrh.days[daystart - 1:dayend]
-
-    neprazdnyDen = None
-    for i, day in enumerate(rozvrh.days):
-        if not day.prazdny:
-            neprazdnyDen, startNeprazdnyDen = day, i
-            break
-    if neprazdnyDen:
-        lowest = 0
-        for i, lesson in enumerate(rozvrh.days[startNeprazdnyDen].lessons):
-            if lesson.predmet != " ":
-                lowest = i
-                break
-        for day in rozvrh.days:
-            if not day.prazdny:
-                largest = 0
-                for i, lesson in enumerate(day.lessons):
-                    if lesson.predmet != " ":
-                        if largest < i:
-                            largest = i
-                        break
-                if lowest > largest:
-                    lowest = largest
-        for day in rozvrh.days:
-            if not day.prazdny:
-                day.lessons = day.lessons[lowest:]
-
-        lowest = 0
-        for i, lesson in enumerate(reversed(rozvrh.days[startNeprazdnyDen].lessons)):
-            if lesson.predmet != " ":
-                lowest = i
-                break
-        for day in rozvrh.days:
-            if not day.prazdny:
-                largest = 0
-                for i, lesson in enumerate(reversed(day.lessons)):
-                    if lesson.predmet != " ":
-                        if largest < i:
-                            largest = i
-                        break
-                if lowest > largest:
-                    lowest = largest
-        for day in rozvrh.days:
-            if not day.prazdny:
-                day.lessons = day.lessons[:-lowest]
-
-        columns = []
-        if showden:
-            column = [ColumnItem(" ", True)]
-            for day in rozvrh.days:
-                if showtrida:
-                    column.append(ColumnItem(day.den, False))
-                    column.append(ColumnItem(" ", True))
-                else:
-                    column.append(ColumnItem(day.den, True))
-            columns.append(column)
-        for i in range(len(rozvrh.days[0].lessons)):
-            column = [ColumnItem(str(rozvrh.days[0].lessons[i].hodina) + ".", True)]
-            for day in rozvrh.days:
-                if showtrida:
-                    column.append(ColumnItem(day.lessons[i].predmet, False))
-                    column.append(ColumnItem(day.lessons[i].trida, True))
-                else:
-                    column.append(ColumnItem(day.lessons[i].predmet, True))
-            columns.append(column)
-
-        output = "```" + table(columns) + "```"
-        return output
+    weekday = datetime.datetime.today().weekday()
+    if weekday == 4 and getSec() > REMIND[-1]:
+        when = 86400 - getSec() + 172800 + REMIND[0]
+        await reminder(client, when)
+    elif weekday == 5:
+        when = 86400 - getSec() + 86400 + REMIND[0]
+        await reminder(client, when)
+    elif weekday == 6:
+        when = 86400 - getSec() + REMIND[0]
+        await reminder(client, when)
     else:
-        return "```V rozvrhu nic není```"
+        lesson = get_next_lesson_for_reminder()
+        if lesson:
+            when = REMIND[lesson.hodina] - getSec()
+            await reminder(client, when)
+        else:
+            when = 86400 - getSec() + REMIND[0]
+            await reminder(client, when)
+
+
+LESSON_TIMES = [[21900, 24600], [25200, 27900], [28500, 31200], [32400, 35100], [35700, 38400], [39000, 41700],
+                [42300, 45000], [43500, 46200], [46800, 49500], [49800, 52500], [52800, 55500], [55800, 58500]]
+
+
+def get_next_lesson_for_reminder():
+    rozvrh = jsonloads(db["rozvrh1"])
+    todayDayInt = datetime.datetime.today().weekday()
+    day = rozvrh.days[todayDayInt]
+
+    outputLesson = None
+    currentTimeSec = getSec()
+    for lesson in day.lessons:
+        if currentTimeSec < LESSON_TIMES[lesson.hodina][0]:
+            if lesson.hodina == " ":
+                outputLesson = lesson
+                break
+    return outputLesson
+
+
+async def reminder(client, when):
+    await asyncio.sleep(when)
+
+    channel = db["channelHodiny"]
+    embed = discord.Embed()
+    lesson = get_next_lesson_for_reminder()
+    if lesson:
+        column = [ColumnItem(lesson.predmet, False), ColumnItem(lesson.trida, True)]
+        predmet = "```" + table([column]) + "```"
+        time1 = from_sec_to_time(LESSON_TIMES[lesson.hodina][0])
+        time2 = from_sec_to_time(LESSON_TIMES[lesson.hodina][1])
+        lessonHodina = time1 + " - " + time2
+        embed.add_field(name=lessonHodina, value=predmet)
+        await client.get_channel(channel).send(embed=embed)
+
+    await createReminder(client)
 
 
 def jsondumps(rozvrh):
@@ -432,7 +534,8 @@ def jsondumps(rozvrh):
         for lesson in day.lessons:
             output = output + json.dumps(lesson.__dict__) + ", "
         output = output[:-2] + "]"
-        output = output + ", \"den\": \"" + day.den + "\", \"prazdny\": " + str(day.prazdny).lower() + "}, "
+        output = output + ", \"den\": \"" + day.den + "\", \"prazdny\": " + str(
+            day.prazdny).lower() + "}, "
     output = output[:-2] + "]"
     output = output + ", \"pristi\": " + str(rozvrh.pristi).lower() + "}"
     return output
@@ -444,73 +547,76 @@ def jsonloads(jsonstring):
     for day in dictRozvrh["days"]:
         lessons = []
         for lesson in day["lessons"]:
-            lessons.append(Lesson(lesson["hodina"], lesson["predmet"], lesson["trida"]))
+            lessons.append(
+                Lesson(lesson["hodina"], lesson["predmet"], lesson["trida"]))
         days.append(Day(lessons, day["den"], day["prazdny"]))
     rozvrh = Rozvrh(days, dictRozvrh["pristi"])
     return rozvrh
-        
-
-def zmenapredmet(lessonOld, lessonNew):
-    column = []
-    column.append(ColumnItem(lessonOld.predmet, False))
-    column.append(ColumnItem(lessonOld.trida, True))
-    lessonOldTable = table([column])
-
-    column = []
-    column.append(ColumnItem(lessonNew.predmet, False))
-    column.append(ColumnItem(lessonNew.trida, True))
-    lessonNewTable = table([column])
-
-    tableListOld = lessonOldTable.split("\n")
-    tableListNew = lessonNewTable.split("\n")
-    output = "```"
-    for rowOld, rowNew, i in zip(tableListOld, tableListNew, range(4)):
-        if i != 2:
-            output = output + rowOld + "     " + rowNew
-        else:
-            output = output + rowOld + " --> " + rowNew
-        output = output + "\n"
-    output = output + "```"
-    return(output)
-          
-
-async def zmenenomessage(changed, tyden, client):
-    channel = db["channelZmeneno"]
-    embed = discord.Embed()
-    embed.title = "Detekována změna v rozvrhu"
-    for changedItem in changed:
-        lessonOld, lessonNew, den = changedItem
-        nazev = ""
-        if tyden:
-            nazev = "Příští týden, "
-        else:
-            nazev = "Tento týden, "
-        nazev = nazev + den + ", " + str(lessonOld.hodina) + ". hodina"
-        obsah = zmenapredmet(lessonOld, lessonNew)
-        embed.add_field(name=nazev, value=obsah, inline = True)
-        nazev = "Additional info"
-        obsah = "WIP"
-        embed.add_field(name=nazev, value=obsah, inline = True)
-        embed.add_field(name='\u200b', value='\u200b', inline = False)
-    embed.remove_field(len(changed) * 3 - 1)
-    messageRespond = await client.get_channel(channel).send(embed=embed)
-    await messageRespond.add_reaction(u'\U0001f4c5')
-
-
-def detectchange(rozvrhOld, rozvrhNew):
-    changedlist = []
-    for (dayOld, dayNew) in zip(rozvrhOld.days, rozvrhNew.days):
-        for (lessonOld, lessonNew) in zip(dayOld.lessons, dayNew.lessons):
-            changed = lessonOld, lessonNew, dayOld.den
-            if lessonOld.predmet != lessonNew.predmet or lessonOld.trida != lessonNew.trida:
-                changedlist.append(changed)
-    if len(changedlist) != 0:
-       return changedlist
-    else:
-        return None
 
 
 async def rozvrhchange(client):
+    def detectchange(rozvrhOld, rozvrhNew):
+        changedlist = []
+        for (dayOld, dayNew) in zip(rozvrhOld.days, rozvrhNew.days):
+            for (lessonOld, lessonNew) in zip(dayOld.lessons, dayNew.lessons):
+                changed = lessonOld, lessonNew, dayOld.den
+                if lessonOld.predmet != lessonNew.predmet or lessonOld.trida != lessonNew.trida:
+                    changedlist.append(changed)
+        if len(changedlist) != 0:
+            return changedlist
+        else:
+            return None
+
+    async def zmenenomessage(changed, tyden, client):
+        def zmenapredmet(lessonOld, lessonNew):
+            column = []
+            column.append(ColumnItem(lessonOld.predmet, False))
+            column.append(ColumnItem(lessonOld.trida, True))
+            lessonOldTable = table([column])
+
+            column = []
+            column.append(ColumnItem(lessonNew.predmet, False))
+            column.append(ColumnItem(lessonNew.trida, True))
+            lessonNewTable = table([column])
+
+            tableListOld = lessonOldTable.split("\n")
+            tableListNew = lessonNewTable.split("\n")
+            output = "```"
+            for rowOld, rowNew, i in zip(tableListOld, tableListNew, range(4)):
+                if i != 2:
+                    output = output + rowOld + "     " + rowNew
+                else:
+                    output = output + rowOld + " --> " + rowNew
+                output = output + "\n"
+            output = output + "```"
+            return (output)
+
+        channel = db["channelZmeneno"]
+        embed = discord.Embed()
+        embed.title = "Detekována změna v rozvrhu"
+        for count, changedItem in enumerate(changed):
+            if count * 3 == 21:
+                embed.add_field(name="Maximální počet embedů v jedné zprávě vyplýtván", value="Asi Hrnec změnil hodně "
+                                     "předmětů najednou :(", inline=True)
+                embed.add_field(name='\u200b', value='\u200b', inline=False)
+                break
+            lessonOld, lessonNew, den = changedItem
+            nazev = ""
+            if tyden:
+                nazev = "Příští týden, "
+            else:
+                nazev = "Tento týden, "
+            nazev = nazev + den + ", " + str(lessonOld.hodina) + ". hodina"
+            obsah = zmenapredmet(lessonOld, lessonNew)
+            embed.add_field(name=nazev, value=obsah, inline=True)
+            nazev = "Additional info"
+            obsah = "WIP"
+            embed.add_field(name=nazev, value=obsah, inline=True)
+            embed.add_field(name='\u200b', value='\u200b', inline=False)
+        embed.remove_field(len(changed) * 3 - 1)
+        messageRespond = await client.get_channel(channel).send(embed=embed)
+        await messageRespond.add_reaction(u'\U0001f4c5')
+
     if len(db.prefix("rozvrh1")) == 0:
         rozvrh1 = getrozvrh(False)
         rozvrh2 = getrozvrh(True)
@@ -520,7 +626,7 @@ async def rozvrhchange(client):
         change = False
         rozvrhNew1 = getrozvrh(False)
         rozvrhNew2 = getrozvrh(True)
-        rozvrhOld1= jsonloads(db["rozvrh1"])
+        rozvrhOld1 = jsonloads(db["rozvrh1"])
         rozvrhOld2 = jsonloads(db["rozvrh2"])
         changed = detectchange(rozvrhOld1, rozvrhNew1)
         if changed:
@@ -534,18 +640,7 @@ async def rozvrhchange(client):
             db["rozvrh1"] = jsondumps(rozvrhNew1)
             db["rozvrh2"] = jsondumps(rozvrhNew2)
     await asyncio.sleep(60)
-    await rozvrhchange(client) 
-
-
-def czechletters(string):
-    return re.sub("[ěščřžýáíéúůňĚŠČŘŽÝÁÍÉÚŮŇ∞ˇ]", "*", string)
-
-
-def login(username, password, url):
-    data = {"username": username, "password": password}
-    session = requests.Session()
-    session.post(url, data)
-    return session
+    await rozvrhchange(client)
 
 
 if __name__ == "__main__":
