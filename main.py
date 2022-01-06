@@ -450,7 +450,7 @@ def readdb(name):
 
 def getSec():
     timeX = time.localtime()
-    sec = timeX.tm_hour * 3600 + timeX.tm_min * 60 + timeX.tm_sec
+    sec = timeX.tm_hour * 3600 + timeX.tm_min * 60 + timeX.tm_sec + time.timezone + 3600
     return sec
 
 
@@ -463,12 +463,12 @@ def from_sec_to_time(sec: int):
         minPrint = "0" + str(min)
     else:
         minPrint = min
-    output = str(hour) + ":" + minPrint
+    output = str(hour) + ":" + str(minPrint)
     return output
 
 
 async def createReminder(client):
-    REMIND = [18000, 22500, 25800, 29100, 33000, 36300, 39600, 42900, 44100, 47400, 50400, 53400, 56400]
+    REMIND = [21600, 26100, 29400, 32700, 36600, 39900, 43200, 46500, 47700, 51000, 54000, 57000, 60000]
 
     weekday = datetime.datetime.today().weekday()
     if weekday == 4 and getSec() > REMIND[-1]:
@@ -490,8 +490,8 @@ async def createReminder(client):
             await reminder(client, when)
 
 
-LESSON_TIMES = [[21900, 24600], [25200, 27900], [28500, 31200], [32400, 35100], [35700, 38400], [39000, 41700],
-                [42300, 45000], [43500, 46200], [46800, 49500], [49800, 52500], [52800, 55500], [55800, 58500]]
+LESSON_TIMES = [[25500, 28200], [28800, 31500], [32100, 34800], [36000, 38700], [39300, 42000], [42600, 45300],
+                [45900, 48600], [47100, 49800], [50400, 53100], [53400, 56100], [56100, 59100], [59400, 62100]]
 
 
 def get_next_lesson_for_reminder():
@@ -503,7 +503,7 @@ def get_next_lesson_for_reminder():
     currentTimeSec = getSec()
     for lesson in day.lessons:
         if currentTimeSec < LESSON_TIMES[lesson.hodina][0]:
-            if lesson.hodina == " ":
+            if lesson.predmet != " ":
                 outputLesson = lesson
                 break
     return outputLesson
@@ -516,13 +516,17 @@ async def reminder(client, when):
     embed = discord.Embed()
     lesson = get_next_lesson_for_reminder()
     if lesson:
-        column = [ColumnItem(lesson.predmet, False), ColumnItem(lesson.trida, True)]
-        predmet = "```" + table([column]) + "```"
-        time1 = from_sec_to_time(LESSON_TIMES[lesson.hodina][0])
-        time2 = from_sec_to_time(LESSON_TIMES[lesson.hodina][1])
-        lessonHodina = time1 + " - " + time2
-        embed.add_field(name=lessonHodina, value=predmet)
-        await client.get_channel(channel).send(embed=embed)
+        hodina, predmet, trida = db["lastLesson"]
+        lastLesson = Lesson(hodina, predmet, trida)
+        if lesson.hodina != lastLesson.hodina and lesson.predmet != lastLesson.predmet and lesson.trida != lastLesson.predmet:
+            column = [ColumnItem(lesson.predmet, False), ColumnItem(lesson.trida, True)]
+            predmet = "```" + table([column]) + "```"
+            time1 = from_sec_to_time(LESSON_TIMES[lesson.hodina][0])
+            time2 = from_sec_to_time(LESSON_TIMES[lesson.hodina][1])
+            lessonHodina = time1 + " - " + time2
+            embed.add_field(name=lessonHodina, value=predmet)
+            await client.get_channel(channel).send(embed=embed)
+            db["lastLesson"] = [lesson.hodina, lesson.predmet, lesson.trida]
 
     await createReminder(client)
 
