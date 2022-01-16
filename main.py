@@ -467,9 +467,12 @@ def from_sec_to_time(sec: int):
     return output
 
 
-async def createReminder(client):
-    REMIND = [21600, 26100, 29400, 32700, 36600, 39900, 43200, 46500, 47700, 51000, 54000, 57000, 60000]
+REMIND = [21600, 26100, 29400, 32700, 36600, 39900, 43200, 46500, 47700, 51000, 54000, 57000, 60000]
+LESSON_TIMES = [[25500, 28200], [28800, 31500], [32100, 34800], [36000, 38700], [39300, 42000], [42600, 45300],
+                [45900, 48600], [47100, 49800], [50400, 53100], [53400, 56100], [56100, 59100], [59400, 62100]]
 
+
+async def createReminder(client):
     weekday = datetime.datetime.today().weekday()
     if weekday == 4 and getSec() > REMIND[-1]:
         when = 86400 - getSec() + 172800 + REMIND[0]
@@ -490,10 +493,6 @@ async def createReminder(client):
             await reminder(client, when)
 
 
-LESSON_TIMES = [[25500, 28200], [28800, 31500], [32100, 34800], [36000, 38700], [39300, 42000], [42600, 45300],
-                [45900, 48600], [47100, 49800], [50400, 53100], [53400, 56100], [56100, 59100], [59400, 62100]]
-
-
 def get_next_lesson_for_reminder():
     rozvrh = jsonloads(db["rozvrh1"])
     todayDayInt = datetime.datetime.today().weekday()
@@ -502,7 +501,7 @@ def get_next_lesson_for_reminder():
     outputLesson = None
     currentTimeSec = getSec()
     for lesson in day.lessons:
-        if currentTimeSec < LESSON_TIMES[lesson.hodina][0]:
+        if currentTimeSec < REMIND[lesson.hodina]:
             if lesson.predmet != " ":
                 outputLesson = lesson
                 break
