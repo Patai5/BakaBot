@@ -172,6 +172,15 @@ async def botcommands(message, client):
             zprava = rozvrhshow(daystart, dayend, nextweek)
             await message.channel.send(zprava)
 
+    async def forceUpdateLessonDatabase(message):
+        rozvrh1 = getrozvrh(False)
+        rozvrh2 = getrozvrh(True)
+        db["rozvrh1"] = jsondumps(rozvrh1)
+        db["rozvrh2"] = jsondumps(rozvrh2)
+        zprava = "Updated lesson database"
+        await message.channel.send(zprava)
+        
+    
     if re.search("^([ -/]*?[Bb][Aa][Kk][Aa][Bb][Oo][Tt]|[ -/]*?[Bb])",
                  message.content):
         if re.search("^[ -/]*?[Bb][Aa][Kk][Aa][Bb][Oo][Tt]", message.content):
@@ -183,16 +192,18 @@ async def botcommands(message, client):
             await rozvrh(message, command)
         elif command.lower().startswith("setting"):
             await settings(message, command)
+        elif command.lower().startswith("forceupdatelessondatabase"):
+            await forceUpdateLessonDatabase(message)
         else:
             await gethelp()
 
 
 class Lesson:
-    def __init__(self, hodina, predmet, trida):
+    def __init__(self, hodina, predmet, trida, changeinfo=None):
         self.hodina = hodina
         self.predmet = predmet
         self.trida = trida
-        # self.changeinfo = changeinfo
+        self.changeinfo = changeinfo
 
 
 class Day:
@@ -242,14 +253,26 @@ def getrozvrh(nextweek):
                             reg2 = reg2[0]
                         else:
                             reg2 = " "
-                        lessons[i2] = Lesson(i2, reg, reg2)
+                            
+                        reg3 = re.findall("(?<=\"changeinfo\":\").*?(?=\")", str(data))
+                        if reg3:
+                            reg3 = reg3[0]
+                        else:
+                            reg3 = re.findall("(?<=\"removedinfo\":\").*?(?=\")", str(data))
+                            if reg3:
+                                reg3 = reg3[0] 
+                        if reg3 == "":
+                            reg3 = None
+                            
+                        if reg3:
+                            lessons[i2] = Lesson(i2, reg, reg2, reg3)
                     else:
                         lessons[i2] = Lesson(i2, " ", " ")
                 else:
                     lessons[i2] = Lesson(i2, " ", " ")
         lessons.pop(6)
         for i2, lesson in enumerate(lessons):
-            lessons[i2] = Lesson(i2, lesson.predmet, lesson.trida)
+            lessons[i2] = Lesson(i2, lesson.predmet, lesson.trida, lesson.changeinfo)
         daynazev = day.div.div.div.div
         daynazev = re.findall("(?<=<div>)\s*?(..)(?=<br/>)", str(daynazev))[0]
         if prazdny:
@@ -551,7 +574,7 @@ def jsonloads(jsonstring):
         lessons = []
         for lesson in day["lessons"]:
             lessons.append(
-                Lesson(lesson["hodina"], lesson["predmet"], lesson["trida"]))
+                Lesson(lesson["hodina"], lesson["predmet"], lesson["trida"], lesson["changeinfo"]))
         days.append(Day(lessons, day["den"], day["prazdny"]))
     rozvrh = Rozvrh(days, dictRozvrh["pristi"])
     return rozvrh
@@ -598,7 +621,7 @@ async def rozvrhchange(client):
         embed = discord.Embed()
         embed.title = "Detekována změna v rozvrhu"
         for count, changedItem in enumerate(changed):
-            if count * 3 == 21:
+            if len(embed.field) >= 23:
                 embed.add_field(name="Maximální počet embedů v jedné zprávě vyplýtván", value="Asi Hrnec změnil hodně "
                                      "předmětů najednou :(", inline=True)
                 embed.add_field(name='\u200b', value='\u200b', inline=False)
@@ -612,11 +635,14 @@ async def rozvrhchange(client):
             nazev = nazev + den + ", " + str(lessonOld.hodina) + ". hodina"
             obsah = zmenapredmet(lessonOld, lessonNew)
             embed.add_field(name=nazev, value=obsah, inline=True)
-            nazev = "Additional info"
-            obsah = "WIP"
-            embed.add_field(name=nazev, value=obsah, inline=True)
+            
+            if lessonNew.changeinfo:
+                nazev = "Change info"
+                obsah = lessonNew.changeinfo
+                embed.add_field(name=nazev, value=obsah, inline=True)
             embed.add_field(name='\u200b', value='\u200b', inline=False)
-        embed.remove_field(len(changed) * 3 - 1)
+        embed.remove_field(len(embed.fields) - 1)
+        embed.color = discord.Color.from_rgb(200, 36, 36)
         messageRespond = await client.get_channel(channel).send(embed=embed)
         await messageRespond.add_reaction(u'\U0001f4c5')
 
