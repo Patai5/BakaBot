@@ -9,6 +9,7 @@ import asyncio
 from keep_alive import keep_alive
 import time
 import datetime
+import copy
 
 
 def main():
@@ -18,6 +19,7 @@ def main():
     @client.event
     async def on_ready():
         print('Ready!')
+        await client.change_presence(activity=discord.Activity(name="Bakaláři", type=3))
         reminder_task = asyncio.create_task(createReminder(client))
         rozvrhchange_task = asyncio.create_task(rozvrhchange(client))
         await reminder_task
@@ -27,19 +29,6 @@ def main():
     async def on_message(message):
         if not message.author.bot:
             await botcommands(message, client)
-
-    @client.event
-    async def on_reaction_add(reaction, user):
-        if not user.bot:
-            async for user in reaction.users():
-                await reaction.remove(user)
-                if reaction.message.embeds[0].fields[0].name.startswith("Tento týden, "):
-                    await reaction.message.channel.send(
-                        rozvrhshow(1, 5, showden=True, showtrida=True))
-                else:
-                    await reaction.message.channel.send(
-                        rozvrhshow(1, 5, nextweek=True, showden=True, showtrida=True))
-                break
 
     token = os.environ['token']
     client.run(token)
@@ -51,8 +40,13 @@ async def botcommands(message, client):
         rozvrhhelp = "Špatný argument pro funkci Rozvrh\nBakaBot Rozvrh den(jeden den(DEN)|více dní(DEN-DEN)|celý " \
                      "týden(TÝDEN)) ?příští(jaký týden(PŘÍŠTÍ))\nDEN = \"pondělí|monday|1\", DEN-DEN = " \
                      "\"DEN-DEN|týden|week\", PŘÍŠTÍ = \"příští|aktuální|now|next|1|2\" "
+        settingshelp = "ShowDen (bool)\nShowTrida (bool)\nChannelZmeneno (message channel)\n" \
+                       "ChannelZnamky (message channel)\nChannelHodiny (message channel)"
+        
         if function == "rozvrhhelp":
             await message.channel.send(rozvrhhelp)
+        elif function == "settings":
+            await message.channel.send(settingshelp)
         else:
             await message.channel.send(general)
 
@@ -62,7 +56,7 @@ async def botcommands(message, client):
             args = command.split(" ")[:3]
             if len(args) != 2:
                 args.insert(1, "")
-            if args[0].startswith("showden"):
+            if args[0].lower().startswith("showden"):
                 if re.match("(true|ano|1)", args[1].lower()):
                     db["showden"] = True
                     await message.channel.send("showden = True")
@@ -71,7 +65,7 @@ async def botcommands(message, client):
                     await message.channel.send("showden = False")
                 else:
                     await gethelp("settings")
-            elif args[0].startswith("showtrida"):
+            elif args[0].lower().startswith("showtrida"):
                 if re.match("(true|ano|1)", args[1].lower()):
                     db["showtrida"] = True
                     await message.channel.send("showtrida = True")
@@ -80,13 +74,13 @@ async def botcommands(message, client):
                     await message.channel.send("showtrida = False")
                 else:
                     await gethelp("settings")
-            elif args[0].startswith("channelzmeneno"):
+            elif args[0].lower().startswith("channelzmeneno"):
                 db["channelZmeneno"] = message.channel.id
                 await message.channel.send("channelZmeneno = This channel")
-            elif args[0].startswith("channelznamky"):
+            elif args[0].lower().startswith("channelznamky"):
                 db["channelZnamky"] = message.channel.id
                 await message.channel.send("channelZnamky = This channel")
-            elif args[0].startswith("channelhodiny"):
+            elif args[0].lower().startswith("channelhodiny"):
                 db["channelHodiny"] = message.channel.id
                 await message.channel.send("channelHodiny = This channel")
             else:
@@ -194,6 +188,8 @@ async def botcommands(message, client):
             await settings(message, command)
         elif command.lower().startswith("forceupdatelessondatabase"):
             await forceUpdateLessonDatabase(message)
+        elif command.lower().startswith("help"):
+            await gethelp(command.split(" ")[0])
         else:
             await gethelp()
 
@@ -241,6 +237,17 @@ def getrozvrh(nextweek):
                 lessons.append(Lesson(i2, " ", " "))
         else:
             for i2, lesson in enumerate(lessons):
+                data = lesson.find_all("div", {"class": "day-item-hover"})
+                changeInfo = re.findall("(?<=\"changeinfo\":\").*?(?=\")", str(data))
+                if changeInfo:
+                    changeInfo = changeInfo[0]
+                else:
+                    changeInfo = re.findall("(?<=\"removedinfo\":\").*?(?=\")", str(data))
+                    if changeInfo:
+                        changeInfo = changeInfo[0] 
+                if changeInfo == "":
+                    changeInfo = None
+
                 name = lesson.find("div", {"class": "middle"})
                 if name:
                     reg = re.findall("(?<=>).*(?=</)", str(name))[0]
@@ -254,22 +261,11 @@ def getrozvrh(nextweek):
                         else:
                             reg2 = " "
                             
-                        reg3 = re.findall("(?<=\"changeinfo\":\").*?(?=\")", str(data))
-                        if reg3:
-                            reg3 = reg3[0]
-                        else:
-                            reg3 = re.findall("(?<=\"removedinfo\":\").*?(?=\")", str(data))
-                            if reg3:
-                                reg3 = reg3[0] 
-                        if reg3 == "":
-                            reg3 = None
-                            
-                        if reg3:
-                            lessons[i2] = Lesson(i2, reg, reg2, reg3)
+                        lessons[i2] = Lesson(i2, reg, reg2, changeInfo)
                     else:
-                        lessons[i2] = Lesson(i2, " ", " ")
+                        lessons[i2] = Lesson(i2, " ", " ", changeInfo)
                 else:
-                    lessons[i2] = Lesson(i2, " ", " ")
+                    lessons[i2] = Lesson(i2, " ", " ", changeInfo)
         lessons.pop(6)
         for i2, lesson in enumerate(lessons):
             lessons[i2] = Lesson(i2, lesson.predmet, lesson.trida, lesson.changeinfo)
@@ -283,7 +279,7 @@ def getrozvrh(nextweek):
     return rozvrh
 
 
-def rozvrhshow(daystart, dayend, nextweek=False, showden=None, showtrida=None):
+def rozvrhshow(daystart, dayend, nextweek=False, showden=None, showtrida=None, exclusives=None, rozvrh=None):
     if showden == None:
         showden = readdb("showden")
         if showden == None:
@@ -293,7 +289,8 @@ def rozvrhshow(daystart, dayend, nextweek=False, showden=None, showtrida=None):
         if showtrida == None:
             showtrida = False
 
-    rozvrh = getrozvrh(nextweek)
+    if not rozvrh:
+        rozvrh = getrozvrh(nextweek)
     rozvrh.days = rozvrh.days[daystart - 1:dayend]
 
     neprazdnyDen = None
@@ -342,30 +339,52 @@ def rozvrhshow(daystart, dayend, nextweek=False, showden=None, showtrida=None):
                 if lowest == 0:
                     lowest = 1
                 day.lessons = day.lessons[:-lowest]
-
-        columns = []
-        if showden:
-            column = [ColumnItem(" ", True)]
-            for day in rozvrh.days:
-                if showtrida:
-                    column.append(ColumnItem(day.den, False))
-                    column.append(ColumnItem(" ", True))
-                else:
-                    column.append(ColumnItem(day.den, True))
-            columns.append(column)
-        for i in range(len(rozvrh.days[0].lessons)):
-            column = [
-                ColumnItem(str(rozvrh.days[0].lessons[i].hodina) + ".", True)
-            ]
-            for day in rozvrh.days:
-                if showtrida:
-                    column.append(ColumnItem(day.lessons[i].predmet, False))
-                    column.append(ColumnItem(day.lessons[i].trida, True))
-                else:
-                    column.append(ColumnItem(day.lessons[i].predmet, True))
-            columns.append(column)
-
-        output = "```" + table(columns) + "```"
+        if exclusives:
+            columns = []
+            if showden:
+                column = [ColumnItem(" ", True)]
+                for day in rozvrh.days:
+                    if showtrida:
+                        column.append(ColumnItem(day.den, False))
+                        column.append(ColumnItem(" ", True))
+                    else:
+                        column.append(ColumnItem(day.den, True))
+                columns.append(column)
+            for i in range(len(rozvrh.days[0].lessons)):
+                column = [
+                    ColumnItem(str(rozvrh.days[0].lessons[i].hodina) + ".", True)
+                ]
+                for day_i, day in enumerate(rozvrh.days):
+                    if showtrida:
+                        column.append(ColumnItem(day.lessons[i].predmet, False, exclusives[day_i][day.lessons[i].hodina]))
+                        column.append(ColumnItem(day.lessons[i].trida, True, exclusives[day_i][day.lessons[i].hodina]))
+                    else:
+                        column.append(ColumnItem(day.lessons[i].predmet, True, exclusives[day_i][day.lessons[i].hodina]))
+                columns.append(column)
+            output = "```" + table(columns) + "```"
+        else:
+            columns = []
+            if showden:
+                column = [ColumnItem(" ", True)]
+                for day in rozvrh.days:
+                    if showtrida:
+                        column.append(ColumnItem(day.den, False))
+                        column.append(ColumnItem(" ", True))
+                    else:
+                        column.append(ColumnItem(day.den, True))
+                columns.append(column)
+            for i in range(len(rozvrh.days[0].lessons)):
+                column = [
+                    ColumnItem(str(rozvrh.days[0].lessons[i].hodina) + ".", True)
+                ]
+                for day in rozvrh.days:
+                    if showtrida:
+                        column.append(ColumnItem(day.lessons[i].predmet, False))
+                        column.append(ColumnItem(day.lessons[i].trida, True))
+                    else:
+                        column.append(ColumnItem(day.lessons[i].predmet, True))
+                columns.append(column)
+            output = "```" + table(columns) + "```"
         return output
     else:
         return "```V rozvrhu nic není```"
@@ -406,9 +425,10 @@ def spaceout(string, spaces):
 
 
 class ColumnItem:
-    def __init__(self, value, newline):
+    def __init__(self, value, newline, exclusive=False):
         self.value = value
         self.newline = newline
+        self.exclusive = exclusive
 
 
 def table(columns):
@@ -422,7 +442,7 @@ def table(columns):
     for row in range(rowsint):
         rows.append("")
 
-    for column in columns:
+    for column_i, column in enumerate(columns):
         longest = 0
         for item in column:
             if len(item.value) > longest:
@@ -433,11 +453,29 @@ def table(columns):
         rows[0] = rows[0] + repeat("═", longest + 2) + "╤"
         z = 1
         for i, item in enumerate(column):
-            rows[z] = rows[z] + " " + item.value + " " + "│"
+            if item.exclusive:
+                rows[z] = rows[z] + " " + item.value + " " + "║"
+            elif len(columns) > column_i + 1: 
+                if columns[column_i + 1][i].exclusive:
+                    rows[z] = rows[z] + " " + item.value + " " + "║"
+                else:
+                    rows[z] = rows[z] + " " + item.value + " " + "│"
+            else:
+                rows[z] = rows[z] + " " + item.value + " " + "│"
             if item.newline:
                 if i != len(column) - 1:
                     z = z + 1
-                    rows[z] = rows[z] + repeat("─", longest + 2) + "┼"
+                    if item.exclusive or column[i + 1].exclusive:
+                        rows[z] = rows[z] + repeat("═", longest + 2) + "●"
+                    elif len(columns) > column_i + 1: 
+                        if columns[column_i + 1][i].exclusive:
+                            rows[z] = rows[z] + repeat("─", longest + 2) + "●"
+                        elif columns[column_i + 1][i + 1].exclusive:
+                            rows[z] = rows[z] + repeat("─", longest + 2) + "●"
+                        else:
+                            rows[z] = rows[z] + repeat("─", longest + 2) + "┼"
+                    else:
+                        rows[z] = rows[z] + repeat("─", longest + 2) + "┼"
             z = z + 1
         rows[z] = rows[z] + repeat("═", longest + 2) + "╧"
 
@@ -586,14 +624,14 @@ async def rozvrhchange(client):
         for (dayOld, dayNew) in zip(rozvrhOld.days, rozvrhNew.days):
             for (lessonOld, lessonNew) in zip(dayOld.lessons, dayNew.lessons):
                 changed = lessonOld, lessonNew, dayOld.den
-                if lessonOld.predmet != lessonNew.predmet or lessonOld.trida != lessonNew.trida:
+                if lessonOld.predmet != lessonNew.predmet or lessonOld.trida != lessonNew.trida or lessonOld.changeinfo != lessonNew.changeinfo:
                     changedlist.append(changed)
         if len(changedlist) != 0:
             return changedlist
         else:
             return None
 
-    async def zmenenomessage(changed, tyden, client):
+    async def zmenenomessage(changed, tyden, client, rozvrh):
         def zmenapredmet(lessonOld, lessonNew):
             column = []
             column.append(ColumnItem(lessonOld.predmet, False))
@@ -620,8 +658,8 @@ async def rozvrhchange(client):
         channel = db["channelZmeneno"]
         embed = discord.Embed()
         embed.title = "Detekována změna v rozvrhu"
-        for count, changedItem in enumerate(changed):
-            if len(embed.field) >= 23:
+        for changedItem in changed:
+            if len(embed.fields) >= 23:
                 embed.add_field(name="Maximální počet embedů v jedné zprávě vyplýtván", value="Asi Hrnec změnil hodně "
                                      "předmětů najednou :(", inline=True)
                 embed.add_field(name='\u200b', value='\u200b', inline=False)
@@ -643,8 +681,23 @@ async def rozvrhchange(client):
             embed.add_field(name='\u200b', value='\u200b', inline=False)
         embed.remove_field(len(embed.fields) - 1)
         embed.color = discord.Color.from_rgb(200, 36, 36)
-        messageRespond = await client.get_channel(channel).send(embed=embed)
-        await messageRespond.add_reaction(u'\U0001f4c5')
+        await client.get_channel(channel).send(embed=embed)
+
+        exclusives = [[False for i in range(12)] for i in range(5)]
+        for item in changed:
+            if item[2] == "po":
+                den = 0
+            elif item[2] == "út":
+                den = 1
+            elif item[2] == "st":
+                den = 2
+            elif item[2] == "čt":
+                den = 3
+            elif item[2] == "pá":
+                den = 4
+            exclusives[den][item[1].hodina] = True
+        rozvrhToShow = rozvrhshow(1, 5, nextweek=tyden, showden=True, showtrida=True, exclusives=exclusives, rozvrh=copy.deepcopy(rozvrh))
+        await client.get_channel(channel).send(rozvrhToShow)
 
     if len(db.prefix("rozvrh1")) == 0:
         rozvrh1 = getrozvrh(False)
@@ -659,11 +712,11 @@ async def rozvrhchange(client):
         rozvrhOld2 = jsonloads(db["rozvrh2"])
         changed = detectchange(rozvrhOld1, rozvrhNew1)
         if changed:
-            await zmenenomessage(changed, False, client)
+            await zmenenomessage(changed, False, client, rozvrhNew1)
             change = True
         changed = detectchange(rozvrhOld2, rozvrhNew2)
         if changed:
-            await zmenenomessage(changed, True, client)
+            await zmenenomessage(changed, True, client, rozvrhNew2)
             change = True
         if change:
             db["rozvrh1"] = jsondumps(rozvrhNew1)
