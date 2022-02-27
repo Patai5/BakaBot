@@ -241,6 +241,10 @@ def getrozvrh(nextweek):
                 changeInfo = re.findall("(?<=\"changeinfo\":\").*?(?=\")", str(data))
                 if changeInfo:
                     changeInfo = changeInfo[0]
+                    if "Suplování" in changeInfo:
+                        teacherDiv = lesson.find("div", {"class": "bottom"})
+                        teacher = re.findall("(?<=>).*(?=</)", str(teacherDiv))[0]
+                        changeInfo += " --> " + teacher
                 else:
                     changeInfo = re.findall("(?<=\"removedinfo\":\").*?(?=\")", str(data))
                     if changeInfo:
