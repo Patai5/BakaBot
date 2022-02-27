@@ -558,7 +558,7 @@ async def createReminder(client):
             await reminder(client, when)
 
 
-def get_next_lesson_for_reminder():
+def get_next_lesson_for_reminder(current=None):
     rozvrh = jsonloads(db["rozvrh1"])
     todayDayInt = datetime.datetime.today().weekday()
     day = rozvrh.days[todayDayInt]
@@ -566,10 +566,16 @@ def get_next_lesson_for_reminder():
     outputLesson = None
     currentTimeSec = getSec()
     for lesson in day.lessons:
-        if currentTimeSec < REMIND[lesson.hodina]:
-            if lesson.predmet != " ":
-                outputLesson = lesson
-                break
+        if current:
+            if REMIND[lesson.hodina] > currentTimeSec - 10:
+                if lesson.predmet != " ":
+                    outputLesson = lesson
+                    break
+        else:
+            if REMIND[lesson.hodina] > currentTimeSec:
+                if lesson.predmet != " ":
+                    outputLesson = lesson
+                    break
     return outputLesson
 
 
@@ -578,7 +584,7 @@ async def reminder(client, when):
 
     channel = db["channelHodiny"]
     embed = discord.Embed()
-    lesson = get_next_lesson_for_reminder()
+    lesson = get_next_lesson_for_reminder(current=True)
     if lesson:
         hodina, predmet, trida = db["lastLesson"]
         lastLesson = Lesson(hodina, predmet, trida)
