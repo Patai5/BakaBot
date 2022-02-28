@@ -551,7 +551,10 @@ async def createReminder(client):
     else:
         lesson = get_next_lesson_for_reminder()
         if lesson:
-            when = REMIND[lesson.hodina] - getSec()
+            for remindTime in REMIND:
+                if remindTime > getSec():
+                    when = remindTime - getSec()
+                    break
             await reminder(client, when)
         else:
             when = 86400 - getSec() + REMIND[0]
@@ -588,7 +591,8 @@ async def reminder(client, when):
     if lesson:
         hodina, predmet, trida = db["lastLesson"]
         lastLesson = Lesson(hodina, predmet, trida)
-        if lesson.hodina != lastLesson.hodina and lesson.predmet != lastLesson.predmet and lesson.trida != lastLesson.predmet:
+        print(lastLesson.predmet, lastLesson.hodina)
+        if lesson.hodina != lastLesson.hodina or lesson.predmet != lastLesson.predmet or lesson.trida != lastLesson.trida:
             column = [ColumnItem(lesson.predmet, False), ColumnItem(lesson.trida, True)]
             predmet = "```" + table([column]) + "```"
             time1 = from_sec_to_time(LESSON_TIMES[lesson.hodina][0])
