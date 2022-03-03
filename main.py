@@ -601,7 +601,7 @@ async def reminder(client, when):
             embed.add_field(name=lessonHodina, value=predmet)
             await client.get_channel(channel).send(embed=embed)
             db["lastLesson"] = [lesson.hodina, lesson.predmet, lesson.trida]
-
+    await asyncio.sleep(1)
     await createReminder(client)
 
 
