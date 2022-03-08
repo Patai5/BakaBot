@@ -58,7 +58,7 @@ async def botcommands(message, client):
 
     async def settings(message, command):
         if message.author.id == 335793327431483392:
-            command = command.replace("setting ", "")
+            command = command.replace("settings ", "").replace("setting ", "")
             args = command.split(" ")[:3]
             if len(args) != 2:
                 args.insert(1, "")
@@ -180,6 +180,12 @@ async def botcommands(message, client):
         zprava = "Updated lesson database"
         await message.channel.send(zprava)
 
+    async def forceUpdateZnamkyDatabase(message):
+        znamky = getznamky()
+        db["znamky"] = jsondumpsZnamky(znamky)
+        zprava = "Updated znamky database"
+        await message.channel.send(zprava)
+
     if re.search("^([ -/]*?[Bb][Aa][Kk][Aa][Bb][Oo][Tt]|[ -/]*?[Bb])", message.content):
         if re.search("^[ -/]*?[Bb][Aa][Kk][Aa][Bb][Oo][Tt]", message.content):
             command = re.split("^[ -/]*?[Bb][Aa][Kk][Aa][Bb][Oo][Tt] ", message.content)[1]
@@ -191,6 +197,8 @@ async def botcommands(message, client):
             await settings(message, command)
         elif command.lower().startswith("forceupdatelessondatabase"):
             await forceUpdateLessonDatabase(message)
+        elif command.lower().startswith("forceupdateznamkydatabase"):
+            await forceUpdateZnamkyDatabase(message)
         elif command.lower().startswith("help"):
             await gethelp(command.split(" ")[0])
         else:
@@ -601,7 +609,6 @@ async def reminder(client, when):
     if lesson:
         hodina, predmet, trida = db["lastLesson"]
         lastLesson = Lesson(hodina, predmet, trida)
-        print(lastLesson.predmet, lastLesson.hodina)
         if (
             lesson.hodina != lastLesson.hodina
             or lesson.predmet != lastLesson.predmet
@@ -734,6 +741,7 @@ async def rozvrhchange(client):
         )
         await client.get_channel(channel).send(rozvrhToShow)
 
+    await znamkychange(client)
     if len(db.prefix("rozvrh1")) == 0:
         rozvrh1 = getrozvrh(False)
         rozvrh2 = getrozvrh(True)
@@ -758,6 +766,202 @@ async def rozvrhchange(client):
             db["rozvrh2"] = jsondumps(rozvrhNew2)
     await asyncio.sleep(60)
     await rozvrhchange(client)
+
+
+def jsondumpsZnamky(znamky):
+    output = '{"znamky": ['
+    for znamka in znamky.znamky:
+        output = output + json.dumps(znamka.__dict__) + ", "
+    output = output[:-2] + "]}"
+
+    return output
+
+
+def jsonloadsZnamky(jsonstring):
+    dictZnamky = json.loads(jsonstring)
+    znamky = []
+    for znamka in dictZnamky["znamky"]:
+        znamky.append(
+            Znamka(
+                znamka["id"],
+                znamka["caption"],
+                znamka["predmet"],
+                znamka["vaha"],
+                znamka["poznamka"],
+                znamka["date"],
+                znamka["znamka"],
+            )
+        )
+    znamky = Znamky(znamky)
+    return znamky
+
+
+class Znamky:
+    def __init__(self, znamky):
+        self.znamky = znamky
+
+    def byPredmet(self, predmet):
+        znamkyByPremdet = []
+        for znamka in self.znamky:
+            if znamka.predmet == predmet:
+                znamkyByPremdet.append(znamka)
+        return Znamky(znamkyByPremdet)
+
+    def prumer(self):
+        totalNumberZnamek = 0
+        totalZnamka = 0
+        for znamka in self.znamky:
+            totalNumberZnamek += znamka.vaha
+            totalZnamka += znamka.znamka * znamka.vaha
+        return self.roundPrumer(totalZnamka / totalNumberZnamek)
+
+    def budouciPrumer(self):
+        self.znamky.append(Znamka(*[None for i in range(3)], 12, *[None for i in range(2)], 5))
+        nejhorsi = self.roundPrumer(self.prumer())
+        self.znamky.pop(-1)
+        self.znamky.append(Znamka(*[None for i in range(3)], 12, *[None for i in range(2)], 1))
+        nejlepsi = self.roundPrumer(self.prumer())
+        self.znamky.pop(-1)
+        return f"{nejhorsi} - {nejlepsi}"
+
+    @staticmethod
+    def roundPrumer(float):
+        if float % 1 == 0:
+            return int(float)
+        if float % 10 == 0:
+            return int(float * 10) / 10
+        else:
+            return int(float * 100) / 100
+
+
+class Znamka:
+    def __init__(self, id, caption, predmet, vaha, poznamka, date, znamka):
+        self.id = id
+        self.caption = caption
+        self.predmet = predmet
+        self.vaha = vaha
+        self.poznamka = poznamka
+        self.date = date
+        self.znamka = znamka
+
+    def znamkaString(self):
+        if self.znamka % 1 != 0:
+            return str(int(self.znamka)) + "-"
+        else:
+            return str(int(self.znamka))
+
+    def print(self):
+        return (
+            f"ID: {self.id}; Caption: {self.caption}; Predmet: {self.predmet}; Vaha: {self.vaha}; Poznamka: "
+            f"{self.poznamka}; Date: {self.date}; Znamka: {self.znamka}"
+        )
+
+
+PREDMETY = {
+    "Inf": "Informatika a výpočetní technika",
+    "EvV": "Estetická výchova - výtvarná",
+    "EvH": "Estetická výchova - hudební",
+    "Zsv": "Základy společenských věd",
+    "Čj": "Český jazyk a literatura",
+    "Fj": "Jazyk francouzský",
+    "Tv": "Tělesná výchova",
+    "Aj": "Jazyk anglický",
+    "M": "Matematika",
+    "Bi": "Biologie",
+    "Fy": "Fyzika",
+    "Ch": "Chemie",
+    "D": "Dějepis",
+    "Z": "Zeměpis",
+}
+
+PREDMETYNAOPAK = {}
+for key, value in zip(PREDMETY.keys(), PREDMETY.values()):
+    PREDMETYNAOPAK.update({value: key})
+
+
+def getznamky():
+    url = "https://bakalari.ceskolipska.cz/Login"
+    session = login(url)
+    result = session.get("https://bakalari.ceskolipska.cz/next/prubzna.aspx?s=chrono")
+    session.close()
+
+    html = BeautifulSoup(result.text, "html.parser")
+    data = html.find("div", {"id": "cphmain_DivByTime"}).script.text
+    data = re.findall("\[\{.*?(?=;)", data)[0]
+
+    znamky = Znamky([])
+    dictData = json.loads(data)
+    for row in dictData:
+        caption = row["caption"]
+        id = row["id"]
+        predmet = row["nazev"]
+        vaha = row["vaha"]
+        poznamka = row["poznamkakzobrazeni"]
+        date = row["udel_datum"]
+        znamka = row["MarkText"]
+
+        if caption == "":
+            caption = None
+        else:
+            caption = caption.replace(" <br>", "")
+        predmet = PREDMETYNAOPAK[predmet]
+        vaha = int(vaha)
+        if poznamka == "":
+            poznamka = None
+        else:
+            poznamka = poznamka.replace(" <br>", "")
+        date = list(reversed([int(datum) for datum in date.split(".")]))
+        if "-" in znamka:
+            znamka = int(znamka.replace("-", "")) + 0.5
+        else:
+            znamka = int(znamka)
+
+        znamky.znamky.append(Znamka(id, caption, predmet, vaha, poznamka, date, znamka))
+    return znamky
+
+
+async def znamkychange(client):
+    def detectchange(znamkyOld, znamkyNew):
+        newZnamky = []
+        oldIDs = [znamka.id for znamka in znamkyOld.znamky]
+        for znamka in znamkyNew.znamky:
+            if znamka.id not in oldIDs:
+                newZnamky.append(znamka)
+        return newZnamky
+
+    async def zmenenomessage(changed, znamky, client):
+        channel = db["channelZnamky"]
+        for znamka in changed:
+            embed = discord.Embed()
+            embed.set_author(name=PREDMETY[znamka.predmet])
+            embed.title = znamka.znamkaString()
+            poznamky = ""
+            if znamka.caption:
+                poznamky += "\n" + znamka.caption
+            if znamka.poznamka:
+                poznamky += "\n" + znamka.poznamka
+            embed.description = f"Váha: {znamka.vaha}{poznamky}"
+
+            obsah = f"Průměr z {znamka.predmet}: {znamky.byPredmet(znamka.predmet).prumer()}\nBudoucí průměr: {znamky.byPredmet(znamka.predmet).budouciPrumer()}"
+            embed.add_field(name="\u200b", value=obsah, inline=False)
+            embed.timestamp = datetime.datetime(*znamka.date)
+
+            g = int(255 / 4 * (znamka.znamka - 1))
+            r = int(255 - 255 / 4 * (znamka.znamka - 1))
+            embed.color = discord.Color.from_rgb(g, r, 0)
+
+            await client.get_channel(channel).send(embed=embed)
+
+    if len(db.prefix("znamky")) == 0:
+        znamky = getznamky()
+        db["znamky"] = jsondumpsZnamky(znamky)
+    else:
+        znamkyNew = getznamky()
+        znamkyOld = jsonloadsZnamky(db["znamky"])
+        changed = detectchange(znamkyOld, znamkyNew)
+        if changed:
+            await zmenenomessage(changed, znamkyNew, client)
+            db["znamky"] = jsondumpsZnamky(znamkyNew)
 
 
 if __name__ == "__main__":
