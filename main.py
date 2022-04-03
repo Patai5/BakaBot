@@ -3,7 +3,7 @@ import logging
 
 import discord
 
-from core.bot_commands import Commands
+from core.bot_commands import Commands, Reactions
 from core.grades import Grades
 from core.keep_alive import keep_alive
 from core.reminder import Reminder
@@ -19,9 +19,10 @@ logger.addHandler(handler)
 
 def main():
     # Keeps the replit on
-    # keep_alive()
+    keep_alive()
 
-    client = discord.Client()
+    client = discord.Client(guild_ready_timeout=0)
+    client.cached_messages_react = []
 
     # After client gets ready
     @client.event
@@ -32,9 +33,21 @@ def main():
         await start_feature_couroutines(client)
 
     @client.event
-    async def on_message(message):
+    async def on_message(message: discord.Message):
         if not message.author.bot:
             await Commands(message, client).execute()
+
+    @client.event
+    async def on_raw_reaction_add(reaction: discord.RawReactionActionEvent):
+        for message in client.cached_messages_react:
+            if reaction.message_id == message.id:
+                if not reaction.member.bot:
+                    await Reactions(
+                        await client.get_channel(reaction.channel_id).fetch_message(reaction.message_id),
+                        reaction.member,
+                        reaction.emoji,
+                        client,
+                    ).execute()
 
     token = os_environ("token")
     client.run(token)
@@ -65,9 +78,14 @@ async def start_feature_couroutines(client: discord.Client):
             write_db("schedule2", Schedule.json_dumps(await Schedule.get_schedule(True)))
         if not read_db("grades"):
             write_db("grades", Grades.json_dumps(await Grades.get_grades()))
+        if not read_db("gradesMessages"):
+            write_db("gradesMessages", [])
+        if not read_db("predictorMessages"):
+            write_db("predictorMessages", [])
 
         # Starts the courutines
         await asyncio.gather(
+            Reactions.query(client),
             Schedule.start_detecting_changes(60, client),
             Grades.start_detecting_changes(60, client),
             Reminder.start_reminding(client),

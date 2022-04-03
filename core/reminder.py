@@ -1,6 +1,5 @@
 import asyncio
 import datetime
-import time
 
 import discord
 from utils.utils import from_sec_to_time, get_sec, read_db, write_db

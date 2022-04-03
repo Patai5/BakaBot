@@ -1,9 +1,12 @@
+import asyncio
+import datetime
 import re
 
 import discord
-from utils.utils import write_db
+from utils.utils import read_db, write_db
 
 from core.grades import Grades
+from core.predictor import Predictor
 from core.schedule import Schedule
 
 
@@ -12,9 +15,9 @@ class Commands:
         self.message = message
         self.client = client
 
-        if not Commands.is_bakabot(message):
-            return None
-        self.parse_message(message)
+        self.isBaka = Commands.is_bakabot(message)
+        if self.isBaka:
+            self.parse_message(message)
 
     def parse_message(self, message: discord.Message):
         self.content = message.content
@@ -58,7 +61,7 @@ class Commands:
     class Help:
         GENERAL = 'Nedokázal jsem rozluštit váš příkaz.\nPužijte "BakaBot Help" pro nápovědu'
 
-        blanc = "BakaBota zavoláž pomocí jeho jména pokračujíc mezerou funkcí mezerou a následnými argumenty.\nFunkce: Rozvrh; Settings"
+        blanc = "BakaBota zavoláž pomocí jeho jména pokračujíc mezerou funkcí mezerou a následnými argumenty.\nFunkce: Rozvrh; Settings, Známka"
         schedule = "Argumenty: den (začátek)-den (konec)"
         settings = "Špatný argument pro funkci Settings"
 
@@ -258,6 +261,23 @@ class Commands:
             else:
                 await message.channel.send("Můj majitel je Patai5 ty mrdko!")
 
+    class Grades:
+        blanc = "Špatný argument pro funkci Známka"
+
+        # Executes the method for of this function
+        @classmethod
+        async def execute(cls, message):
+            # Check if the user inputed at least one arguments
+            if len(message.arguments) == 0:
+                await message.channel.send(cls.blanc)
+            else:
+                arg1 = message.arguments[0]
+                if re.search("^(Inf|EvV|EvH|Zsv|[cčČ]j|Fj|Tv|Aj|M|Bi|Fy|Ch|D|Z)$", arg1, flags=2):
+                    arg1 = arg1.lower().replace("c", "Č")
+                    await Predictor.predict_embed(arg1, message.channel, message.client)
+                else:
+                    await message.channel.send(f'{cls.blanc}: "{arg1}"')
+
     COMMANDS = {
         "r": Schedule,
         "rozvrh": Schedule,
@@ -267,12 +287,108 @@ class Commands:
         "setting": Settings,
         "settings": Settings,
         "admin": Admin,
+        "grade": Grades,
+        "znamka": Grades,
+        "známka": Grades,
     }
 
     # Executes the message's command
     async def execute(self):
-        command = self.COMMANDS.get(self.command.lower())
-        if command:
-            await command.execute(self)
-        else:
-            await self.Help.execute(self)
+        if self.isBaka:
+            command = self.COMMANDS.get(self.command.lower())
+            if command:
+                await command.execute(self)
+            else:
+                await self.Help.execute(self)
+
+
+class Reactions:
+    def __init__(self, message: discord.Message, user: discord.Member, emoji: discord.emoji, client: discord.Client):
+        self.message = message
+        self.user = user
+        self.emoji = emoji
+        self.client = client
+        self.userReactions = [reaction for reaction in self.message.reactions if reaction.count > 1]
+
+    class Predictor:
+        queryMessagesDatabase = "predictorMessages"
+
+        @classmethod
+        async def query(cls, client: discord.Client):
+            messages = read_db(cls.queryMessagesDatabase)
+            if messages:
+                for message in messages:
+                    try:
+                        message = await client.get_channel(message[1]).fetch_message(message[0])
+                        client.cached_messages_react.append(message)
+
+                        createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+
+                        if createdFromNowSec > 300:
+                            editedFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+                            if not message.edited_at or editedFromNowSec > 300:
+                                await Predictor.delete_predictor_message(message, Predictor.get_stage(message), 0)
+                            else:
+                                await Predictor.delete_predictor_message(
+                                    message, Predictor.get_stage(message), editedFromNowSec
+                                )
+                        else:
+                            await Predictor.delete_predictor_message(
+                                message, Predictor.get_stage(message), createdFromNowSec
+                            )
+                    except:
+                        pass
+
+        # Executes the method for of this function
+        @classmethod
+        async def execute(cls, reaction):
+            stage = Predictor.get_stage(reaction.message)
+            if stage == 1:
+                await Predictor.update_grade(reaction)
+            elif stage == 2:
+                await Predictor.update_weight(reaction)
+
+    class Grades:
+        queryMessagesDatabase = "gradesMessages"
+
+        @classmethod
+        async def query(cls, client: discord.Client):
+            messages = read_db(cls.queryMessagesDatabase)
+            if messages:
+                for message in messages:
+                    try:
+                        message = await client.get_channel(message[1]).fetch_message(message[0])
+                        client.cached_messages_react.append(message)
+
+                        createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+                        if createdFromNowSec > 300:
+                            await Grades.delete_grade_reaction(message, Grades.PREDICTOR_EMOJI, 0)
+                        else:
+                            await Grades.delete_grade_reaction(message, Grades.PREDICTOR_EMOJI, createdFromNowSec)
+                    except:
+                        pass
+
+        # Executes the method for of this function
+        @classmethod
+        async def execute(cls, reaction):
+            if reaction.emoji.name == "📊":
+                await Grades.create_predection(reaction.message, reaction.client)
+
+    REACTIONS = {Predictor, Grades}
+
+    # Executes the message's command
+    async def execute(self):
+        for user in self.message.reactions:
+            if user.me:
+                for reaction in Reactions.REACTIONS:
+                    if reaction.queryMessagesDatabase:
+                        for message in read_db(reaction.queryMessagesDatabase):
+                            if self.message.id == message[0]:
+                                await reaction.execute(self)
+                                return
+
+    @staticmethod
+    async def query(client: discord.Client):
+        for reaction in Reactions.REACTIONS:
+            if reaction.queryMessagesDatabase:
+                asyncio.ensure_future(reaction.query(client))
