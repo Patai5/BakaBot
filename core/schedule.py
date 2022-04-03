@@ -1,11 +1,13 @@
 import asyncio
 import copy
+import datetime
 import json
+import random
 import re
 
 import discord
 from bs4 import BeautifulSoup
-from utils.utils import login, read_db, write_db
+from utils.utils import get_sec, login, read_db, write_db
 
 from core.table import Table
 
@@ -315,6 +317,16 @@ class Schedule:
     # Detects changes in schedule and sends them to discord
     @staticmethod
     async def detect_changes(client: discord.Client):
+        def is_week_change() -> bool:
+            """Returns a boolean value if the weeks are currently changing"""
+            weekday = datetime.datetime.today().weekday()
+            # If the current day is monday or sunday
+            if weekday == 0 or weekday == 6:
+                # If current time is around midnight
+                if 86280 < get_sec() or get_sec() < 120:
+                    return True
+            return False
+
         # Finds and returns the actual changes
         def find_changes(scheduleOld: Schedule, scheduleNew: Schedule):
             changedlist = []
@@ -332,6 +344,28 @@ class Schedule:
                 return changedlist
             else:
                 return None
+
+        async def new_week_message(currentWeek: Schedule, client: discord.Client):
+            randomReaction = [
+                "Hurá",
+                "Kurwa",
+                "Do píči",
+                "Cука блять",
+                "Tak tohleto je v těžce prdeli",
+                "Hrnčíř je zmrd",
+                "Škodová je odporná zmrdná, vyšoustaná, vyšlukovaná, vypařízkovaná špína",
+                "Jakože nemám nic proti lidem s dvojciferným IQ ale Škodová má jednociferný",
+            ]
+
+            # Generates the random title
+            title = f"*\\*{random.choice(randomReaction)}\\**\n**Detekován nový týden**:"
+            # Generates the schedule table
+            schedule = f"```{currentWeek.show(1, 5, True, True)}```"
+
+            # Sends the messages
+            channel = read_db("channelSchedule")
+            await client.get_channel(channel).send(title)
+            await client.get_channel(channel).send(schedule)
 
         # Discord message with the information about the changes
         async def changed_message(changed: list, nextWeek: bool, client: discord.Client, schedule: Schedule):
@@ -433,12 +467,17 @@ class Schedule:
         # Current schedule
         changed = find_changes(scheduleOld1, scheduleNew1)
         if changed:
-            await changed_message(changed, False, client, scheduleNew1)
+            # When the weeks are changing
+            if is_week_change():
+                await new_week_message(scheduleNew1, client)
+            else:
+                await changed_message(changed, False, client, scheduleNew1)
             write_db("schedule1", Schedule.json_dumps(scheduleNew1))
         # Next week's schedule
         changed = find_changes(scheduleOld2, scheduleNew2)
         if changed:
-            await changed_message(changed, True, client, scheduleNew2)
+            if not is_week_change():
+                await changed_message(changed, True, client, scheduleNew2)
             write_db("schedule2", Schedule.json_dumps(scheduleNew2))
 
     # Starts an infinite loop for checking changes in the schedule
