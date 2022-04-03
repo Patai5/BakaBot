@@ -85,6 +85,10 @@ class Reminder:
         channel = read_db("channelReminder")
         lesson = await Reminder.next_reminder_lesson(current=True)
         if lesson:
+            # Sends the full day schedule at 6:00am
+            if Reminder.REMIND[0] - 60 < get_sec() < Reminder.REMIND[0] + 60:
+                await Reminder.remind_whole_day_schedule(client)
+
             # Creates a lastLesson database if needed for the first time
             if not read_db("lastLesson"):
                 write_db("lastLesson", Schedule.Lesson.json_dumps(lesson))
@@ -118,6 +122,18 @@ class Reminder:
                 write_db("lastLesson", Schedule.Lesson.json_dumps(lesson))
         # Prevents sending multiple reminders
         await asyncio.sleep(1)
+
+    # Sends the whole day schedule
+    @staticmethod
+    async def remind_whole_day_schedule(client: discord.Client):
+        # Gets the schedule to be shown
+        schedule = await Schedule.db_schedule()
+        weekday = datetime.datetime.today().weekday()
+        scheduleToShow = f"```{schedule.show(weekday + 1, weekday + 1, True, True)}```"
+
+        # Sends the message
+        channel = read_db("channelReminder")
+        await client.get_channel(channel).send(scheduleToShow)
 
     # Starts an infinite loop for checking changes in the grades
     @staticmethod
