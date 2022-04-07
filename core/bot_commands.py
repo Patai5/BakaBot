@@ -3,7 +3,7 @@ import datetime
 import re
 
 import discord
-from utils.utils import read_db, write_db
+from utils.utils import MessageTimers, read_db, write_db
 
 from core.grades import Grades
 from core.predictor import Predictor
@@ -245,14 +245,14 @@ class Commands:
                 else:
                     arg1 = message.arguments[0]
                     if arg1.lower() == "forceupdatescheduledatabase":
-                        schedule1 = Schedule.get_schedule(False)
-                        schedule2 = Schedule.get_schedule(True)
+                        schedule1 = await Schedule.get_schedule(False)
+                        schedule2 = await Schedule.get_schedule(True)
                         write_db("schedule1", Schedule.json_dumps(schedule1))
                         write_db("schedule2", Schedule.json_dumps(schedule2))
                         response = "Updated schedule database"
                         await message.channel.send(response)
                     elif arg1.lower() == "forceupdategradesdatabase":
-                        grades = Grades.get_grades()
+                        grades = await Grades.get_grades()
                         write_db("grades", Grades.json_dumps(grades))
                         response = "Updated grades database"
                         await message.channel.send(response)
@@ -315,63 +315,75 @@ class Reactions:
 
         @classmethod
         async def query(cls, client: discord.Client):
-            messages = read_db(cls.queryMessagesDatabase)
+            # Deletes some removed messages from the database while the bot was off
+            messages = await MessageTimers.query_messages(cls.queryMessagesDatabase, client)
             if messages:
                 for message in messages:
-                    try:
-                        message = await client.get_channel(message[1]).fetch_message(message[0])
-                        client.cached_messages_react.append(message)
+                    message_id = message.id
+                    message_channel = message.channel.id
 
-                        createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
-
-                        if createdFromNowSec > 300:
-                            editedFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
-                            if not message.edited_at or editedFromNowSec > 300:
-                                await Predictor.delete_predictor_message(message, Predictor.get_stage(message), 0)
-                            else:
-                                await Predictor.delete_predictor_message(
-                                    message, Predictor.get_stage(message), editedFromNowSec
-                                )
-                        else:
-                            await Predictor.delete_predictor_message(
-                                message, Predictor.get_stage(message), createdFromNowSec
+                    if message.edited_at:
+                        editedFromNowSec = (datetime.datetime.utcnow() - message.edited_at).seconds
+                        if editedFromNowSec > 300:
+                            await MessageTimers.delete_message(
+                                [message_id, message_channel], "predictorMessages", client
                             )
-                    except:
-                        pass
+                        else:
+                            await MessageTimers.delete_message(
+                                [message_id, message_channel], "predictorMessages", client, 300 - editedFromNowSec
+                            )
+                    else:
+                        createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+                        if createdFromNowSec > 300:
+                            await MessageTimers.delete_message(
+                                [message_id, message_channel], "predictorMessages", client
+                            )
+                        else:
+                            await MessageTimers.delete_message(
+                                [message_id, message_channel], "predictorMessages", client, 300 - createdFromNowSec
+                            )
 
         # Executes the method for of this function
         @classmethod
         async def execute(cls, reaction):
             stage = Predictor.get_stage(reaction.message)
             if stage == 1:
-                await Predictor.update_grade(reaction)
+                await Predictor.update_grade(reaction, reaction.client)
             elif stage == 2:
-                await Predictor.update_weight(reaction)
+                await Predictor.update_weight(reaction, reaction.client)
 
     class Grades:
         queryMessagesDatabase = "gradesMessages"
 
         @classmethod
         async def query(cls, client: discord.Client):
-            messages = read_db(cls.queryMessagesDatabase)
+            # Deletes some removed messages from the database while the bot was off
+            messages = await MessageTimers.query_messages_reactions(cls.queryMessagesDatabase, client)
             if messages:
                 for message in messages:
-                    try:
-                        message = await client.get_channel(message[1]).fetch_message(message[0])
-                        client.cached_messages_react.append(message)
+                    message_id = message.id
+                    message_channel = message.channel.id
 
-                        createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
-                        if createdFromNowSec > 300:
-                            await Grades.delete_grade_reaction(message, Grades.PREDICTOR_EMOJI, 0)
-                        else:
-                            await Grades.delete_grade_reaction(message, Grades.PREDICTOR_EMOJI, createdFromNowSec)
-                    except:
-                        pass
+                    client.cached_messages_react.append(message)
+
+                    createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+                    if createdFromNowSec > 5400:
+                        await MessageTimers.delete_message_reaction(
+                            [message_id, message_channel], "gradesMessages", Grades.PREDICTOR_EMOJI, client
+                        )
+                    else:
+                        await MessageTimers.delete_message_reaction(
+                            [message_id, message_channel],
+                            "gradesMessages",
+                            Grades.PREDICTOR_EMOJI,
+                            client,
+                            5400 - createdFromNowSec,
+                        )
 
         # Executes the method for of this function
         @classmethod
         async def execute(cls, reaction):
-            if reaction.emoji.name == "📊":
+            if reaction.emoji.name == Grades.PREDICTOR_EMOJI:
                 await Grades.create_predection(reaction.message, reaction.client)
 
     REACTIONS = {Predictor, Grades}

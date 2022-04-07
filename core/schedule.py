@@ -86,9 +86,10 @@ class Schedule:
             lesson = day.first_non_empty_lesson()
             if lesson:
                 firstPerDays.append(lesson.hour)
-            else:
-                return None
-        return min(firstPerDays)
+        if firstPerDays:
+            return min(firstPerDays)
+        else:
+            return None
 
     # Gets the index of the last non empty lesson in common across all days
     def last_non_empty_lessons(self) -> int:
@@ -97,9 +98,10 @@ class Schedule:
             lesson = day.last_non_empty_lesson()
             if lesson:
                 lastPerDays.append(lesson.hour)
-            else:
-                return None
-        return max(lastPerDays)
+        if lastPerDays:
+            return max(lastPerDays)
+        else:
+            return None
 
     # Gets Schedule object from the database
     @staticmethod
@@ -170,9 +172,11 @@ class Schedule:
             empty = False
             if not lessons:
                 empty = True
-                for i in range(13):
-                    lessons.append(Schedule.Lesson(i, " ", " "))
+                for i in range(12):
+                    lessons.append(Schedule.Lesson(i, " ", " ", None, None))
             else:
+                # Removes useless lesson from bakalari
+                lessons.pop(6)
                 for lesson_i, lesson in enumerate(lessons):
                     # Gets main data of a lesson
                     data = lesson.find_all("div", {"class": "day-item-hover"})
@@ -218,8 +222,6 @@ class Schedule:
                         topic = None
                     # Creates Lesson object and saves it into lessons list
                     lessons[lesson_i] = Schedule.Lesson(lesson_i, subject, classroom, changeInfo, topic)
-            lessons.pop(6)  # Removes useless lesson from bakalari
-
             # Gets the short version of the day's name
             dayShort_div = day.div.div.div.div
             dayShort = re.search("(?<=<div>)\s*?(..)(?=<br\/>)", str(dayShort_div)).group(1)
@@ -250,7 +252,7 @@ class Schedule:
                 showClassroom = False
         # Full exclusives of False if None as parameter
         if exclusives == None:
-            exclusives = [[False for i in range(12)] for i in range(5)]
+            exclusives = [[False for i in range(13)] for i in range(5)]
 
         # Copyies itself to work with a Schedule object without damaging the original
         schedule = copy.deepcopy(self)
@@ -288,7 +290,7 @@ class Schedule:
                         column.append(Table.ColumnItem(day.day, False))
                         column.append(Table.ColumnItem(" ", True))
                     else:
-                        column.append(Table.ColumnItem(day.den, True))
+                        column.append(Table.ColumnItem(day.day, True))
                 columns.append(column)
             for i in range(len(schedule.days[0].lessons)):
                 # Adds the lesson hour to the top of the table
@@ -434,10 +436,11 @@ class Schedule:
             embed.color = discord.Color.from_rgb(200, 36, 36)
 
             # Makes the 2D exclusives array with the right values
-            exclusives = [[False for i in range(12)] for i in range(5)]
+            exclusives = [[False for i in range(14)] for i in range(5)]
             DAYS = {"po": 0, "út": 1, "st": 2, "čt": 3, "pá": 4}
             for item in changed:
                 exclusives[DAYS[item[2]]][item[1].hour] = True
+
             # Generates an ascii table of the changed schedule
             scheduleToShow = (
                 "```"

@@ -6,7 +6,7 @@ import re
 
 import discord
 from bs4 import BeautifulSoup
-from utils.utils import get_sec, login, read_db, write_db
+from utils.utils import MessageTimers, get_sec, login, read_db, write_db
 
 
 class Grades:
@@ -245,8 +245,8 @@ class Grades:
         # Subject
         subject = Grades.SUBJECTS_REVERSED.get(message.embeds[0].author.name)
 
-        # Removes the reacted emoji from the message
-        await Grades.delete_grade_reaction(message, Grades.PREDICTOR_EMOJI, 0)
+        # Removes the reaction
+        await MessageTimers.delete_message_reaction(message, "gradesMessages", Grades.PREDICTOR_EMOJI, client)
 
         # Sends the grade predictor
         predictorMessage = await Predictor.predict_embed(subject, message.channel, client)
@@ -295,19 +295,15 @@ class Grades:
                 # Sends the embed
                 message = await client.get_channel(channel).send(embed=embed)
 
-                # Saves the reaction to be removed later
-                messages = read_db("gradesMessages")
-                if messages:
-                    messages = list(messages)
-                else:
-                    messages = []
-                messages.append([message.id, message.channel.id])
-                write_db("gradesMessages", messages)
-                client.cached_messages_react.append(message)
                 # Adds the reaction emoji
                 await message.add_reaction(Grades.PREDICTOR_EMOJI)
+
                 # Removes the emoji after 1.5 hours of inactivity
-                asyncio.ensure_future(Grades.delete_grade_reaction(message, Grades.PREDICTOR_EMOJI, 5400))
+                asyncio.ensure_future(
+                    MessageTimers.delete_message_reaction(
+                        message, "gradesMessages", Grades.PREDICTOR_EMOJI, client, 5400
+                    )
+                )
 
         # The main detection code
         # Gets the new Grade object

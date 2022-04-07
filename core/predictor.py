@@ -1,7 +1,7 @@
 import asyncio
 
 import discord
-from utils.utils import get_sec, read_db, write_db
+from utils.utils import MessageTimers, get_sec, read_db, write_db
 
 from core.grades import Grades
 
@@ -38,20 +38,12 @@ class Predictor:
         for emoji in Predictor.GRADES_EMOJIS:
             await message.add_reaction(emoji)
 
-        # Saves the message to be removed later
-        messages = read_db("predictorMessages")
-        if messages:
-            messages = list(messages)
-        else:
-            messages = []
-        messages.append([message.id, message.channel.id])
-        write_db("predictorMessages", messages)
         client.cached_messages_react.append(message)
         # Removes the message after 5 minutes of inactivity
-        await Predictor.delete_predictor_message(message, 1, 300)
+        await MessageTimers.delete_message(message, "predictorMessages", client, 300)
 
     @staticmethod
-    async def update_grade(reaction: discord.Reaction):
+    async def update_grade(reaction: discord.Reaction, client: discord.Client):
         """Edits the embed with the reacted grade"""
         for loopReaction in reaction.userReactions:
             # If reacted with the right emoji
@@ -85,10 +77,10 @@ class Predictor:
                         await reaction.message.add_reaction(emoji)
 
                     # Removes the message after 5 minutes of inactivity
-                    await Predictor.delete_predictor_message(reaction.message, 2, 300)
+                    await MessageTimers.delete_message(reaction.message, "predictorMessages", client, 300)
 
     @staticmethod
-    async def update_weight(reaction: discord.Reaction):
+    async def update_weight(reaction: discord.Reaction, client: discord.Client):
         """Edits the embed with the updated weight and shows the new grade average"""
         for loopReaction in reaction.userReactions:
             # If reacted with the right emoji
@@ -131,33 +123,7 @@ class Predictor:
                     await reaction.message.clear_reactions()
 
                     # Removes the message after 5 minutes of inactivity
-                    await Predictor.delete_predictor_message(reaction.message, 3, 300)
-
-    # Variable to store running timers
-    message_remove_timers = []
-
-    @staticmethod
-    async def delete_predictor_message(message: discord.Message, stage: id, delay: int):
-        """Deletes the message from the chat after some delay"""
-        # Puts the message into the timer variable
-        Predictor.message_remove_timers.append([message.id, stage, get_sec() + delay])
-        # Sleeps for the time of the delay
-        await asyncio.sleep(delay)
-
-        for timer in Predictor.message_remove_timers:
-            # Checks if the timer is still active
-            if message.id == timer[0]:
-                # Checks if the message was changed while sleeping
-                if stage == timer[1]:
-                    try:
-                        # Deletes the messege
-                        await message.delete()
-                        toRemoveMessages = read_db("predictorMessages")
-                        Predictor.message_remove_timers.remove(timer)
-                        toRemoveMessages.remove([message.id, message.channel.id])
-                        write_db("predictorMessages", toRemoveMessages)
-                    except:
-                        pass
+                    await MessageTimers.delete_message(reaction.message, "predictorMessages", client, 300)
 
     @staticmethod
     def get_stage(message: discord.Message):
