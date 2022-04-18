@@ -60,7 +60,7 @@ class Reminder:
     # Gets the next nearest lesson for reminder
     @staticmethod
     async def next_reminder_lesson(current: bool = None):
-        schedule = await Schedule.db_schedule(False)
+        schedule = Schedule.db_schedule()
         weekday = datetime.datetime.today().weekday()
         day = schedule.days[weekday]
 
@@ -127,7 +127,7 @@ class Reminder:
     @staticmethod
     async def remind_whole_day_schedule(client: discord.Client):
         # Gets the schedule to be shown
-        schedule = await Schedule.db_schedule()
+        schedule = Schedule.db_schedule()
         weekday = datetime.datetime.today().weekday()
         scheduleToShow = f"```{schedule.show(weekday + 1, weekday + 1, True, True)}```"
 

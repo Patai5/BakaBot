@@ -7,7 +7,7 @@ import re
 
 import discord
 from bs4 import BeautifulSoup
-from utils.utils import get_sec, login, read_db, write_db
+from utils.utils import get_sec, login, read_db, request, write_db
 
 from core.table import Table
 
@@ -105,22 +105,11 @@ class Schedule:
 
     # Gets Schedule object from the database
     @staticmethod
-    async def db_schedule(nextWeek: bool = False):
+    def db_schedule(nextWeek: bool = False):
         if not nextWeek:
-            schedule = read_db("schedule1")
-            if not schedule:
-                schedule = await Schedule.get_schedule(nextWeek)
-                write_db("schedule1", Schedule.json_dumps(schedule))
-            else:
-                schedule = Schedule.json_loads(schedule)
+            return Schedule.json_loads(read_db("schedule1"))
         else:
-            schedule = read_db("schedule2")
-            if not schedule:
-                schedule = await Schedule.get_schedule(nextWeek)
-                write_db("schedule2", Schedule.json_dumps(schedule))
-            else:
-                schedule = Schedule.json_loads(schedule)
-        return schedule
+            return Schedule.json_loads(read_db("schedule2"))
 
     # Loads a Schedule object from JSON
     @staticmethod
@@ -151,20 +140,26 @@ class Schedule:
 
     # Returns a Schedule object with the exctracted information
     @staticmethod
-    async def get_schedule(nextWeek: bool):
+    async def get_schedule(nextWeek: bool, client: discord.Client):
         # Gets response from the server
-        session = await login()
+        session = await login(client)
+        # If bakalari server is down
+        if not session:
+            return None
         if nextWeek:
             url = "https://bakalari.ceskolipska.cz/next/rozvrh.aspx?s=next"
         else:
             url = "https://bakalari.ceskolipska.cz/next/rozvrh.aspx"
-        response = await session.get(url)
+        response = await request(session, url, True, client)
+        # If bakalari server is down
+        if not response:
+            return None
         # Making an BS html parser object from the response
         html = BeautifulSoup(await response.text(), "html.parser")
         await session.close()
 
         # Web scraping the response
-        days = html.find_all("div", {"class": "day-row"})
+        days = html.find_all("div", {"class": "day-row"})[-5:]
         for day_i, day in enumerate(days):
             lessons = day.div.div.find_all("div", {"class": "day-item"})
 
@@ -460,11 +455,14 @@ class Schedule:
 
         # The main detection code
         # Gets the new Schedule objects
-        scheduleNew1 = await Schedule.get_schedule(False)
-        scheduleNew2 = await Schedule.get_schedule(True)
+        scheduleNew1 = await Schedule.get_schedule(False, client)
+        scheduleNew2 = await Schedule.get_schedule(True, client)
         # Gets the old Schedule objects
-        scheduleOld1 = await Schedule.db_schedule(False)
-        scheduleOld2 = await Schedule.db_schedule(True)
+        scheduleOld1 = Schedule.db_schedule(False)
+        scheduleOld2 = Schedule.db_schedule(True)
+        # If bakalari server is down
+        if scheduleNew1 is None or scheduleNew2 is None:
+            return None
 
         # Detects any changes and sends the message and saves the schedule if needed
         # Current schedule

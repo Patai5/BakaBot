@@ -175,11 +175,11 @@ class Commands:
                             dayEnd = get_day_int(dayStartEnd.group(6))
 
                         # Gets the week with the desired days and sends it
-                        schedule = (await Schedule.db_schedule(nextWeek)).show(dayStart, dayEnd)
+                        schedule = Schedule.db_schedule(nextWeek).show(dayStart, dayEnd)
                         await message.channel.send(f"```{schedule}```")
                     else:
                         # Gets the full week and sends it
-                        schedule = (await Schedule.db_schedule(nextWeek)).show(1, 5)
+                        schedule = Schedule.db_schedule(nextWeek).show(1, 5)
                         await message.channel.send(f"```{schedule}```")
                 else:
                     await message.channel.send(f'{cls.blanc}: "{dayStartEndArg}"')
@@ -207,6 +207,8 @@ class Commands:
                         await cls.channel_setting("channelGrades", message)
                     elif arg1.lower() == "channelreminder":
                         await cls.channel_setting("channelReminder", message)
+                    elif arg1.lower() == "channelstatus":
+                        await cls.channel_setting("channelStatus", message)
                     else:
                         await message.channel.send(f'{cls.blanc}: "{arg1}"')
             else:
@@ -245,17 +247,21 @@ class Commands:
                 else:
                     arg1 = message.arguments[0]
                     if arg1.lower() == "forceupdatescheduledatabase":
-                        schedule1 = await Schedule.get_schedule(False)
-                        schedule2 = await Schedule.get_schedule(True)
-                        write_db("schedule1", Schedule.json_dumps(schedule1))
-                        write_db("schedule2", Schedule.json_dumps(schedule2))
-                        response = "Updated schedule database"
-                        await message.channel.send(response)
+                        schedule1 = await Schedule.get_schedule(False, message.client)
+                        schedule2 = await Schedule.get_schedule(True, message.client)
+                        if schedule1 is None or schedule2 is None:
+                            await message.channel.send("Bakalari's server is currently down.")
+                        else:
+                            write_db("schedule1", Schedule.json_dumps(schedule1))
+                            write_db("schedule2", Schedule.json_dumps(schedule2))
+                            await message.channel.send("Updated schedule database")
                     elif arg1.lower() == "forceupdategradesdatabase":
-                        grades = await Grades.get_grades()
-                        write_db("grades", Grades.json_dumps(grades))
-                        response = "Updated grades database"
-                        await message.channel.send(response)
+                        grades = await Grades.get_grades(message.client)
+                        if grades is None:
+                            await message.channel.send("Bakalari's server is currently down.")
+                        else:
+                            write_db("grades", Grades.json_dumps(grades))
+                            await message.channel.send("Updated grades database")
                     else:
                         await message.channel.send(f'{cls.blanc}: "{arg1}"')
             else:

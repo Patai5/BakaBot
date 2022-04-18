@@ -27,15 +27,98 @@ def os_environ(key: str):
 
 
 # Logs into the server and returns the login session
-async def login():
+async def login(client: discord.Client):
     username = os_environ("username")
     password = os_environ("password")
 
     url = "https://bakalari.ceskolipska.cz/Login"
     data = {"username": username, "password": password}
     session = aiohttp.ClientSession()
-    await session.post(url, data=data)
-    return session
+    try:
+        await session.head(url, timeout=15)
+        await session.post(url, data=data)
+    except:
+        await status(False, client)
+        await session.close()
+        return None
+    else:
+        await status(True, client)
+        return session
+
+
+async def request(session: aiohttp.ClientSession, url: str, get: bool, client: discord.Client):
+    try:
+        if get:
+            return await session.get(url, timeout=15)
+        else:
+            return await session.post(url, timeout=15)
+    except:
+        await status(False, client)
+        await session.close()
+        return None
+
+
+async def status(online: bool, client: discord.Client):
+    """Send's the current status of the bakalari server to discord"""
+    if not read_db("lastStatus"):
+        x = datetime.datetime.utcnow()
+        write_db("lastStatus", [online, time_since_epoch_utc()])
+    lastStatus = read_db("lastStatus")
+    if lastStatus[0] != online:
+        if online == True:
+            embed = discord.Embed()
+
+            embed.title = "Server is back online!"
+
+            time = for_time(lastStatus[1])
+            embed.add_field(name="\u200b", value=f"Server was offline for: {time}")
+
+            embed.color = discord.Color.from_rgb(0, 255, 0)
+        else:
+            embed = discord.Embed()
+
+            embed.title = "Server has gone offline!"
+
+            time = for_time(lastStatus[1])
+            embed.add_field(name="\u200b", value=f"Server was online for: {time}")
+
+            embed.color = discord.Color.from_rgb(255, 0, 0)
+
+        channel = read_db("channelStatus")
+        write_db("lastStatus", [online, time_since_epoch_utc()])
+        channel = await client.get_channel(channel).send(embed=embed)
+
+
+def for_time(time: int):
+    forTime = time_since_epoch_utc() - time
+
+    intervals = (
+        ("years", 29030400),
+        ("months", 2419200),
+        ("weeks", 604800),
+        ("days", 86400),
+        ("hours", 3600),
+        ("minutes", 60),
+        ("seconds", 1),
+    )
+
+    def display_time(seconds):
+        result = []
+        for name, count in intervals:
+            value = seconds // count
+            if value:
+                seconds -= value * count
+                if value == 1:
+                    name = name.rstrip("s")
+                result.append("{} {}".format(value, name))
+        return ", ".join(result[:3])
+
+    return display_time(forTime)
+
+
+def time_since_epoch_utc():
+    utcTime = pytz.timezone("UTC").localize(datetime.datetime.utcnow())
+    return int(utcTime.timestamp())
 
 
 # Returns the current time in the Czech republic

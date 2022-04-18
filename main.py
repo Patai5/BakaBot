@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import os
 
 import discord
 
@@ -50,7 +51,11 @@ def main():
                     ).execute()
 
     token = os_environ("token")
-    client.run(token)
+    try:
+        client.run(token)
+    # Resets the replit server if needed
+    except:
+        os.system("kill 1")
 
 
 # Starts couroutines needed for some features
@@ -70,14 +75,30 @@ async def start_feature_couroutines(client: discord.Client):
         setup_channel_error_message("Reminder")
     elif not read_db("channelSchedule"):
         setup_channel_error_message("Schedule")
+    elif not read_db("channelStatus"):
+        setup_channel_error_message("Status")
     else:
         # First time startup
-        if not read_db("schedule1"):
-            write_db("schedule1", Schedule.json_dumps(await Schedule.get_schedule(False)))
-        if not read_db("schedule2"):
-            write_db("schedule2", Schedule.json_dumps(await Schedule.get_schedule(True)))
-        if not read_db("grades"):
-            write_db("grades", Grades.json_dumps(await Grades.get_grades()))
+        if not read_db("schedule1") or not read_db("schedule2"):
+            schedule1 = await Schedule.get_schedule(False, client)
+            schedule2 = await Schedule.get_schedule(True, client)
+            if schedule1 is None or schedule2 is None:
+                print(
+                    "Bakalari's server is currently down. Wait until the server is back online and then restart the bot"
+                )
+                return None
+            else:
+                write_db("schedule1", Schedule.json_dumps(schedule1))
+                write_db("schedule2", Schedule.json_dumps(schedule2))
+        elif not read_db("grades"):
+            grades = await Grades.get_grades(client)
+            if grades is None:
+                print(
+                    "Bakalari's server is currently down. Wait until the server is back online and then restart the bot"
+                )
+                return None
+            else:
+                write_db("grades", Grades.json_dumps(grades))
         if not read_db("gradesMessages"):
             write_db("gradesMessages", [])
         if not read_db("predictorMessages"):

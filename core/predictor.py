@@ -113,7 +113,7 @@ class Predictor:
                     )
 
                     # Average
-                    average = (await Grades.db_grades()).by_subject(grade.subject).future_average(grade)
+                    average = Grades.db_grades().by_subject(grade.subject).future_average(grade)
                     editedEmbed.add_field(name=f"Nový průměr: {average}", value="\u200b", inline=False)
 
                     # Sends the edited message

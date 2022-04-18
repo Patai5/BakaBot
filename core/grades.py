@@ -6,7 +6,7 @@ import re
 
 import discord
 from bs4 import BeautifulSoup
-from utils.utils import MessageTimers, get_sec, login, read_db, write_db
+from utils.utils import MessageTimers, get_sec, login, read_db, request, write_db
 
 
 class Grades:
@@ -145,12 +145,9 @@ class Grades:
         return output
 
     @staticmethod
-    async def db_grades():
+    def db_grades():
         """Gets Grades object from the database"""
         grades = read_db("grades")
-        if not grades:
-            grades = await Grades.get_grades()
-            write_db("grades", Grades.json_dumps(grades))
         return Grades.json_loads(grades)
 
     # Constants for all subjects with their short and long form
@@ -178,12 +175,18 @@ class Grades:
         SUBJECTS_LOWER.update({key.lower(): key})
 
     @staticmethod
-    async def get_grades():
+    async def get_grades(client: discord.Client):
         """Returns a Grades object with the exctracted information from the server"""
         # Gets response from the server
-        session = await login()
+        session = await login(client)
+        # If bakalari server is down
+        if not session:
+            return None
         url = "https://bakalari.ceskolipska.cz/next/prubzna.aspx?s=chrono"
-        response = await session.get(url)
+        response = await request(session, url, True, client)
+        # If bakalari server is down
+        if not response:
+            return None
         # Making an BS html parser object from the response
         html = BeautifulSoup(await response.text(), "html.parser")
         await session.close()
@@ -307,9 +310,12 @@ class Grades:
 
         # The main detection code
         # Gets the new Grade object
-        gradesNew = await Grades.get_grades()
+        gradesNew = await Grades.get_grades(client)
         # Gets the old Grades object
-        gradesOld = await Grades.db_grades()
+        gradesOld = Grades.db_grades()
+        # If bakalari server is down
+        if gradesNew is None:
+            return None
 
         # Detects any changes and sends the message and saves the schedule if needed
         changed = find_changes(gradesOld, gradesNew)
