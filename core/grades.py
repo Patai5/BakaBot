@@ -205,7 +205,7 @@ class Grades:
             subject = row["nazev"]
             weight = row["vaha"]
             note = row["poznamkakzobrazeni"]
-            date = row["udel_datum"]
+            date = row["datum"]
             grade = row["MarkText"]
 
             # If a there is a caption parse it else None
@@ -223,7 +223,7 @@ class Grades:
             else:
                 note = None
             # Parses the date into list of [Year, Month, Day]
-            date = list(reversed([int(date_x) for date_x in date.split(".")]))
+            date = [int(date) for date in re.search(r"(\d{4})-0?(\d{1,2})-0?(\d{1,2})", date).groups((1, 2, 3))]
             # Parses the grade an int or a float because of this "-" symbol
             if "-" in grade:
                 grade = int(grade.replace("-", "")) + 0.5
