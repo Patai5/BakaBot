@@ -1,6 +1,7 @@
 import asyncio
 import datetime
 import os
+import random
 
 import aiohttp
 import discord
@@ -141,13 +142,31 @@ def from_sec_to_time(sec: int):
     return output
 
 
+async def fetch_message(message_channel: int, message_id: int, client: discord.Client):
+    try:
+        return await client.get_channel(message_channel).fetch_message(message_id)
+    except:
+        print(
+            f"""Couldn't get the desired message! Was probably removed!:\n
+                message_id: {message_id}, message_channel: {message_channel}"""
+        )
+
+
+def rand_rgb():
+    return random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
+
+
 class MessageTimers:
     timers = []
     timers_reactions = []
 
     @staticmethod
     async def delete_message(
-        message: discord.Message or list[int, int], database: str, client: discord.Client, delay: int = 0
+        message: discord.Message or list[int, int],
+        database: str,
+        client: discord.Client,
+        delay: int = 0,
+        function=None,
     ):
         """Deletes the specified message from the chat after some delay\n
         message = discord.Message or list[message_id, message_channel]"""
@@ -186,6 +205,9 @@ class MessageTimers:
                                 message_id: {message_id}, message_channel: {message_channel}"""
                         )
                     finally:
+                        if function:
+                            function()
+
                         activeTimersRemove = [
                             timer
                             for timer in MessageTimers.timers
@@ -204,6 +226,27 @@ class MessageTimers:
                             messages_database.remove(messageRemove)
                         write_db(database, messages_database)
                         return
+
+    @staticmethod
+    def stop_message_removal(message: discord.Message or list[int, int], database: str, client: discord.Client):
+        """Stops the specified message from being removed from the chat\n
+        message = discord.Message or list[message_id, message_channel]"""
+        if type(message) == discord.Message:
+            message_id = message.id
+            message_channel = message.channel.id
+        else:
+            message_id = message[0]
+            message_channel = message[1]
+
+        messeges_database = read_db(database)
+        for timer in messeges_database[:]:
+            if message_id == timer[0]:
+                messeges_database.remove(timer)
+        write_db(database, messeges_database)
+
+        for timer in MessageTimers.timers[:]:
+            if message_id == timer[0]:
+                MessageTimers.timers.remove(timer)
 
     @staticmethod
     async def delete_message_reaction(
@@ -335,7 +378,7 @@ class MessageTimers:
         return foundMessages
 
     @staticmethod
-    async def message_cache(client, message):
+    async def message_cache(client: discord.Client, message: discord.Message):
         """Adds the message into the clients custom cached messages"""
         if not type(message) == discord.Message:
             message_id = message[0]
@@ -352,3 +395,39 @@ class MessageTimers:
                     client.cached_messages_react.append(message)
         if not message in client.cached_messages_react:
             client.cached_messages_react.append(message)
+
+    @staticmethod
+    def response_channel_cache(channel: int, client: discord.Client, responseChannelType: str, remove: bool = False):
+        """Adds/Removes the response channel from the client cache"""
+        if remove:
+            if channel in client.response_channel_cache:
+                del client.response_channel_cache[channel]
+        else:
+            if not channel in client.response_channel_cache:
+                client.response_channel_cache[channel] = responseChannelType
+
+    @staticmethod
+    def response_channel(
+        channel: int, user: int, message: int, responseFor: str, client: discord.Client, remove: bool = False
+    ):
+        """Adds/Removes the response channel from the database and client cache"""
+        database = f"{responseFor}ResponseChannel"
+        responseChannelUsers = read_db(database)
+        if remove:
+            if user in responseChannelUsers:
+                responseChannelUsers.pop(user)
+                write_db(database, responseChannelUsers)
+                if not responseChannelUsers:
+                    responseChannels = read_db("responseChannels")
+                    responseChannels.pop(channel)
+                    write_db("responseChannels", responseChannels)
+                    MessageTimers.response_channel_cache(channel, client, responseFor, remove)
+        else:
+            if user not in responseChannelUsers:
+                responseChannelUsers[user] = message
+                write_db(database, responseChannelUsers)
+                responseChannels = read_db("responseChannels")
+                if channel not in responseChannels:
+                    responseChannels[channel] = responseFor
+                    write_db("responseChannels", responseChannels)
+                    MessageTimers.response_channel_cache(channel, client, responseFor, remove)

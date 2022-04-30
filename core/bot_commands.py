@@ -1,10 +1,12 @@
 import asyncio
+import copy
 import datetime
 import re
 
 import discord
 from utils.utils import MessageTimers, read_db, write_db
 
+from core.betting import Betting
 from core.grades import Grades
 from core.predictor import Predictor
 from core.schedule import Schedule
@@ -14,24 +16,29 @@ class Commands:
     def __init__(self, message: discord.Message, client: discord.Client):
         self.message = message
         self.client = client
+        self.parse_message(message)
 
-        self.isBaka = Commands.is_bakabot(message)
-        if self.isBaka:
-            self.parse_message(message)
+    def is_response_message(self, message: discord.Message):
+        if message.channel.id in self.client.response_channel_cache:
+            return True
 
     def parse_message(self, message: discord.Message):
         self.content = message.content
         self.channel = message.channel
         self.author = message.author
 
-        search = re.search("^(bakabot|b)($|\s)", self.content, flags=2)
-        self.baka = search
+        self.isBaka = self.is_bakabot(self.message)
+        self.isResponse = self.is_response_message(message)
 
-        withoutBaka = self.content[search.span()[1] :]
-        othersWithoutBaka = re.findall("[a-zěščřžýáíéóúůďťňĎŇŤŠČŘŽÝÁÍÉÚŮĚÓ0-9\-]+", withoutBaka, flags=2)
-        self.command = othersWithoutBaka[0]
+        if self.isBaka:
+            search = re.search("^(bakabot|b)($|\s)", self.content, flags=2)
+            self.baka = search
 
-        self.arguments = othersWithoutBaka[1:]
+            withoutBaka = self.content[search.span()[1] :]
+            othersWithoutBaka = re.findall("[a-zěščřžýáíéóúůďťňĎŇŤŠČŘŽÝÁÍÉÚŮĚÓ0-9\-]+", withoutBaka, flags=2)
+            self.command = othersWithoutBaka[0]
+
+            self.arguments = othersWithoutBaka[1:]
 
     # Decides if the function was meant for BakaBot
     @staticmethod
@@ -262,6 +269,10 @@ class Commands:
                         else:
                             write_db("grades", Grades.json_dumps(grades))
                             await message.channel.send("Updated grades database")
+                    elif arg1.lower() == "forcenewweek":
+                        await Schedule.new_week_message(
+                            Schedule.db_schedule(), Schedule.db_schedule(True), message.client
+                        )
                     else:
                         await message.channel.send(f'{cls.blanc}: "{arg1}"')
             else:
@@ -306,6 +317,8 @@ class Commands:
                 await command.execute(self)
             else:
                 await self.Help.execute(self)
+        elif self.isResponse:
+            await Responses(self.message, self.client).execute()
 
 
 class Reactions:
@@ -325,28 +338,31 @@ class Reactions:
             messages = await MessageTimers.query_messages(cls.queryMessagesDatabase, client)
             if messages:
                 for message in messages:
-                    message_id = message.id
-                    message_channel = message.channel.id
-
                     if message.edited_at:
                         editedFromNowSec = (datetime.datetime.utcnow() - message.edited_at).seconds
                         if editedFromNowSec > 300:
-                            await MessageTimers.delete_message(
-                                [message_id, message_channel], "predictorMessages", client
-                            )
+                            await MessageTimers.delete_message(message, cls.queryMessagesDatabase, client)
                         else:
-                            await MessageTimers.delete_message(
-                                [message_id, message_channel], "predictorMessages", client, 300 - editedFromNowSec
+                            asyncio.ensure_future(
+                                MessageTimers.delete_message(
+                                    message,
+                                    cls.queryMessagesDatabase,
+                                    client,
+                                    300 - editedFromNowSec,
+                                )
                             )
                     else:
                         createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
                         if createdFromNowSec > 300:
-                            await MessageTimers.delete_message(
-                                [message_id, message_channel], "predictorMessages", client
-                            )
+                            await MessageTimers.delete_message(message, cls.queryMessagesDatabase, client)
                         else:
-                            await MessageTimers.delete_message(
-                                [message_id, message_channel], "predictorMessages", client, 300 - createdFromNowSec
+                            asyncio.ensure_future(
+                                MessageTimers.delete_message(
+                                    message,
+                                    cls.queryMessagesDatabase,
+                                    client,
+                                    300 - createdFromNowSec,
+                                )
                             )
 
         # Executes the method for of this function
@@ -367,23 +383,20 @@ class Reactions:
             messages = await MessageTimers.query_messages_reactions(cls.queryMessagesDatabase, client)
             if messages:
                 for message in messages:
-                    message_id = message.id
-                    message_channel = message.channel.id
-
-                    client.cached_messages_react.append(message)
-
                     createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
                     if createdFromNowSec > 5400:
                         await MessageTimers.delete_message_reaction(
-                            [message_id, message_channel], "gradesMessages", Grades.PREDICTOR_EMOJI, client
+                            message, cls.queryMessagesDatabase, Grades.PREDICTOR_EMOJI, client
                         )
                     else:
-                        await MessageTimers.delete_message_reaction(
-                            [message_id, message_channel],
-                            "gradesMessages",
-                            Grades.PREDICTOR_EMOJI,
-                            client,
-                            5400 - createdFromNowSec,
+                        asyncio.ensure_future(
+                            MessageTimers.delete_message_reaction(
+                                message,
+                                cls.queryMessagesDatabase,
+                                Grades.PREDICTOR_EMOJI,
+                                client,
+                                5400 - createdFromNowSec,
+                            )
                         )
 
         # Executes the method for of this function
@@ -392,7 +405,38 @@ class Reactions:
             if reaction.emoji.name == Grades.PREDICTOR_EMOJI:
                 await Grades.create_predection(reaction.message, reaction.client)
 
-    REACTIONS = {Predictor, Grades}
+    class Betting:
+        queryMessagesDatabase = "bettingMessages"
+
+        @classmethod
+        async def query(cls, client: discord.Client):
+            # Deletes some removed messages from the database while the bot was off
+            messages = await MessageTimers.query_messages_reactions(cls.queryMessagesDatabase, client)
+            if messages:
+                for message in messages:
+                    createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+                    if createdFromNowSec > 43200:
+                        await MessageTimers.delete_message_reaction(
+                            message, cls.queryMessagesDatabase, Betting.BETT_EMOJI, client
+                        )
+                    else:
+                        asyncio.ensure_future(
+                            MessageTimers.delete_message_reaction(
+                                message,
+                                cls.queryMessagesDatabase,
+                                Betting.BETT_EMOJI,
+                                client,
+                                43200 - createdFromNowSec,
+                            )
+                        )
+
+        # Executes the method for of this function
+        @classmethod
+        async def execute(cls, reaction):
+            if reaction.emoji.name == Betting.BETT_EMOJI:
+                await Betting.make_bet(reaction, reaction.client)
+
+    REACTIONS = {Predictor, Grades, Betting}
 
     # Executes the message's command
     async def execute(self):
@@ -410,3 +454,71 @@ class Reactions:
         for reaction in Reactions.REACTIONS:
             if reaction.queryMessagesDatabase:
                 asyncio.ensure_future(reaction.query(client))
+
+
+class Responses(Commands):
+    class Bett:
+        queryMessagesDatabase = "bettMessages"
+
+        @classmethod
+        async def query(cls, client: discord.Client):
+            # Deletes some removed messages from the database while the bot was off
+            messages = await MessageTimers.query_messages(cls.queryMessagesDatabase, client)
+            if messages:
+                for message in messages:
+                    message_id = message.id
+                    message_channel = message.channel.id
+
+                    createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+                    if createdFromNowSec > 300:
+                        await MessageTimers.delete_message(
+                            [message_id, message_channel],
+                            cls.queryMessagesDatabase,
+                            client,
+                            0,
+                            lambda: Betting.remove_unfinished_bet([message_id, message_channel], client),
+                        )
+                    else:
+                        asyncio.ensure_future(
+                            MessageTimers.delete_message(
+                                [message_id, message_channel],
+                                cls.queryMessagesDatabase,
+                                client,
+                                300 - createdFromNowSec,
+                                lambda: Betting.remove_unfinished_bet([message_id, message_channel], client),
+                            )
+                        )
+
+    RESPONSE_FOR = {"betting": Betting}
+    RESPONSES = {Bett}
+
+    # Executes the message's command
+    async def execute(self):
+        responseFor = self.RESPONSE_FOR.get(self.client.response_channel_cache.get(self.channel.id))
+        await responseFor.response(self.message, self.client)
+
+    @staticmethod
+    async def query(client: discord.Client):
+        """Queries the response channels to the client cache and removes the messages to be removed"""
+        responseChannels = read_db("responseChannels")
+        for responseChannel in copy.copy(responseChannels):
+            users = read_db(f"{responseChannels[responseChannel]}ResponseChannel")
+            for user in copy.copy(users):
+                try:
+                    message = await client.get_channel(responseChannel).fetch_message(users[user])
+                except:
+                    print(
+                        f"""Couldn't get the desired message! Was probably removed!:\n
+                        message_id: {users[user]}, message_channel: {responseChannel}"""
+                    )
+                    del users[user]
+            write_db(f"{responseChannels[responseChannel]}ResponseChannel", users)
+            if users:
+                client.response_channel_cache[responseChannel] = responseChannels[responseChannel]
+            else:
+                del responseChannels[responseChannel]
+        write_db("responseChannels", responseChannels)
+
+        for response in Responses.RESPONSES:
+            if response.queryMessagesDatabase:
+                await response.query(client)

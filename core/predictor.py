@@ -1,7 +1,5 @@
-import asyncio
-
 import discord
-from utils.utils import MessageTimers, get_sec, read_db, write_db
+from utils.utils import MessageTimers
 
 from core.grades import Grades
 
@@ -26,7 +24,7 @@ class Predictor:
             inline=False,
         )
         # Grade {select}
-        embed.add_field(name="Známka: *\{select\}*", value="test", inline=False)
+        embed.add_field(name="Známka: *\{select\}*", value="\u200b", inline=False)
 
         # Color
         embed.color = discord.Color.from_rgb(102, 0, 255)

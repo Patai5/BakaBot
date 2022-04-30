@@ -160,6 +160,8 @@ class Schedule:
 
         # Web scraping the response
         days = html.find_all("div", {"class": "day-row"})[-5:]
+        if not days:
+            return None
         for day_i, day in enumerate(days):
             lessons = day.div.div.find_all("div", {"class": "day-item"})
 
@@ -195,7 +197,7 @@ class Schedule:
                     # Prevents from returning an empty lesson
                     # Continues only if it finds the lesson's subject
                     subject_div = lesson.find("div", {"class": "middle"})
-                    if subject_div:
+                    if subject_div and subject_div.text:
                         subject = re.search("(?<=>).*(?=</)", str(subject_div)).group()
                         mainData_div = lesson.find_all("div", {"class": "day-item-hover"})
 
@@ -311,6 +313,57 @@ class Schedule:
         else:
             return "V rozvrhu nic není"
 
+    @staticmethod
+    async def new_week_message(currentWeek, nextWeek, client: discord.Client):
+        """Sends the messages for the newly detected week +Betting"""
+        from core.betting import Betting
+
+        randomReaction = [
+            "Hurá",
+            "Kurwa",
+            "Do píči",
+            "Cука блять",
+            "Tak tohleto je těžce v prdeli",
+            "Hrnčíř je zmrd",
+            "Škodová je odporná zmrdná, vyšoustaná, vyšlukovaná, vypařízkovaná špína",
+            "Jakože nemám nic proti lidem s dvojciferným IQ ale Škodová má jednociferný",
+        ]
+
+        # Generates the title
+        titleNext = f"\\**{random.choice(randomReaction)}*\\*\n**Detekován nový týden**:"
+        titleCurrent = "**Aktualní týden**:"
+        # Generates the schedule tables
+        scheduleNext = f"```{nextWeek.show(1, 5, True, True)}```"
+        scheduleCurrent = f"```{currentWeek.show(1, 5, True, True)}```"
+
+        # Sends the messages
+        channel = client.get_channel(read_db("channelSchedule"))
+        await channel.send(titleNext)
+        await channel.send(scheduleNext)
+        await channel.send(titleCurrent)
+        await channel.send(scheduleCurrent)
+        bettingSchedule = Schedule.json_loads(read_db("bettingSchedule"))
+        Betting.update_week(currentWeek)
+        await Betting.start_betting(client)
+        removed, added = Betting.get_removed_added(bettingSchedule, currentWeek)
+        # Czech bullshit
+        if removed == 1:
+            czech = "a"
+            hour = "a"
+        elif 1 < removed <= 4:
+            czech = "y"
+            hour = "y"
+        else:
+            czech = "o"
+            hour = ""
+        if added == 1:
+            czech2 = "a"
+        elif 1 < added <= 4:
+            czech2 = "y"
+        else:
+            czech2 = "o"
+        await channel.send(f"Tento týden odpadl{czech} **{removed}** hodin{hour}, přidaných byl{czech2} **{added}**")
+
     # Detects changes in schedule and sends them to discord
     @staticmethod
     async def detect_changes(client: discord.Client):
@@ -341,28 +394,6 @@ class Schedule:
                 return changedlist
             else:
                 return None
-
-        async def new_week_message(currentWeek: Schedule, client: discord.Client):
-            randomReaction = [
-                "Hurá",
-                "Kurwa",
-                "Do píči",
-                "Cука блять",
-                "Tak tohleto je v těžce prdeli",
-                "Hrnčíř je zmrd",
-                "Škodová je odporná zmrdná, vyšoustaná, vyšlukovaná, vypařízkovaná špína",
-                "Jakože nemám nic proti lidem s dvojciferným IQ ale Škodová má jednociferný",
-            ]
-
-            # Generates the random title
-            title = f"*\\*{random.choice(randomReaction)}\\**\n**Detekován nový týden**:"
-            # Generates the schedule table
-            schedule = f"```{currentWeek.show(1, 5, True, True)}```"
-
-            # Sends the messages
-            channel = read_db("channelSchedule")
-            await client.get_channel(channel).send(title)
-            await client.get_channel(channel).send(schedule)
 
         # Discord message with the information about the changes
         async def changed_message(changed: list, nextWeek: bool, client: discord.Client, schedule: Schedule):
@@ -470,7 +501,7 @@ class Schedule:
         if changed:
             # When the weeks are changing
             if is_week_change():
-                await new_week_message(scheduleNew1, client)
+                await Schedule.new_week_message(scheduleNew1, scheduleNew2, client)
             else:
                 await changed_message(changed, False, client, scheduleNew1)
             write_db("schedule1", Schedule.json_dumps(scheduleNew1))

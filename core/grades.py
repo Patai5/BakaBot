@@ -192,8 +192,10 @@ class Grades:
         await session.close()
 
         # Web scraping the response
-        data = html.find("div", {"id": "cphmain_DivByTime"}).script.text
-        data = re.findall("\[\{.*?(?=;)", data)[0]
+        data = html.find("div", {"id": "cphmain_DivByTime"})
+        if not data:
+            return
+        data = re.findall("\[\{.*?(?=;)", data.script.text)[0]
         # Creates an empty Grades object
         grades = Grades([])
         # Parses the data into a dicture
