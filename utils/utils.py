@@ -36,8 +36,13 @@ async def login(client: discord.Client):
     data = {"username": username, "password": password}
     session = aiohttp.ClientSession()
     try:
-        await session.head(url, timeout=15)
-        await session.post(url, data=data)
+        await session.head(url, timeout=25)
+        response = await session.post(url, data=data)
+
+        if response.url.name == "errinfo.aspx":
+            await status(False, client)
+            await session.close()
+            return None
     except:
         await status(False, client)
         await session.close()
@@ -50,9 +55,16 @@ async def login(client: discord.Client):
 async def request(session: aiohttp.ClientSession, url: str, get: bool, client: discord.Client):
     try:
         if get:
-            return await session.get(url, timeout=15)
+            response = await session.get(url, timeout=25)
         else:
-            return await session.post(url, timeout=15)
+            response = await session.post(url, timeout=25)
+
+        if response.url.name == "errinfo.aspx":
+            await status(False, client)
+            await session.close()
+            return None
+        else:
+            return response
     except:
         await status(False, client)
         await session.close()
@@ -62,7 +74,6 @@ async def request(session: aiohttp.ClientSession, url: str, get: bool, client: d
 async def status(online: bool, client: discord.Client):
     """Send's the current status of the bakalari server to discord"""
     if not read_db("lastStatus"):
-        x = datetime.datetime.utcnow()
         write_db("lastStatus", [online, time_since_epoch_utc()])
     lastStatus = read_db("lastStatus")
     if lastStatus[0] != online:
