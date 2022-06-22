@@ -1,25 +1,27 @@
 import asyncio
 import datetime
 import os
+import pickle
 import random
 
 import aiohttp
 import discord
 import pytz
-from replit import db
 
 
 # Reads a from the database by key. Returns none if the key doesn't exist
 def read_db(key: str):
-    if len(db.prefix(key)) == 0:
+    try:
+        with open(f"db/{key}.dat", "rb") as f:
+            return pickle.load(f)
+    except:
         return None
-    else:
-        return db[key]
 
 
 # Writes to the database
 def write_db(key: str, value):
-    db[key] = value
+    with open(f"db/{key}.dat", "wb") as f:
+        pickle.dump(value, f, protocol=2)
 
 
 # Gets os.environ values by key
