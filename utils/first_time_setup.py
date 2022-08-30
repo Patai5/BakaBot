@@ -34,6 +34,8 @@ async def start(client: discord.Client):
         if grades is None:
             print("Bakalari's server is currently down. Wait until the server is back online and then restart the bot")
             return None
+        elif grades == False:
+            write_db("grades", Grades.json_dumps(Grades([])))
         else:
             write_db("grades", Grades.json_dumps(grades))
     if not read_db("gradesMessages"):

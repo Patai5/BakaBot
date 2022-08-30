@@ -35,13 +35,13 @@ async def login(client: discord.Client):
     password = os_environ("password")
 
     url = "https://bakalari.ceskolipska.cz/Login"
-    data = {"username": username, "password": password}
+    data = {"username": username, "password": password, "returnUrl": "", "login": ""}
     session = aiohttp.ClientSession()
     try:
         await session.head(url, timeout=25)
         response = await session.post(url, data=data)
 
-        if response.url.name == "errinfo.aspx":
+        if response.url.name in ("errinfo.aspx", "Login"):
             await status(False, client)
             await session.close()
             return None

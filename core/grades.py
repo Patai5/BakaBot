@@ -117,7 +117,7 @@ class Grades:
 
     @staticmethod
     def json_loads(jsonstring: str):
-        """Loads a Schedule object from JSON"""
+        """Loads a Grades object from JSON"""
         dictGrades = json.loads(jsonstring)
         grades = Grades([])
         for grade in dictGrades["grades"]:
@@ -136,11 +136,13 @@ class Grades:
 
     @staticmethod
     def json_dumps(grades):
-        """Makes a JSON from Schedule object"""
+        """Makes a JSON from Grades object"""
         output = '{"grades": ['
         for grades in grades.grades:
-            output = output + json.dumps(grades.__dict__) + ", "
-        output = output[:-2] + "]}"
+            output += json.dumps(grades.__dict__) + ", "
+        if grades.grades:
+            output = output[:-2]
+        output += "]}"
 
         return output
 
@@ -194,7 +196,7 @@ class Grades:
         # Web scraping the response
         data = html.find("div", {"id": "cphmain_DivByTime"})
         if not data:
-            return
+            return False
         data = re.findall("\[\{.*?(?=;)", data.script.text)[0]
         # Creates an empty Grades object
         grades = Grades([])
@@ -284,10 +286,11 @@ class Grades:
         def find_changes(gradesOld: Grades, gradesNew: Grades):
             newGrades = []
             oldIDs = [grade.id for grade in gradesOld.grades]
-            for grade in gradesNew.grades:
-                # New unrecognized ID
-                if grade.id not in oldIDs:
-                    newGrades.append(grade)
+            if gradesNew != False:
+                for grade in gradesNew.grades:
+                    # New unrecognized ID
+                    if grade.id not in oldIDs:
+                        newGrades.append(grade)
             return newGrades
 
         # Discord message with the information about the changes

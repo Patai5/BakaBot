@@ -173,7 +173,7 @@ class Schedule:
                     lessons.append(Schedule.Lesson(i, " ", " ", None, None))
             else:
                 # Removes useless lesson from bakalari
-                lessons.pop(6)
+                lessons.pop(7)
                 for lesson_i, lesson in enumerate(lessons):
                     # Gets main data of a lesson
                     data = lesson.find_all("div", {"class": "day-item-hover"})
@@ -237,6 +237,7 @@ class Schedule:
         showDay: bool = None,
         showClassroom: bool = None,
         exclusives: list = None,
+        image: bool = False,
     ):
         # Uses the setting if inputed else tries looking into the database
         if showDay == None:

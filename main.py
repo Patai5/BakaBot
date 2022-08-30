@@ -23,7 +23,8 @@ def main():
     # Keeps the replit on
     keep_alive()
 
-    client = discord.Client(guild_ready_timeout=0)
+    client = discord.Client(guild_ready_timeout=0, intents=discord.Intents.all())
+
     client.cached_messages_react = []
     client.response_channel_cache = {}
 
