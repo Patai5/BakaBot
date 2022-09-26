@@ -1,0 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=Maven+Pro:wght@700&display=swap");
+
+html,
+body {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+table {
+  border-spacing: 10px;
+  padding: 20px;
+}
+table td {
+  border-radius: 10px;
+  background-color: #202e38;
+  padding: 0;
+}
+
+table td p {
+  font-family: "Maven Pro", sans-serif;
+  text-align: center;
+  font-size: 100px;
+  min-height: 1em;
+  margin: 10px 20px;
+  background-attachment: fixed;
+  -webkit-text-fill-color: transparent;
+  -webkit-background-clip: text;
+}
+
+.exclusive p {
+  filter: invert(100%);
+}
+
+.exclusive {
+  box-shadow: 0px 0px 0px 12px rgb(131, 0, 0) inset;
+}
+
+.empty {
+  background-color: #ffffff3d;
+}

@@ -7,21 +7,32 @@ import re
 
 import discord
 from bs4 import BeautifulSoup
-from utils.utils import get_sec, login, read_db, request, write_db
+from utils.utils import get_sec, login, rand_rgb, read_db, request, write_db
 
 from core.table import Table
 
 
 class Schedule:
+    DAYS = {"po": 0, "út": 1, "st": 2, "čt": 3, "pá": 4}
+    DAYS_REVERSED = {}
+    for key, value in zip(DAYS.keys(), DAYS.values()):
+        DAYS_REVERSED.update({value: key})
+
     def __init__(self, days: list, nextWeek: bool):
         self.days = days
         self.nextWeek = nextWeek
 
     class Day:
-        def __init__(self, lessons: list, day: str, empty: bool):
+        def __init__(self, lessons: list, day: str, date: str, empty: bool):
             self.lessons = lessons
             self.day = day
+            self.date = date
             self.empty = empty
+
+            # Prevents the day from being empty
+            if empty and not lessons:
+                for i in range(12):
+                    lessons.append(Schedule.Lesson(i, "", "", None, None))
 
         # Gets the first non empty lesson of the day. If none then returns None
         def first_non_empty_lesson(self):
@@ -45,21 +56,20 @@ class Schedule:
             self.changeInfo = changeInfo
             self.topic = topic
 
-            if self.subject == " ":
+            if self.subject == "":
                 self.empty = True
             else:
                 self.empty = False
 
-        # Generates an asci table of the lesson
-        def show(self, classroom: bool):
-            column = []
-            if classroom:
-                column.append(Table.ColumnItem(self.subject, False))
-                column.append(Table.ColumnItem(self.classroom, True))
-            else:
-                column.append(Table.ColumnItem(self.subject, True))
-            table = Table([column])
-            return table.show()
+        def render(self, showClassroom: bool = None, renderStyle: Table.Style = None, file_name: str = "temp.png"):
+            """Returns a lesson redered as an image"""
+            if showClassroom == None:
+                showClassroom = read_db("showClassroom")
+
+            cell = Table.Cell([Table.Cell.Item(self.subject)])
+            if showClassroom:
+                cell.items.append(Table.Cell.Item(self.classroom))
+            return Table([[cell]]).render(file_name=file_name, style=renderStyle)
 
         # Loads a Lesson object from JSON
         @staticmethod
@@ -120,7 +130,7 @@ class Schedule:
             lessons = []
             for lesson in day["lessons"]:
                 lessons.append(Schedule.Lesson.json_loads(json.dumps(lesson)))
-            days.append(Schedule.Day(lessons, day["day"], day["empty"]))
+            days.append(Schedule.Day(lessons, day["day"], day["date"], day["empty"]))
         schedule = Schedule(days, dictSchedule["nextWeek"])
         return schedule
 
@@ -133,10 +143,24 @@ class Schedule:
             for lesson in day.lessons:
                 output = output + Schedule.Lesson.json_dumps(lesson) + ", "
             output = output[:-2] + "]"
-            output = output + ', "day": "' + day.day + '", "empty": ' + str(day.empty).lower() + "}, "
+            output = f'{output}, "day": "{day.day}", "date": "{day.date}", "empty": {str(day.empty).lower()}}}, '
         output = output[:-2] + "]"
         output = output + ', "nextWeek": ' + str(schedule.nextWeek).lower() + "}"
         return output
+
+    def insert_missing_days(self):
+        """Inserts missing days into the schedule to make it a full week"""
+        if self.days:
+            start = Schedule.DAYS[self.days[0].day]
+            end = Schedule.DAYS[self.days[-1].day]
+        else:
+            start = 5
+            end = 4
+
+        for day in range(start):
+            self.days.insert(day, Schedule.Day([], Schedule.DAYS_REVERSED[day], "", True))
+        for day in range(end, 4):
+            self.days.insert(day, Schedule.Day([], Schedule.DAYS_REVERSED[day], "", True))
 
     # Returns a Schedule object with the exctracted information
     @staticmethod
@@ -165,12 +189,9 @@ class Schedule:
         for day_i, day in enumerate(days):
             lessons = day.div.div.find_all("div", {"class": "day-item"})
 
-            # Prevents day from being empty
             empty = False
             if not lessons:
                 empty = True
-                for i in range(12):
-                    lessons.append(Schedule.Lesson(i, " ", " ", None, None))
             else:
                 # Removes useless lesson from bakalari
                 lessons.pop(7)
@@ -207,47 +228,48 @@ class Schedule:
                             classroom = classroom.group()
                         # Prevents empty classroom
                         if not classroom:
-                            classroom = " "
+                            classroom = ""
 
                         # Finds the topic
                         topic = re.search('(?<="theme":")[^"]+(?=")', str(mainData_div))
                         if topic:
                             topic = topic.group()
                     else:
-                        subject = " "
-                        classroom = " "
+                        subject = ""
+                        classroom = ""
                         topic = None
                     # Creates Lesson object and saves it into lessons list
                     lessons[lesson_i] = Schedule.Lesson(lesson_i, subject, classroom, changeInfo, topic)
             # Gets the short version of the day's name
             dayShort_div = day.div.div.div.div
             dayShort = re.search("(?<=<div>)\s*?(..)(?=<br\/>)", str(dayShort_div)).group(1)
+            # Gets the date
+            date = dayShort_div.span.text
 
             # Creates Day object and saves it into the days list
-            days[day_i] = Schedule.Day(lessons, dayShort, empty)
-        # Returns full Schedule object
+            days[day_i] = Schedule.Day(lessons, dayShort, date, empty)
         schedule = Schedule(days, nextWeek)
+        schedule.insert_missing_days()
+        # Returns full Schedule object
         return schedule
 
-    # Generates an asci table of the Schedule
-    def show(
+    def render(
         self,
         dayStart: int,
         dayEnd: int,
         showDay: bool = None,
         showClassroom: bool = None,
         exclusives: list = None,
-        image: bool = False,
+        renderStyle: Table.Style = None,
+        file_name: str = "table.png",
     ):
+        """Renders the schedule into an image"""
         # Uses the setting if inputed else tries looking into the database
         if showDay == None:
             showDay = read_db("showDay")
-            if showDay == None:
-                showDay = False
         if showClassroom == None:
             showClassroom = read_db("showClassroom")
-            if showClassroom == None:
-                showClassroom = False
+
         # Full exclusives of False if None as parameter
         if exclusives == None:
             exclusives = [[False for i in range(13)] for i in range(5)]
@@ -282,37 +304,28 @@ class Schedule:
             columns = []
             # Adds short names of the days to the left of the table
             if showDay:
-                column = [Table.ColumnItem(" ", True)]
+                column = [Table.Cell([Table.Cell.Item("")])]
                 for day in schedule.days:
-                    if showClassroom:
-                        column.append(Table.ColumnItem(day.day, False))
-                        column.append(Table.ColumnItem(" ", True))
-                    else:
-                        column.append(Table.ColumnItem(day.day, True))
+                    column.append(Table.Cell([Table.Cell.Item(day.day)]))
                 columns.append(column)
             for i in range(len(schedule.days[0].lessons)):
                 # Adds the lesson hour to the top of the table
-                column = [Table.ColumnItem(str(schedule.days[0].lessons[i].hour) + ".", True)]
+                column = [Table.Cell([Table.Cell.Item(f"{schedule.days[0].lessons[i].hour}.")])]
 
                 # Adds the actual lessons to the table
                 for day_i, day in enumerate(schedule.days):
+                    column.append(
+                        Table.Cell([Table.Cell.Item(day.lessons[i].subject)], exclusives[day_i][day.lessons[i].hour])
+                    )
                     if showClassroom:
-                        column.append(
-                            Table.ColumnItem(day.lessons[i].subject, False, exclusives[day_i][day.lessons[i].hour])
-                        )
-                        column.append(
-                            Table.ColumnItem(day.lessons[i].classroom, True, exclusives[day_i][day.lessons[i].hour])
-                        )
-                    else:
-                        column.append(
-                            Table.ColumnItem(day.lessons[i].subject, True, exclusives[day_i][day.lessons[i].hour])
-                        )
+                        column[-1].items.append(Table.Cell.Item(day.lessons[i].classroom))
                 columns.append(column)
-            # Returns printed Table of schedule
-            output = Table(columns).show()
-            return output
+            table = Table(columns)
         else:
-            return "V rozvrhu nic není"
+            table = Table([[Table.Cell([Table.Cell.Item("Rozvrh je prázdný")])]])
+
+        # Returns a rendered table image
+        return table.render(file_name=file_name, style=renderStyle)
 
     @staticmethod
     async def new_week_message(currentWeek, nextWeek, client: discord.Client):
@@ -396,94 +409,38 @@ class Schedule:
             else:
                 return None
 
-        # Discord message with the information about the changes
-        async def changed_message(changed: list, nextWeek: bool, client: discord.Client, schedule: Schedule):
-            # Makes an ascii string with the lessons update
-            def embed_lessons(lessonOld: Schedule.Lesson, lessonNew: Schedule.Lesson):
-                # Generates an ascii table of the lesson
-                lessonOldTable = lessonOld.show(True)
-                lessonNewTable = lessonNew.show(True)
-                # Splits the ascii table into rows
-                lessonOldTable = lessonOldTable.split("\n")
-                lessonNewTable = lessonNewTable.split("\n")
+        async def changed_message(changed: list, client: discord.Client, scheduleOld: Schedule, scheduleNew: Schedule):
+            """Sends the changed schedules"""
+            embedsColor = discord.Color.from_rgb(*rand_rgb())
+            # Makes the two embeds containing the changed schedule images
+            embedOld = discord.Embed(color=embedsColor)
+            embedNew = discord.Embed(color=embedsColor)
 
-                output = "```"
-                # Merges the lessons ascii tables into one string
-                for lessonOldRow, lessonNewRow, row in zip(lessonOldTable, lessonNewTable, range(4)):
-                    if row != 2:
-                        output = output + lessonOldRow + "     " + lessonNewRow
-                    else:
-                        # Adds a nice arrow to indicate the updated lesson
-                        output = output + lessonOldRow + " --> " + lessonNewRow
-                    output = output + "\n"
-                output = output + "```"
-                return output
-
-            channel = read_db("channelSchedule")
-            # Creation of the embed
-            embed = discord.Embed()
-            embed.title = "Detekována změna v rozvrhu"
-            # Seperate fields for the changed items
-            for changedItem in changed:
-                lessonOld, lessonNew, day = changedItem
-                # Stops at the discord embed field amount limit
-                if len(embed.fields) >= 23:
-                    embed.add_field(
-                        name="Maximální počet embedů v jedné zprávě vyplýtván",
-                        value="Asi Hrnec změnil hodně " "předmětů najednou :(",
-                        inline=True,
-                    )
-                    embed.add_field(name="\u200b", value="\u200b", inline=False)
-                    break
-
-                # Creating the title
-                if nextWeek:
-                    title = "Příští týden"
-                else:
-                    title = "Tento týden"
-                title += f" , {day}, {lessonOld.hour}. hodina"
-                # Creating the content
-                content = embed_lessons(lessonOld, lessonNew)
-                # Adding the field to the embed
-                embed.add_field(name=title, value=content, inline=True)
-
-                # Change info field if needed
-                if lessonNew.changeInfo:
-                    title = "Change info"
-                    content = lessonNew.changeInfo
-                    embed.add_field(name=title, value=content, inline=True)
-                elif lessonOld.changeInfo:
-                    title = "Change info bylo odstraněno"
-                    embed.add_field(name=title, value="\u200b", inline=True)
-
-                # Empty field for inline property
-                embed.add_field(name="\u200b", value="\u200b", inline=False)
-            # Removes the last empty field and sets the color for the embed
-            embed.remove_field(len(embed.fields) - 1)
-            embed.color = discord.Color.from_rgb(200, 36, 36)
+            embedOld.title = f'Detekována změna v rozvrhu {"příštího" if scheduleOld.nextWeek else "aktuálního"} týdne'
+            embedOld.description = "Zastaralý rozvrh"
+            embedNew.description = "Aktualizovaný rozvrh"
 
             # Makes the 2D exclusives array with the right values
             exclusives = [[False for i in range(14)] for i in range(5)]
-            DAYS = {"po": 0, "út": 1, "st": 2, "čt": 3, "pá": 4}
             for item in changed:
-                exclusives[DAYS[item[2]]][item[1].hour] = True
+                exclusives[Schedule.DAYS[item[2]]][item[1].hour] = True
 
-            # Generates an ascii table of the changed schedule
-            scheduleToShow = (
-                "```"
-                + schedule.show(
-                    1,
-                    5,
-                    showDay=True,
-                    showClassroom=True,
-                    exclusives=exclusives,
-                )
-                + "```"
-            )
+            # Gets the same random render style for both of the schedules
+            renderStyle = Table.Style()
+
+            # Generates some images of the changed schedule
+            fileNameOld = "scheduleOld.png"
+            imgOld = await scheduleOld.render(1, 5, True, True, exclusives, renderStyle, fileNameOld)
+            embedOld.set_image(url=f"attachment://{fileNameOld}")
+
+            fileNameNew = "scheduleNew.png"
+            imgNew = await scheduleNew.render(1, 5, True, True, exclusives, renderStyle, fileNameNew)
+            embedNew.set_image(url=f"attachment://{fileNameNew}")
 
             # Sends the messages
-            await client.get_channel(channel).send(embed=embed)
-            await client.get_channel(channel).send(scheduleToShow)
+            channel = read_db("channelSchedule")
+            await client.get_channel(channel).send(file=imgOld, embed=embedOld)
+            await client.get_channel(channel).send(file=imgNew, embed=embedNew)
 
         # The main detection code
         # Gets the new Schedule objects
@@ -504,13 +461,13 @@ class Schedule:
             if is_week_change():
                 await Schedule.new_week_message(scheduleNew1, scheduleNew2, client)
             else:
-                await changed_message(changed, False, client, scheduleNew1)
+                await changed_message(changed, client, scheduleOld1, scheduleNew1)
             write_db("schedule1", Schedule.json_dumps(scheduleNew1))
         # Next week's schedule
         changed = find_changes(scheduleOld2, scheduleNew2)
         if changed:
             if not is_week_change():
-                await changed_message(changed, True, client, scheduleNew2)
+                await changed_message(changed, client, scheduleOld2, scheduleNew2)
             write_db("schedule2", Schedule.json_dumps(scheduleNew2))
 
     # Starts an infinite loop for checking changes in the schedule

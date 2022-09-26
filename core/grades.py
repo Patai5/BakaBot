@@ -138,8 +138,8 @@ class Grades:
     def json_dumps(grades):
         """Makes a JSON from Grades object"""
         output = '{"grades": ['
-        for grades in grades.grades:
-            output += json.dumps(grades.__dict__) + ", "
+        for grade in grades.grades:
+            output += json.dumps(grade.__dict__) + ", "
         if grades.grades:
             output = output[:-2]
         output += "]}"
@@ -155,8 +155,8 @@ class Grades:
     # Constants for all subjects with their short and long form
     SUBJECTS = {
         "Inf": "Informatika a výpočetní technika",
-        "EvV": "Estetická výchova - výtvarná",
-        "EvH": "Estetická výchova - hudební",
+        "Evv": "Estetická výchova - výtvarná",
+        "Evh": "Estetická výchova - hudební",
         "Zsv": "Základy společenských věd",
         "Čj": "Český jazyk a literatura",
         "Fj": "Jazyk francouzský",

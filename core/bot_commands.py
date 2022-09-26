@@ -137,6 +137,7 @@ class Commands:
                                     nextWeek = True
                         else:
                             await message.channel.send(f'{cls.blanc}: "{nextWeekArg}"')
+                            return
 
                     # Checks if the argument is not a full week passed like a single word
                     if not dayStartEnd.group(10):
@@ -182,12 +183,10 @@ class Commands:
                             dayEnd = get_day_int(dayStartEnd.group(6))
 
                         # Gets the week with the desired days and sends it
-                        schedule = Schedule.db_schedule(nextWeek).show(dayStart, dayEnd)
-                        await message.channel.send(f"```{schedule}```")
+                        await message.channel.send(file=await Schedule.db_schedule(nextWeek).render(dayStart, dayEnd))
                     else:
                         # Gets the full week and sends it
-                        schedule = Schedule.db_schedule(nextWeek).show(1, 5)
-                        await message.channel.send(f"```{schedule}```")
+                        await message.channel.send(file=await Schedule.db_schedule(nextWeek).render(1, 5))
                 else:
                     await message.channel.send(f'{cls.blanc}: "{dayStartEndArg}"')
 

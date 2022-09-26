@@ -1,15 +1,16 @@
 import asyncio
 import logging
 import os
+import secrets
 
 import discord
 
 import utils.first_time_setup as first_time_setup
 from core.bot_commands import Commands, Reactions, Responses
 from core.grades import Grades
-from core.keep_alive import keep_alive
 from core.reminder import Reminder
 from core.schedule import Schedule
+from html2img.html2img import Html2img
 from utils.utils import os_environ
 
 logger = logging.getLogger("discord")
@@ -21,9 +22,8 @@ logger.addHandler(handler)
 
 def main():
     # Keeps the replit on
-    keep_alive()
 
-    client = discord.Client(guild_ready_timeout=0, intents=discord.Intents.all())
+    client = discord.Client(intents=discord.Intents.all())
 
     client.cached_messages_react = []
     client.response_channel_cache = {}
@@ -66,6 +66,7 @@ async def start_feature_couroutines(client: discord.Client):
     if await first_time_setup.start(client):
         # Starts the courutines
         await asyncio.gather(
+            Html2img.browser_init(),
             Reactions.query(client),
             Responses.query(client),
             Schedule.start_detecting_changes(60, client),

@@ -2,7 +2,7 @@ import asyncio
 import datetime
 
 import discord
-from utils.utils import from_sec_to_time, get_sec, read_db, write_db
+from utils.utils import from_sec_to_time, get_sec, rand_rgb, read_db, write_db
 
 from core.schedule import Schedule
 
@@ -100,23 +100,20 @@ class Reminder:
                 or lesson.classroom != lastLesson.classroom
             ):
                 # Creates the embed with the reminder info
-                embed = discord.Embed()
+                embed = discord.Embed(color=discord.Color.from_rgb(*rand_rgb()))
 
                 # Title with the start and end times of the lesson
                 lessonStartTime = from_sec_to_time(Reminder.LESSON_TIMES[lesson.hour][0])
                 lessonEndTime = from_sec_to_time(Reminder.LESSON_TIMES[lesson.hour][1])
-                lessonTimes = lessonStartTime + " - " + lessonEndTime
+                embed.title = lessonStartTime + " - " + lessonEndTime
 
-                # The lesson asci table
-                lessonTable = "```" + lesson.show(True) + "```"
-                embed.add_field(name=lessonTimes, value=lessonTable, inline=False)
-
-                # If lesson has a topic
-                if lesson.topic:
-                    embed.add_field(name="\u200b", value=lesson.topic, inline=False)
+                # The lesson image
+                fileName = "nextLesson.png"
+                lessonImg = await lesson.render(True, file_name=fileName)
+                embed.set_image(url=f"attachment://{fileName}")
 
                 # Sends the message
-                await client.get_channel(channel).send(embed=embed)
+                await client.get_channel(channel).send(file=lessonImg, embed=embed)
 
                 # Saves the current lesson into the lastLesson database
                 write_db("lastLesson", Schedule.Lesson.json_dumps(lesson))
@@ -129,11 +126,19 @@ class Reminder:
         # Gets the schedule to be shown
         schedule = Schedule.db_schedule()
         weekday = datetime.datetime.today().weekday()
-        scheduleToShow = f"```{schedule.show(weekday + 1, weekday + 1, True, True)}```"
+
+        # Creates the embed with today's schedule
+        embed = discord.Embed(color=discord.Color.from_rgb(*rand_rgb()))
+        embed.title = "Dnešní rozvrh"
+
+        # The schedule image
+        fileName = "todaysSchedule.png"
+        scheduleImg = await schedule.render(weekday + 1, weekday + 1, False, True, file_name=fileName)
+        embed.set_image(url=f"attachment://{fileName}")
 
         # Sends the message
         channel = read_db("channelReminder")
-        await client.get_channel(channel).send(scheduleToShow)
+        await client.get_channel(channel).send(file=scheduleImg, embed=embed)
 
     # Starts an infinite loop for checking changes in the grades
     @staticmethod

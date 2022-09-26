@@ -56,6 +56,10 @@ async def start(client: discord.Client):
         write_db("bettingResponseChannel", {})
     if not read_db("bettingSchedule"):
         write_db("bettingSchedule", Schedule.json_dumps(Schedule.db_schedule(False)))
+    if read_db("showDay") == None:
+        write_db("showDay", False)
+    if read_db("showClassroom") == None:
+        write_db("showClassroom", False)
     # Looks if the bot was properly setup before continueing
     if not read_db("channelGrades"):
         setup_channel_error_message("Grades")
@@ -65,5 +69,6 @@ async def start(client: discord.Client):
         setup_channel_error_message("Schedule")
     elif not read_db("channelStatus"):
         setup_channel_error_message("Status")
+
     else:
         return True

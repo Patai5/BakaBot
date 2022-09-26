@@ -1,101 +1,89 @@
+import random
+from typing import List
+
+import discord
+from html2img.html2img import Html2img
+
+
 class Table:
+    class Style:
+        def __init__(self, background: int = None, backgroundAngle: int = None):
+            if background is None:
+                background = random.randint(0, len(self.backgrounds) - 1)
+            self.background = self.backgrounds[background]
+
+            self.backgroundAngle = backgroundAngle
+            if self.backgroundAngle is None:
+                self.backgroundAngle = random.randint(0, 360)
+
+            self.set_background_angle()
+
+        def set_background_angle(self):
+            self.background = self.background.replace("{ANGLE}", str(self.backgroundAngle))
+
+        backgrounds = [
+            "linear-gradient({ANGLE}deg, #fc5c7d, #6a82fb)",
+            "linear-gradient({ANGLE}deg, #ff0000, #24e912)",
+        ]
+
     def __init__(self, columns: list):
         self.columns = columns
+        self.rows = self.gen_rows()
 
-    class ColumnItem:
-        def __init__(self, value: str, newline: bool, exclusive: bool = False):
-            self.value = value
-            self.newline = newline
+    class Cell:
+        def __init__(self, items: List, exclusive: bool = False):
+            self.items = items
             self.exclusive = exclusive
+            self.empty = True
+            for item in items:
+                if item.value:
+                    self.empty = False
 
-    # Puts {x} spaces around a string
-    @staticmethod
-    def spaceout(string: str, spaces: int):
-        output = ""
-        spaces2int = int((spaces - len(string)) / 2)
-        spaces2float = (spaces - len(string)) / 2
-        if spaces2int != 0:
-            output = " " * spaces2int
-        if spaces2float != spaces2int:
-            if string.endswith("."):
-                output = output + " " + string
-            else:
-                output = output + string + " "
-        else:
-            output = output + string
-        if spaces2int != 0:
-            output = output + " " * spaces2int
-        return output
+        class Item:
+            def __init__(self, value: str):
+                self.value = value
 
-    # Returns an asci table
-    # "Don't look at the code of this function it's a half working mess!"
-    def show(self):
-        # You have been warned!
-        rows = []
-        rowsint = 2
-        for item in self.columns[0]:
-            if item.newline:
-                rowsint = rowsint + 2
-            else:
-                rowsint = rowsint + 1
-        for row in range(rowsint):
-            rows.append("")
-
-        for column_i, column in enumerate(self.columns):
-            longest = 0
-            for item in column:
-                if len(item.value) > longest:
-                    longest = len(item.value)
-            for i in range(len(column)):
-                column[i].value = Table.spaceout(column[i].value, longest)
-
-            rows[0] = rows[0] + "═" * (longest + 2) + "╤"
-            z = 1
+    def gen_rows(self) -> list:
+        """Generates rows for the table"""
+        rows = [[] for i in range(len(self.columns[0]))]
+        for column in self.columns:
             for i, item in enumerate(column):
-                if item.exclusive:
-                    rows[z] = rows[z] + " " + item.value + " " + "║"
-                elif len(self.columns) > column_i + 1:
-                    if self.columns[column_i + 1][i].exclusive:
-                        rows[z] = rows[z] + " " + item.value + " " + "║"
-                    else:
-                        rows[z] = rows[z] + " " + item.value + " " + "│"
-                else:
-                    rows[z] = rows[z] + " " + item.value + " " + "│"
-                if item.newline:
-                    if i != len(column) - 1:
-                        z = z + 1
-                        if item.exclusive or column[i + 1].exclusive:
-                            rows[z] = rows[z] + "═" * (longest + 2) + "●"
-                        elif len(self.columns) > column_i + 1:
-                            if self.columns[column_i + 1][i].exclusive:
-                                rows[z] = rows[z] + "─" * (longest + 2) + "●"
-                            elif self.columns[column_i + 1][i + 1].exclusive:
-                                rows[z] = rows[z] + "─" * (longest + 2) + "●"
-                            else:
-                                rows[z] = rows[z] + "─" * (longest + 2) + "┼"
-                        else:
-                            rows[z] = rows[z] + "─" * (longest + 2) + "┼"
-                z = z + 1
-            rows[z] = rows[z] + "═" * (longest + 2) + "╧"
+                rows[i].append(item)
+        return rows
 
-        for i in range(len(rows)):
-            if i == 0:
-                rows[i] = "╔" + rows[i][:-1] + "╗"
-            elif i == len(rows) - 1:
-                rows[i - 1] = "╚" + rows[i - 1][:-1] + "╝"
-        z = 0
-        for i, item in enumerate(self.columns[0]):
-            z = z + 1
-            if item.newline:
-                rows[z] = "║" + rows[z][:-1] + "║"
-                if z == len(rows) - 3:
-                    break
-                z = z + 1
-                rows[z] = "╟" + rows[z][:-1] + "╢"
-            else:
-                rows[z] = "║" + rows[z][:-1] + "║"
+    async def render(self, file_name: str = "table.png", style: Style = None) -> discord.File:
+        """Returns a rendered table as a discord.File"""
+        return await Html2img.html2discord_file(self.renderHTML(style), Html2img.cssPathTable, file_name)
 
-        output = ""
-        for row in rows:
-            output = output + row + "\n"
+    def renderHTML(self, style: Style = None) -> str:
+        """Returns an HTML table"""
+        if style is None:
+            style = self.Style()
+
+        output = f"""<!DOCTYPE html><html><head><link rel="stylesheet" href="../styles.css"></head><body>"""
+
+        output += f'<table class="{random.randint(0, len(style.backgrounds) - 1)}, {random.randint(0, 360)}">'
+        for row in self.rows:
+            output += "<tr>"
+            for cell in row:
+                output += '<td class="'
+                output += "empty " if cell.empty else ""
+                output += "exclusive " if cell.exclusive else ""
+                output += '">'
+                for item in cell.items:
+                    output += f"<p>{item.value}</p>"
+                output += "</td>"
+            output += "</tr>"
+        output += "</table>"
+        output += f"""<script>
+            window.onload = function () {{
+                var background = "{style.background}";
+                var query = [...document.querySelectorAll("td p")];
+                query.push(document.querySelector("table"));
+                query.forEach((element) => {{
+                    element.style.backgroundImage = background;
+                }});
+            }};
+        </script></body></html>"""
+
         return output
