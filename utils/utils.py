@@ -6,6 +6,7 @@ import random
 
 import aiohttp
 import discord
+import dotenv
 import pytz
 
 
@@ -22,6 +23,11 @@ def read_db(key: str):
 def write_db(key: str, value):
     with open(f"db/{key}.dat", "wb") as f:
         pickle.dump(value, f, protocol=2)
+
+
+def env_load():
+    """Loads the .env file"""
+    dotenv.load_dotenv(dotenv.find_dotenv())
 
 
 # Gets os.environ values by key

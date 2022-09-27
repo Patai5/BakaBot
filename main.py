@@ -1,7 +1,5 @@
 import asyncio
 import logging
-import os
-import secrets
 
 import discord
 
@@ -11,7 +9,7 @@ from core.grades import Grades
 from core.reminder import Reminder
 from core.schedule import Schedule
 from html2img.html2img import Html2img
-from utils.utils import os_environ
+from utils.utils import env_load, os_environ
 
 logger = logging.getLogger("discord")
 logger.setLevel(level=logging.DEBUG)
@@ -21,7 +19,7 @@ logger.addHandler(handler)
 
 
 def main():
-    # Keeps the replit on
+    env_load()
 
     client = discord.Client(intents=discord.Intents.all())
 
@@ -53,12 +51,7 @@ def main():
                         client,
                     ).execute()
 
-    token = os_environ("token")
-    try:
-        client.run(token)
-    # Resets the replit server if needed
-    except:
-        os.system("kill 1")
+    client.run(os_environ("token"))
 
 
 # Starts couroutines needed for some features
