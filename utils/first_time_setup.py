@@ -1,3 +1,4 @@
+import logging
 import os
 
 import discord
@@ -11,7 +12,7 @@ from utils.utils import read_db, write_db
 def setup_channel_error_message(channel: str):
     errorMessage = (
         f'Setup the bot setting channel{channel} to a specific channel by typing the command: "BakaBot settings '
-        f'channel{channel}" in your desired discord channel and then restart the bot'
+        f'channel{channel}" in your desired discord channel'
     )
     print(errorMessage)
 
@@ -61,14 +62,27 @@ async def start(client: discord.Client):
     if read_db("showClassroom") == None:
         write_db("showClassroom", False)
     # Looks if the bot was properly setup before continueing
+    ready = True
+    if read_db("html2imgBrowserPath") == None:
+        write_db(
+            "html2imgBrowserPath",
+            input("Please enter the path to your browser executable (Leave empty for auto by Pyppeteer): "),
+        )
+        ready = False
     if not read_db("channelGrades"):
         setup_channel_error_message("Grades")
+        ready = False
     elif not read_db("channelReminder"):
         setup_channel_error_message("Reminder")
+        ready = False
     elif not read_db("channelSchedule"):
         setup_channel_error_message("Schedule")
+        ready = False
     elif not read_db("channelStatus"):
         setup_channel_error_message("Status")
+        ready = False
 
-    else:
+    if ready:
         return True
+    else:
+        print("Restart the bot after you are done setting up the bot")

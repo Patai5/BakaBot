@@ -4,22 +4,27 @@ from io import BytesIO
 import discord
 import pyppeteer
 from PIL import Image
+from utils.utils import read_db
 
 
 class Html2img:
     @classmethod
     async def browser_init(cls):
         """Initializes the browser"""
-        cls.browser = await pyppeteer.launch(headless=True, args=["--no-sandbox"])
+        cls.browser = await pyppeteer.launch(
+            headless=True,
+            args=["--no-sandbox"],
+            executablePath=read_db("html2imgBrowserPath"),
+        )
 
-    tempPNGPath = ".\\html2img\\temp\\temp.png"
+    tempPNGPath = os.path.join(os.getcwd(), "html2img", "temp", "temp.png")
 
-    cssPathTable = "\\html2img\\css\\table\\"
+    cssPathTable = os.path.join(os.getcwd(), "html2img", "css", "table")
 
     @classmethod
     async def render(cls, html: str, css_path: str):
         """Renders the html and saves it as a png"""
-        path = os.getcwd() + css_path + "temp\\index.html"
+        path = os.path.join(css_path, "temp", "index.html")
 
         page = await cls.browser.newPage()
 
