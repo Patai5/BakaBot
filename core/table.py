@@ -23,7 +23,20 @@ class Table:
 
         backgrounds = [
             "linear-gradient({ANGLE}deg, #fc5c7d, #6a82fb)",
-            "linear-gradient({ANGLE}deg, #ff0000, #24e912)",
+            "linear-gradient({ANGLE}deg, #8360c3, #2ebf91)",
+            "linear-gradient({ANGLE}deg, #ff512f, #f09819)",
+            "linear-gradient({ANGLE}deg, #0099f7, #f11712)",
+            "linear-gradient({ANGLE}deg, #ff9966, #ff5e62)",
+            "linear-gradient({ANGLE}deg, #00DBDE, #FC00FF)",
+            "linear-gradient({ANGLE}deg, #FBDA61, #FF5ACD)",
+            "linear-gradient({ANGLE}deg, #21D4FD, #B721FF)",
+            "linear-gradient({ANGLE}deg, #d64c7f, #ee4758 50%)",
+            "radial-gradient(circle farthest-side, #fceabb, #f8b500)",
+            "linear-gradient({ANGLE}deg, #4158D0, #C850C0 46%, #FFCC70)",
+            "linear-gradient({ANGLE}deg, rgb(182, 244, 146), rgb(51, 139, 147))",
+            "linear-gradient({ANGLE}deg, rgb(242, 112, 156), rgb(255, 148, 114))",
+            "linear-gradient({ANGLE}deg, rgba(255,174,0,1) 11.2%, rgba(255,0,0,1) 100.2%)",
+            "linear-gradient({ANGLE}deg, rgba(156,252,248,1) 11.2%, rgba(110,123,251,1) 91.1% )",
         ]
 
     def __init__(self, columns: list):

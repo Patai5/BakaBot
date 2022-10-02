@@ -24,7 +24,10 @@ class Html2img:
     @classmethod
     async def render(cls, html: str, css_path: str):
         """Renders the html and saves it as a png"""
-        path = os.path.join(css_path, "temp", "index.html")
+        path = os.path.join(css_path, "temp")
+        if not os.path.isdir(path):
+            os.mkdir(path)
+        path = os.path.join(path, "index.html")
 
         page = await cls.browser.newPage()
 
