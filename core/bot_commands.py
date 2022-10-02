@@ -338,7 +338,7 @@ class Reactions:
             if messages:
                 for message in messages:
                     if message.edited_at:
-                        editedFromNowSec = (datetime.datetime.utcnow() - message.edited_at).seconds
+                        editedFromNowSec = (datetime.datetime.now(datetime.timezone.utc) - message.edited_at).seconds
                         if editedFromNowSec > 300:
                             await MessageTimers.delete_message(message, cls.queryMessagesDatabase, client)
                         else:
@@ -351,7 +351,7 @@ class Reactions:
                                 )
                             )
                     else:
-                        createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+                        createdFromNowSec = (datetime.datetime.now(datetime.timezone.utc) - message.created_at).seconds
                         if createdFromNowSec > 300:
                             await MessageTimers.delete_message(message, cls.queryMessagesDatabase, client)
                         else:
@@ -382,7 +382,7 @@ class Reactions:
             messages = await MessageTimers.query_messages_reactions(cls.queryMessagesDatabase, client)
             if messages:
                 for message in messages:
-                    createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+                    createdFromNowSec = (datetime.datetime.now(datetime.timezone.utc) - message.created_at).seconds
                     if createdFromNowSec > 5400:
                         await MessageTimers.delete_message_reaction(
                             message, cls.queryMessagesDatabase, Grades.PREDICTOR_EMOJI, client
@@ -413,7 +413,7 @@ class Reactions:
             messages = await MessageTimers.query_messages_reactions(cls.queryMessagesDatabase, client)
             if messages:
                 for message in messages:
-                    createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+                    createdFromNowSec = (datetime.datetime.now(datetime.timezone.utc) - message.created_at).seconds
                     if createdFromNowSec > 43200:
                         await MessageTimers.delete_message_reaction(
                             message, cls.queryMessagesDatabase, Betting.BETT_EMOJI, client
@@ -468,7 +468,7 @@ class Responses(Commands):
                     message_id = message.id
                     message_channel = message.channel.id
 
-                    createdFromNowSec = (datetime.datetime.utcnow() - message.created_at).seconds
+                    createdFromNowSec = (datetime.datetime.now(datetime.timezone.utc) - message.created_at).seconds
                     if createdFromNowSec > 300:
                         await MessageTimers.delete_message(
                             [message_id, message_channel],
