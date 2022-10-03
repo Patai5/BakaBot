@@ -37,8 +37,8 @@ def os_environ(key: str):
 
 # Logs into the server and returns the login session
 async def login(client: discord.Client):
-    username = os_environ("username")
-    password = os_environ("password")
+    username = os_environ("bakalariUsername")
+    password = os_environ("bakalariPassword")
 
     url = "https://bakalari.ceskolipska.cz/Login"
     data = {"username": username, "password": password, "returnUrl": "", "login": ""}
