@@ -197,7 +197,7 @@ class Grades:
         data = html.find("div", {"id": "cphmain_DivByTime"})
         if not data:
             return False
-        data = re.findall("\[\{.*?(?=;)", data.script.text)[0]
+        data = re.findall("\[\{.*?](?=;)", data.script.text)[0]
         # Creates an empty Grades object
         grades = Grades([])
         # Parses the data into a dicture
