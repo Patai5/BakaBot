@@ -1,10 +1,10 @@
 import asyncio
 import copy
 import datetime
-import re
 
 import discord
-from utils.utils import MessageTimers, read_db, write_db
+from discord.ext import commands
+from utils.utils import MessageTimers, os_environ, read_db, write_db
 
 from core.betting import Betting
 from core.grades import Grades
@@ -12,312 +12,161 @@ from core.predictor import Predictor
 from core.schedule import Schedule
 
 
-class Commands:
-    def __init__(self, message: discord.Message, client: discord.Client):
-        self.message = message
+class General(commands.Cog):
+    def __init__(self, client: discord.Bot):
         self.client = client
-        self.parse_message(message)
 
-    def is_response_message(self, message: discord.Message):
-        if message.channel.id in self.client.response_channel_cache:
-            return True
+    @commands.slash_command(name="schedule", description="Sends the schedule")
+    async def schedule_command(
+        self,
+        ctx,
+        day_start: discord.Option(
+            int,
+            name="day_start",
+            description="The first day of the schedule",
+            default=1,
+            choices=[discord.OptionChoice(name=str(i), value=i) for i in range(1, 6)],
+        ),
+        day_end: discord.Option(
+            int,
+            name="day_end",
+            description="The last day of the schedule",
+            default=5,
+            choices=[discord.OptionChoice(name=str(i), value=i) for i in reversed(range(1, 6))],
+        ),
+        week: discord.Option(
+            int,
+            name="week",
+            description="Current or future week of the schedule",
+            default=1,
+            choices=[discord.OptionChoice(name=str(i), value=i) for i in range(1, 3)],
+        ),
+    ):
+        await ctx.response.defer()
+        await ctx.followup.send(file=await Schedule.db_schedule(week - 1).render(day_start, day_end))
 
-    def parse_message(self, message: discord.Message):
-        self.content = message.content
-        self.channel = message.channel
-        self.author = message.author
+    @commands.slash_command(name="grade_prediction", description="Makes a prediction of your grades")
+    async def grades_command(
+        self,
+        ctx,
+        subject: discord.Option(
+            str,
+            name="subject",
+            description="Subject to predict the grade for",
+            choices=[
+                discord.OptionChoice(name=val, value=key)
+                for key, val in sorted(Grades.SUBJECTS.items(), key=lambda item: item[1])
+            ],
+        ),
+    ):
+        await ctx.respond("Sending predictor embed message", delete_after=0)
+        await Predictor.predict_embed(subject, ctx, self.client)
 
-        self.isBaka = self.is_bakabot(self.message)
-        self.isResponse = self.is_response_message(message)
 
-        if self.isBaka:
-            search = re.search("^(bakabot|b)($|\s)", self.content, flags=2)
-            self.baka = search
+class Admin(commands.Cog):
+    def __init__(self, client: discord.Bot):
+        self.client = client
 
-            withoutBaka = self.content[search.span()[1] :]
-            othersWithoutBaka = re.findall("[a-zěščřžýáíéóúůďťňĎŇŤŠČŘŽÝÁÍÉÚŮĚÓ0-9\-]+", withoutBaka, flags=2)
-            self.command = othersWithoutBaka[0]
+    group = discord.SlashCommandGroup(name="admin", description="Admin commands")
 
-            self.arguments = othersWithoutBaka[1:]
+    def admin_user():
+        def predicate(ctx):
+            return ctx.author.id == os_environ("adminID")
 
-    # Decides if the function was meant for BakaBot
-    @staticmethod
-    def is_bakabot(message: discord.Message):
-        content = message.content
-        if re.search("^(bakabot|b)($|\s)", content, flags=2):
-            return True
+        return commands.check(predicate)
+
+    async def user_not_admin(ctx):
+        await ctx.respond("Only admins can use this command!")
+
+    @admin_user()
+    @group.command(name="update_schedule_database", description="Updates the schedule database")
+    async def update_schedule_database(self, ctx):
+        await ctx.response.defer(ephemeral=True)
+
+        schedule1 = await Schedule.get_schedule(False, self.client)
+        schedule2 = await Schedule.get_schedule(True, self.client)
+        if schedule1 is None or schedule2 is None:
+            await ctx.followup.send("Bakalari's server is currently down.")
         else:
-            return False
+            write_db("schedule1", Schedule.json_dumps(schedule1))
+            write_db("schedule2", Schedule.json_dumps(schedule2))
+            await ctx.followup.send("Updated schedule database")
 
-    # Gets True or False from various forms out of a string
-    @staticmethod
-    def true_or_false_string(string: str):
-        search = re.search(
-            "^(1|pravda|ano|p|a|true|t|yes|y)|(0|[sšŠ]patn[eěĚ]|[sšŠ]|ne|n|false|f|no|nepravda)$", string, flags=2
-        )
-        if search:
-            # True
-            if search.group(1):
-                return True
-            # False
-            else:
-                return False
+    @update_schedule_database.error
+    async def update_schedule_database_error(self, ctx, error):
+        await Admin.user_not_admin(ctx)
+
+    @admin_user()
+    @group.command(name="update_grades_database", description="Updates the grades database")
+    async def update_grades_database(self, ctx):
+        await ctx.response.defer(ephemeral=True)
+
+        grades = await Grades.get_grades(self.client)
+        if grades is None:
+            await ctx.followup.send("Bakalari's server is currently down.")
         else:
-            return None
+            write_db("grades", Grades.json_dumps(grades))
+            await ctx.followup.send("Updated grades database")
 
-    class Help:
-        GENERAL = 'Nedokázal jsem rozluštit váš příkaz.\nPužijte "BakaBot Help" pro nápovědu'
+    @update_grades_database.error
+    async def update_grades_database_error(self, ctx, error):
+        await Admin.user_not_admin(ctx)
 
-        blanc = "BakaBota zavoláž pomocí jeho jména pokračujíc mezerou funkcí mezerou a následnými argumenty.\nFunkce: Rozvrh; Settings, Známka"
-        schedule = "Argumenty: den (začátek)-den (konec)"
-        settings = "Špatný argument pro funkci Settings"
 
-        ARGUMENTS = {"rozvrh": schedule, "schedule": schedule, "settings": settings}
+class Settings(commands.Cog):
+    def __init__(self, client: discord.Bot):
+        self.client = client
 
-        # Executes the method for of this function
-        @classmethod
-        async def execute(cls, message):
-            # Check if the user inputed at least one argument
-            if len(message.arguments) == 0:
-                await message.channel.send(cls.blanc)
-            else:
-                argument = message.arguments[0]
-                Commands.Help.ARGUMENTS.get(argument)
-                response = Commands.COMMANDS.get(message.command)
-                if response:
-                    await message.channel.send(response)
-                else:
-                    await message.channel.send(Commands.Help.GENERAL)
+    group = discord.SlashCommandGroup(name="settings", description="Edits the bot's settings")
 
-    class Schedule:
-        blanc = "Špatný argument pro funkci Rozvrh"
+    scheduleSettings = {"Show_day": "showDay", "show_classroom": "showClassroom"}
 
-        # Executes the method for of this function
-        @classmethod
-        async def execute(cls, message):
-            # Check if the user inputed at least one argument
-            if len(message.arguments) == 0:
-                await message.channel.send(cls.blanc)
-            else:
-                # Gets the parameters of the days to show in the schedule
-                dayStartEndArg = message.arguments[0]
-                dayStartEnd = re.search(
-                    "^((([1-5])|(pond[eěĚ]l[iíÍ]|[uúÚ]ter[yýÝ]|st[rřŘ]eda|[cčČ]tvrtek|p[aáÁ]tek)|(p|[uúÚ]|s|[cčČ]|p))\-(([1-5])|(pond[eěĚ]l[iíÍ]|[uúÚ]ter[yýÝ]|st[rřŘ]eda|[cčČ]tvrtek|p[aáÁ]tek)|(p|[uúÚ]|s|[cčČ]|p))|(7|t|t[yýÝ]den)|(([1-5])|(pond[eěĚ]l[iíÍ]|[uúÚ]ter[yýÝ]|st[rřŘ]eda|[cčČ]tvrtek|p[aáÁ]tek)|(p|[uúÚ]|s|[cčČ]|p)))$",
-                    dayStartEndArg,
-                    flags=2,
-                )
-                # If the argument is valid
-                if dayStartEnd:
-                    # Gets if the week is the current or the next. Default is current week
-                    if len(message.arguments) == 1:
-                        nextWeek = False
-                    else:
-                        nextWeekArg = message.arguments[1]
-                        search = re.search(
-                            "^((1|2)|(aktu[aáÁ]ln[iíÍ]|p[rřŘ][iíÍ][sšŠ]t[iíÍ])|(a|p))$", nextWeekArg, flags=2
-                        )
-                        if search:
-                            # If it's argumented by numbers
-                            if search.group(2):
-                                if nextWeekArg == "1":
-                                    nextWeek = False
-                                else:
-                                    nextWeek = True
-                            # If it's argumented by full name
-                            elif search.group(3):
-                                if re.search("aktu[aáÁ]ln[iíÍ]", nextWeekArg, flags=2):
-                                    nextWeek = False
-                                else:
-                                    nextWeek = True
-                            # If it's argumented by short name
-                            else:
-                                if nextWeekArg == "a":
-                                    nextWeek = False
-                                else:
-                                    nextWeek = True
-                        else:
-                            await message.channel.send(f'{cls.blanc}: "{nextWeekArg}"')
-                            return
+    @Admin.admin_user()
+    @group.command(name="schedule", description="Settings for schedule apperance")
+    async def schedule_settings_command(
+        self,
+        ctx,
+        setting: discord.Option(
+            str,
+            name="setting",
+            description="Which setting to change",
+            choices=[discord.OptionChoice(name=key, value=key) for key in scheduleSettings.keys()],
+        ),
+        boolean: discord.Option(bool, name="bool", description="True or False value"),
+    ):
+        write_db(self.scheduleSettings[setting], boolean)
+        await ctx.respond(f"Setting {setting} set to {boolean}", ephemeral=True)
 
-                    # Checks if the argument is not a full week passed like a single word
-                    if not dayStartEnd.group(10):
-                        # Gets the int of the day from various forms out of a string
-                        def get_day_int(string: str):
-                            # If it's argumented by numbers
-                            if re.search("\d", string):
-                                return int(string)
-                            # If it's argumented by full name
-                            elif re.search(
-                                "pond[eěĚ]l[iíÍ]|[uúÚ]ter[yýÝ]|st[rřŘ]eda|[cčČ]tvrtek|p[aáÁ]tek", string, flags=2
-                            ):
-                                if re.search("pond[eěĚ]l[iíÍ]", string, flags=2):
-                                    return 1
-                                elif re.search("[uúÚ]ter[yýÝ]", string, flags=2):
-                                    return 2
-                                elif re.search("st[rřŘ]eda", string, flags=2):
-                                    return 3
-                                elif re.search("[cčČ]tvrtek", string, flags=2):
-                                    return 4
-                                else:
-                                    return 5
-                            # If it's argumented by short name
-                            else:
-                                if re.search("p", string, flags=2):
-                                    return 1
-                                elif re.search("[uúÚ]", string, flags=2):
-                                    return 2
-                                elif re.search("s", string, flags=2):
-                                    return 3
-                                elif re.search("[cčČ]", string, flags=2):
-                                    return 4
-                                else:
-                                    return 5
+    @schedule_settings_command.error
+    async def schedule_settings_command_error(self, ctx, error):
+        await Admin.user_not_admin(ctx)
 
-                        # If it's argumented as single day
-                        if dayStartEnd.group(11):
-                            dayStart = get_day_int(dayStartEnd.group(11))
-                            dayEnd = dayStart
-                        else:
-                            # Finds the desired days from the argument
-                            dayStart = get_day_int(dayStartEnd.group(2))
-                            dayEnd = get_day_int(dayStartEnd.group(6))
+    channels = ["Schedule", "Grades", "Predictor", "Reminder"]
 
-                        # Gets the week with the desired days and sends it
-                        await message.channel.send(file=await Schedule.db_schedule(nextWeek).render(dayStart, dayEnd))
-                    else:
-                        # Gets the full week and sends it
-                        await message.channel.send(file=await Schedule.db_schedule(nextWeek).render(1, 5))
-                else:
-                    await message.channel.send(f'{cls.blanc}: "{dayStartEndArg}"')
+    @Admin.admin_user()
+    @group.command(
+        name="channel",
+        description="Use this command in the channel where you want to have the bot's functions to send messages",
+    )
+    async def channel_schedule_command(
+        self,
+        ctx,
+        function: discord.Option(
+            str,
+            name="function",
+            description="Select the function for this channel",
+            choices=[discord.OptionChoice(name=channel, value=channel) for channel in channels],
+        ),
+    ):
+        write_db(f"channel{function}", ctx.channel.id)
+        await ctx.respond(f"channel_{function.lower()} changed to this channel", ephemeral=True)
 
-    class Settings:
-        blanc = "Špatný argument pro funkci Settings"
+    @channel_schedule_command.error
+    async def channel_schedule_command_error(self, ctx, error):
+        await Admin.user_not_admin(ctx)
 
-        # Executes the method for of this function
-        @classmethod
-        async def execute(cls, message):
-            # Checks if the author is Patai5#4771
-            if message.author.id == 335793327431483392:
-                # Check if the user inputed at least one argument
-                if len(message.arguments) == 0:
-                    await message.channel.send(cls.blanc)
-                else:
-                    arg1 = message.arguments[0]
-                    if arg1.lower() == "showday":
-                        await cls.boolean_setting("showDay", message)
-                    elif arg1.lower() == "showclassroom":
-                        await cls.boolean_setting("showClassroom", message)
-                    elif arg1.lower() == "channelschedule":
-                        await cls.channel_setting("channelSchedule", message)
-                    elif arg1.lower() == "channelgrades":
-                        await cls.channel_setting("channelGrades", message)
-                    elif arg1.lower() == "channelreminder":
-                        await cls.channel_setting("channelReminder", message)
-                    elif arg1.lower() == "channelstatus":
-                        await cls.channel_setting("channelStatus", message)
-                    else:
-                        await message.channel.send(f'{cls.blanc}: "{arg1}"')
-            else:
-                await message.channel.send("Můj majitel je Patai5 ty mrdko!")
 
-        # Writes to database for boolean type settings
-        @classmethod
-        async def boolean_setting(cls, dbName: str, message):
-            if len(message.arguments) > 1:
-                trueFalse = Commands.true_or_false_string(message.arguments[1])
-                if trueFalse != None:
-                    await message.channel.send(f'Setting {dbName} changed to "{trueFalse}"')
-                else:
-                    await message.channel.send(f'{cls.blanc}: "{message.arguments[1]}"')
-                write_db(dbName, trueFalse)
-            else:
-                await message.channel.send(cls.blanc)
-
-        # Writes to database for discord channel settings
-        @classmethod
-        async def channel_setting(cls, dbName: str, message):
-            write_db(dbName, message.channel.id)
-            await message.channel.send(f'"{dbName}" changed to this channel')
-
-    class Admin:
-        blanc = "Špatný argument pro funkci Admin"
-
-        # Executes the method for of this function
-        @classmethod
-        async def execute(cls, message):
-            # Checks if the author is Patai5#4771
-            if message.author.id == 335793327431483392:
-                # Check if the user inputed at least one arguments
-                if len(message.arguments) == 0:
-                    await message.channel.send(cls.blanc)
-                else:
-                    arg1 = message.arguments[0]
-                    if arg1.lower() == "forceupdatescheduledatabase":
-                        schedule1 = await Schedule.get_schedule(False, message.client)
-                        schedule2 = await Schedule.get_schedule(True, message.client)
-                        if schedule1 is None or schedule2 is None:
-                            await message.channel.send("Bakalari's server is currently down.")
-                        else:
-                            write_db("schedule1", Schedule.json_dumps(schedule1))
-                            write_db("schedule2", Schedule.json_dumps(schedule2))
-                            await message.channel.send("Updated schedule database")
-                    elif arg1.lower() == "forceupdategradesdatabase":
-                        grades = await Grades.get_grades(message.client)
-                        if grades is None:
-                            await message.channel.send("Bakalari's server is currently down.")
-                        else:
-                            write_db("grades", Grades.json_dumps(grades))
-                            await message.channel.send("Updated grades database")
-                    elif arg1.lower() == "forcenewweek":
-                        await Schedule.new_week_message(
-                            Schedule.db_schedule(), Schedule.db_schedule(True), message.client
-                        )
-                    else:
-                        await message.channel.send(f'{cls.blanc}: "{arg1}"')
-            else:
-                await message.channel.send("Můj majitel je Patai5 ty mrdko!")
-
-    class Grades:
-        blanc = "Špatný argument pro funkci Známka"
-
-        # Executes the method for of this function
-        @classmethod
-        async def execute(cls, message):
-            # Check if the user inputed at least one arguments
-            if len(message.arguments) == 0:
-                await message.channel.send(cls.blanc)
-            else:
-                arg1 = message.arguments[0]
-                if re.search("^(Inf|EvV|EvH|Zsv|[cčČ]j|Fj|Tv|Aj|M|Bi|Fy|Ch|D|Z)$", arg1, flags=2):
-                    arg1 = arg1.lower().replace("c", "Č")
-                    await Predictor.predict_embed(arg1, message.channel, message.client)
-                else:
-                    await message.channel.send(f'{cls.blanc}: "{arg1}"')
-
-    COMMANDS = {
-        "r": Schedule,
-        "rozvrh": Schedule,
-        "s": Schedule,
-        "schedule": Schedule,
-        "help": Help,
-        "setting": Settings,
-        "settings": Settings,
-        "admin": Admin,
-        "grade": Grades,
-        "znamka": Grades,
-        "známka": Grades,
-    }
-
-    # Executes the message's command
-    async def execute(self):
-        if self.isBaka:
-            command = self.COMMANDS.get(self.command.lower())
-            if command:
-                await command.execute(self)
-            else:
-                await self.Help.execute(self)
-        elif self.isResponse:
-            await Responses(self.message, self.client).execute()
+COGS = [General, Settings, Admin]
 
 
 class Reactions:
@@ -455,7 +304,12 @@ class Reactions:
                 asyncio.ensure_future(reaction.query(client))
 
 
-class Responses(Commands):
+class Responses:
+    def __init__(self, message: discord.Message, client: discord.Client):
+        self.message = message
+        self.client = client
+        self.isResponse = message.channel.id in self.client.response_channel_cache
+
     class Bett:
         queryMessagesDatabase = "bettMessages"
 
@@ -493,8 +347,9 @@ class Responses(Commands):
 
     # Executes the message's command
     async def execute(self):
-        responseFor = self.RESPONSE_FOR.get(self.client.response_channel_cache.get(self.channel.id))
-        await responseFor.response(self.message, self.client)
+        if self.isResponse:
+            responseFor = self.RESPONSE_FOR.get(self.client.response_channel_cache.get(self.channel.id))
+            await responseFor.response(self.message, self.client)
 
     @staticmethod
     async def query(client: discord.Client):

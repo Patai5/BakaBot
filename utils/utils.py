@@ -32,7 +32,11 @@ def env_load():
 
 # Gets os.environ values by key
 def os_environ(key: str):
-    return os.environ[key]
+    intKeys = ("adminID",)
+    if key in intKeys:
+        return int(os.environ[key])
+    else:
+        return os.environ[key]
 
 
 # Logs into the server and returns the login session

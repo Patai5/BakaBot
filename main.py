@@ -4,7 +4,7 @@ import logging
 import discord
 
 import utils.first_time_setup as first_time_setup
-from core.bot_commands import Commands, Reactions, Responses
+from core.bot_commands import COGS, Reactions, Responses
 from core.grades import Grades
 from core.reminder import Reminder
 from core.schedule import Schedule
@@ -21,7 +21,10 @@ logger.addHandler(handler)
 def main():
     env_load()
 
-    client = discord.Client(intents=discord.Intents.all())
+    client = discord.Bot(command_prefix=None, intents=discord.Intents.all())
+
+    for cog in COGS:
+        client.add_cog(cog(client))
 
     client.cached_messages_react = []
     client.response_channel_cache = {}
@@ -37,7 +40,7 @@ def main():
     @client.event
     async def on_message(message: discord.Message):
         if not message.author.bot:
-            await Commands(message, client).execute()
+            await Responses(message, client).execute()
 
     @client.event
     async def on_raw_reaction_add(reaction: discord.RawReactionActionEvent):
