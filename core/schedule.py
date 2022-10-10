@@ -437,10 +437,24 @@ class Schedule:
             imgNew = await scheduleNew.render(1, 5, True, True, exclusives, renderStyle, fileNameNew)
             embedNew.set_image(url=f"attachment://{fileNameNew}")
 
+            # Detail of the changes
+            changedDetail = discord.Embed(color=embedsColor)
+            changedStr = ""
+            for lessonOld, lessonNew, day in changed:
+                changedStr += f"{day} {lessonOld.hour}. hodina: "
+                changedStr += "**∅**" if lessonOld.empty else f"**{lessonOld.subject} {lessonOld.classroom}**"
+                changedStr += " -> "
+                changedStr += "**∅**" if lessonNew.empty else f"**{lessonNew.subject} {lessonNew.classroom}**"
+                if lessonNew.changeInfo is not None:
+                    changedStr += f"; *{lessonNew.changeInfo}*"
+                changedStr += "\n"
+            changedDetail.description = changedStr
+
             # Sends the messages
             channel = read_db("channelSchedule")
             await client.get_channel(channel).send(file=imgOld, embed=embedOld)
             await client.get_channel(channel).send(file=imgNew, embed=embedNew)
+            await client.get_channel(channel).send(embed=changedDetail)
 
         # The main detection code
         # Gets the new Schedule objects
