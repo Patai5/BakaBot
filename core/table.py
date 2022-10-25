@@ -84,7 +84,7 @@ class Table:
                 output += "exclusive " if cell.exclusive else ""
                 output += '">'
                 for item in cell.items:
-                    output += f"<p>{item.value}</p>"
+                    output += f"<p>{'' if item.value is None else item.value}</p>"
                 output += "</td>"
             output += "</tr>"
         output += "</table>"

@@ -1,14 +1,14 @@
 import asyncio
 import copy
-import datetime
 import json
-import random
 import re
+from typing import Union
 
 import discord
 from bs4 import BeautifulSoup
-from utils.utils import get_sec, login, rand_rgb, read_db, request, write_db
+from utils.utils import login, rand_rgb, read_db, request, write_db
 
+from core.grades import Grades
 from core.table import Table
 
 
@@ -22,17 +22,24 @@ class Schedule:
         self.days = days
         self.nextWeek = nextWeek
 
-    class Day:
-        def __init__(self, lessons: list, day: str, date: str, empty: bool):
-            self.lessons = lessons
-            self.day = day
-            self.date = date
-            self.empty = empty
+        self.insert_missing_days()
 
-            # Prevents the day from being empty
-            if empty and not lessons:
-                for i in range(12):
-                    lessons.append(Schedule.Lesson(i, "", "", None, None))
+    class Day:
+        def __init__(self, lessons: list, weekDay: int, date: str):
+            self.lessons = lessons
+            self.weekDay = weekDay
+            self.nameShort = Schedule.DAYS_REVERSED[weekDay]
+            self.date = date
+
+            # Adds empty lessons if there have been none given
+            if lessons == []:
+                lessons = [Schedule.Lesson(i) for i in range(12)]
+
+            # Sets the empty attribute to True if every lesson is empty else False
+            self.empty = True
+            for lesson in self.lessons:
+                if lesson.empty is False:
+                    self.empty = False
 
         # Gets the first non empty lesson of the day. If none then returns None
         def first_non_empty_lesson(self):
@@ -49,17 +56,27 @@ class Schedule:
             return None
 
     class Lesson:
-        def __init__(self, hour: int, subject: str, classroom: str, changeInfo: str, topic: str):
+        def __init__(
+            self,
+            hour: int,
+            subject: Union[str, None] = None,
+            classroom: Union[str, None] = None,
+            teacher: Union[str, None] = None,
+            changeInfo: Union[str, None] = None,
+        ):
             self.hour = hour
             self.subject = subject
             self.classroom = classroom
+            self.teacher = teacher
             self.changeInfo = changeInfo
-            self.topic = topic
 
-            if self.subject == "":
+            self.subjectShort = Grades.SUBJECTS_REVERSED.get(self.subject)
+            if self.subjectShort is None:
+                self.subjectShort = self.subject
+
+            self.empty = False
+            if self.subject is None:
                 self.empty = True
-            else:
-                self.empty = False
 
         def render(self, showClassroom: bool = None, renderStyle: Table.Style = None, file_name: str = "temp.png"):
             """Returns a lesson redered as an image"""
@@ -70,24 +87,6 @@ class Schedule:
             if showClassroom:
                 cell.items.append(Table.Cell.Item(self.classroom))
             return Table([[cell]]).render(file_name=file_name, style=renderStyle)
-
-        # Loads a Lesson object from JSON
-        @staticmethod
-        def json_loads(jsonstring: str):
-            dictLesson = json.loads(jsonstring)
-            lesson = Schedule.Lesson(
-                dictLesson["hour"],
-                dictLesson["subject"],
-                dictLesson["classroom"],
-                dictLesson["changeInfo"],
-                dictLesson["topic"],
-            )
-            return lesson
-
-        # Makes a JSON from Lesson
-        @staticmethod
-        def json_dumps(lesson):
-            return json.dumps(lesson.__dict__)
 
     # Gets the index of the first non empty lesson in common across all days
     def first_non_empty_lessons(self) -> int:
@@ -113,54 +112,31 @@ class Schedule:
         else:
             return None
 
-    # Gets Schedule object from the database
     @staticmethod
     def db_schedule(nextWeek: bool = False):
-        if not nextWeek:
-            return Schedule.json_loads(read_db("schedule1"))
+        """Gets schedule from the database"""
+        return read_db("schedule1") if not nextWeek else read_db("schedule2")
+
+    def db_save(self):
+        """Saves the schedule to the database"""
+        if not self.nextWeek:
+            write_db("schedule1", self)
         else:
-            return Schedule.json_loads(read_db("schedule2"))
-
-    # Loads a Schedule object from JSON
-    @staticmethod
-    def json_loads(jsonstring: str):
-        dictSchedule = json.loads(jsonstring)
-        days = []
-        for day in dictSchedule["days"]:
-            lessons = []
-            for lesson in day["lessons"]:
-                lessons.append(Schedule.Lesson.json_loads(json.dumps(lesson)))
-            days.append(Schedule.Day(lessons, day["day"], day["date"], day["empty"]))
-        schedule = Schedule(days, dictSchedule["nextWeek"])
-        return schedule
-
-    # Makes a JSON from Schedule
-    @staticmethod
-    def json_dumps(schedule):
-        output = '{"days": ['
-        for day in schedule.days:
-            output = output + '{"lessons": ['
-            for lesson in day.lessons:
-                output = output + Schedule.Lesson.json_dumps(lesson) + ", "
-            output = output[:-2] + "]"
-            output = f'{output}, "day": "{day.day}", "date": "{day.date}", "empty": {str(day.empty).lower()}}}, '
-        output = output[:-2] + "]"
-        output = output + ', "nextWeek": ' + str(schedule.nextWeek).lower() + "}"
-        return output
+            write_db("schedule2", self)
 
     def insert_missing_days(self):
         """Inserts missing days into the schedule to make it a full week"""
         if self.days:
-            start = Schedule.DAYS[self.days[0].day]
-            end = Schedule.DAYS[self.days[-1].day]
+            start = self.days[0].weekDay
+            end = self.days[-1].weekDay
         else:
             start = 5
             end = 4
 
-        for day in range(start):
-            self.days.insert(day, Schedule.Day([], Schedule.DAYS_REVERSED[day], "", True))
-        for day in range(end, 4):
-            self.days.insert(day, Schedule.Day([], Schedule.DAYS_REVERSED[day], "", True))
+        for weekDay in range(start):
+            self.days.insert(weekDay, Schedule.Day([Schedule.Lesson(i) for i in range(12)], weekDay, None))
+        for weekDay in range(end, 4):
+            self.days.insert(weekDay, Schedule.Day([Schedule.Lesson(i) for i in range(12)], weekDay, None))
 
     # Returns a Schedule object with the exctracted information
     @staticmethod
@@ -182,76 +158,66 @@ class Schedule:
         html = BeautifulSoup(await response.text(), "html.parser")
         await session.close()
 
-        # Web scraping the response
-        days = html.find_all("div", {"class": "day-row"})[-5:]
-        if not days:
-            return None
-        for day_i, day in enumerate(days):
-            lessons = day.div.div.find_all("div", {"class": "day-item"})
+        scheduleDiv = html.find("div", {"id": "schedule"})
+        # Gets the days from the schedule and iterates over them
+        days = []
+        dayDivs = scheduleDiv.find_all("div", {"class": "day-row"})[:5]
+        for day in dayDivs:
+            lessons = []
 
-            empty = False
-            if not lessons:
-                empty = True
+            # Gets the week day and date of the day
+            dayInfo = day.find("div", {"class": "day-name"}).div
+            weekDay, date = re.findall(r"([^\n|\r| ]+)", dayInfo.text)
+            weekDay = Schedule.DAYS[weekDay]
+
+            # Gets the lessons from the day and iterates over them
+            lessonDivs = day.find_all("div", {"class": "day-item"})
+            # Removes the useless lesson from the day
+            if lessonDivs:
+                lessonDivs.pop(7)
             else:
-                # Removes useless lesson from bakalari
-                lessons.pop(7)
-                for lesson_i, lesson in enumerate(lessons):
-                    # Gets main data of a lesson
-                    data = lesson.find_all("div", {"class": "day-item-hover"})
+                lessons = [Schedule.Lesson(i) for i in range(12)]
 
-                    # Gets change info
-                    changeInfo = re.search('(?<="changeinfo":")[^"]+(?=")', str(data))
-                    if changeInfo:
-                        changeInfo = changeInfo.group()
-                        # Changed info
-                        if "Suplování" in changeInfo:
-                            # When Suplovani then gets the teacher that's beaing replaced aswell
-                            teacher_div = lesson.find("div", {"class": "bottom"})
-                            teacher = re.search("(?<=>).*(?=</)", str(teacher_div)).group()
-                            changeInfo += " --> " + teacher
-                    else:
-                        # Removed info
-                        changeInfo = re.search('(?<="removedinfo":")[^"]+(?=")', str(data))
-                        if changeInfo:
-                            changeInfo = changeInfo.group()
+            for hour, lesson in enumerate(lessonDivs):
+                # Gets the actual lesson div
+                if "day-item-hover" not in lesson.attrs["class"]:
+                    lesson = lesson.div
 
-                    # Prevents from returning an empty lesson
-                    # Continues only if it finds the lesson's subject
-                    subject_div = lesson.find("div", {"class": "middle"})
-                    if subject_div and subject_div.text:
-                        subject = re.search("(?<=>).*(?=</)", str(subject_div)).group()
-                        mainData_div = lesson.find_all("div", {"class": "day-item-hover"})
+                # Empty lesson
+                if "empty" in lesson.attrs["class"]:
+                    lessons.append(Schedule.Lesson(hour))
+                    continue
 
-                        # Finds the classroom
-                        classroom = re.search('(?<="room":")[^"]+(?=")', str(mainData_div))
-                        if classroom:
-                            classroom = classroom.group()
-                        # Prevents empty classroom
-                        if not classroom:
-                            classroom = ""
+                # Gets the lesson detail for non-empty lessons
+                lessonDetail = json.loads(lesson.attrs["data-detail"])
 
-                        # Finds the topic
-                        topic = re.search('(?<="theme":")[^"]+(?=")', str(mainData_div))
-                        if topic:
-                            topic = topic.group()
-                    else:
-                        subject = ""
-                        classroom = ""
-                        topic = None
-                    # Creates Lesson object and saves it into lessons list
-                    lessons[lesson_i] = Schedule.Lesson(lesson_i, subject, classroom, changeInfo, topic)
-            # Gets the short version of the day's name
-            dayShort_div = day.div.div.div.div
-            dayShort = re.search("(?<=<div>)\s*?(..)(?=<br\/>)", str(dayShort_div)).group(1)
-            # Gets the date
-            date = dayShort_div.span.text
+                # Removed lesson
+                if lessonDetail["type"] == "removed":
+                    lessons.append(Schedule.Lesson(hour, changeInfo=lessonDetail.get("removedinfo")))
+                    continue
 
-            # Creates Day object and saves it into the days list
-            days[day_i] = Schedule.Day(lessons, dayShort, date, empty)
-        schedule = Schedule(days, nextWeek)
-        schedule.insert_missing_days()
-        # Returns full Schedule object
-        return schedule
+                # Speacial case of the lesson being half empty
+                if "green" in lesson.attrs["class"]:
+                    lessons.append(Schedule.Lesson(hour, lessonDetail.get("absentinfo")))
+                    continue
+
+                # Normal or removed lesson
+                # Subject
+                subject = lessonDetail.get("subjecttext")
+                if subject is not None:
+                    subject = re.search(r"(.*?) \|", subject).group(1)
+                # Classroom
+                classroom = lessonDetail.get("room")
+                # Teacher
+                teacher = lessonDetail.get("teacher")
+                # Change info
+                changeInfo = lessonDetail.get("changeinfo")
+                if changeInfo == "":
+                    changeInfo = None
+                # Adds the lesson to the list
+                lessons.append(Schedule.Lesson(hour, subject, classroom, teacher, changeInfo))
+            days.append(Schedule.Day(lessons, weekDay, date))
+        return Schedule(days, nextWeek)
 
     def render(
         self,
@@ -306,7 +272,7 @@ class Schedule:
             if showDay:
                 column = [Table.Cell([Table.Cell.Item("")])]
                 for day in schedule.days:
-                    column.append(Table.Cell([Table.Cell.Item(day.day)]))
+                    column.append(Table.Cell([Table.Cell.Item(day.nameShort)]))
                 columns.append(column)
             for i in range(len(schedule.days[0].lessons)):
                 # Adds the lesson hour to the top of the table
@@ -315,7 +281,9 @@ class Schedule:
                 # Adds the actual lessons to the table
                 for day_i, day in enumerate(schedule.days):
                     column.append(
-                        Table.Cell([Table.Cell.Item(day.lessons[i].subject)], exclusives[day_i][day.lessons[i].hour])
+                        Table.Cell(
+                            [Table.Cell.Item(day.lessons[i].subjectShort)], exclusives[day_i][day.lessons[i].hour]
+                        )
                     )
                     if showClassroom:
                         column[-1].items.append(Table.Cell.Item(day.lessons[i].classroom))
@@ -327,166 +295,113 @@ class Schedule:
         # Returns a rendered table image
         return table.render(file_name=file_name, style=renderStyle)
 
+
+class ChangeDetector:
+    class Changed:
+        def __init__(self, previousLesson, updatedLesson, day):
+            self.previousLesson = previousLesson
+            self.updatedLesson = updatedLesson
+            self.day = day
+
     @staticmethod
-    async def new_week_message(currentWeek, nextWeek, client: discord.Client):
-        """Sends the messages for the newly detected week +Betting"""
-        from core.betting import Betting
+    async def detect_changes(client: discord.Bot):
+        """Detects any changes in the schedule and sends a discord notification of the changes if there are any"""
+        # Gets the schedules from bakalari and the database and pairs them together
+        schedulesCurrentWeek = [Schedule.db_schedule(False), await Schedule.get_schedule(False, client)]
+        schedulesNextWeek = [Schedule.db_schedule(True), await Schedule.get_schedule(True, client)]
 
-        randomReaction = [
-            "Hurá",
-            "Kurwa",
-            "Do píči",
-            "Cука блять",
-            "Tak tohleto je těžce v prdeli",
-            "Hrnčíř je zmrd",
-            "Škodová je odporná zmrdná, vyšoustaná, vyšlukovaná, vypařízkovaná špína",
-            "Jakože nemám nic proti lidem s dvojciferným IQ ale Škodová má jednociferný",
-        ]
-
-        # Generates the title
-        titleNext = f"\\**{random.choice(randomReaction)}*\\*\n**Detekován nový týden**:"
-        titleCurrent = "**Aktualní týden**:"
-        # Generates the schedule tables
-        scheduleNext = f"```{nextWeek.show(1, 5, True, True)}```"
-        scheduleCurrent = f"```{currentWeek.show(1, 5, True, True)}```"
-
-        # Sends the messages
-        channel = client.get_channel(read_db("channelSchedule"))
-        await channel.send(titleNext)
-        await channel.send(scheduleNext)
-        await channel.send(titleCurrent)
-        await channel.send(scheduleCurrent)
-        bettingSchedule = Schedule.json_loads(read_db("bettingSchedule"))
-        Betting.update_week(currentWeek)
-        await Betting.start_betting(client)
-        removed, added = Betting.get_removed_added(bettingSchedule, currentWeek)
-        # Czech bullshit
-        if removed == 1:
-            czech = "a"
-            hour = "a"
-        elif 1 < removed <= 4:
-            czech = "y"
-            hour = "y"
-        else:
-            czech = "o"
-            hour = ""
-        if added == 1:
-            czech2 = "a"
-        elif 1 < added <= 4:
-            czech2 = "y"
-        else:
-            czech2 = "o"
-        await channel.send(f"Tento týden odpadl{czech} **{removed}** hodin{hour}, přidaných byl{czech2} **{added}**")
-
-    # Detects changes in schedule and sends them to discord
-    @staticmethod
-    async def detect_changes(client: discord.Client):
-        def is_week_change() -> bool:
-            """Returns a boolean value if the weeks are currently changing"""
-            weekday = datetime.datetime.today().weekday()
-            # If the current day is monday or sunday
-            if weekday == 0 or weekday == 6:
-                # If current time is around midnight
-                if 86280 < get_sec() or get_sec() < 120:
-                    return True
-            return False
-
-        # Finds and returns the actual changes
-        def find_changes(scheduleOld: Schedule, scheduleNew: Schedule):
-            changedlist = []
-            for (dayOld, dayNew) in zip(scheduleOld.days, scheduleNew.days):
-                for (lessonOld, lessonNew) in zip(dayOld.lessons, dayNew.lessons):
-                    changed = lessonOld, lessonNew, dayOld.day
-                    # The actuall differences that we are looking for
-                    if (
-                        lessonOld.subject != lessonNew.subject
-                        or lessonOld.classroom != lessonNew.classroom
-                        or lessonOld.changeInfo != lessonNew.changeInfo
-                    ):
-                        changedlist.append(changed)
-            if len(changedlist) != 0:
-                return changedlist
-            else:
-                return None
-
-        async def changed_message(changed: list, client: discord.Client, scheduleOld: Schedule, scheduleNew: Schedule):
-            """Sends the changed schedules"""
-            embedsColor = discord.Color.from_rgb(*rand_rgb())
-            # Makes the two embeds containing the changed schedule images
-            embedOld = discord.Embed(color=embedsColor)
-            embedNew = discord.Embed(color=embedsColor)
-
-            embedOld.title = f'Detekována změna v rozvrhu {"příštího" if scheduleOld.nextWeek else "aktuálního"} týdne'
-            embedOld.description = "Zastaralý rozvrh"
-            embedNew.description = "Aktualizovaný rozvrh"
-
-            # Makes the 2D exclusives array with the right values
-            exclusives = [[False for i in range(14)] for i in range(5)]
-            for item in changed:
-                exclusives[Schedule.DAYS[item[2]]][item[1].hour] = True
-
-            # Gets the same random render style for both of the schedules
-            renderStyle = Table.Style()
-
-            # Generates some images of the changed schedule
-            fileNameOld = "scheduleOld.png"
-            imgOld = await scheduleOld.render(1, 5, True, True, exclusives, renderStyle, fileNameOld)
-            embedOld.set_image(url=f"attachment://{fileNameOld}")
-
-            fileNameNew = "scheduleNew.png"
-            imgNew = await scheduleNew.render(1, 5, True, True, exclusives, renderStyle, fileNameNew)
-            embedNew.set_image(url=f"attachment://{fileNameNew}")
-
-            # Detail of the changes
-            changedDetail = discord.Embed(color=embedsColor)
-            changedStr = ""
-            for lessonOld, lessonNew, day in changed:
-                changedStr += f"{day} {lessonOld.hour}. hodina: "
-                changedStr += "**∅**" if lessonOld.empty else f"**{lessonOld.subject} {lessonOld.classroom}**"
-                changedStr += " -> "
-                changedStr += "**∅**" if lessonNew.empty else f"**{lessonNew.subject} {lessonNew.classroom}**"
-                if lessonNew.changeInfo is not None:
-                    changedStr += f"; *{lessonNew.changeInfo}*"
-                changedStr += "\n"
-            changedDetail.description = changedStr
-
-            # Sends the messages
-            channel = read_db("channelSchedule")
-            await client.get_channel(channel).send(file=imgOld, embed=embedOld)
-            await client.get_channel(channel).send(file=imgNew, embed=embedNew)
-            await client.get_channel(channel).send(embed=changedDetail)
-
-        # The main detection code
-        # Gets the new Schedule objects
-        scheduleNew1 = await Schedule.get_schedule(False, client)
-        scheduleNew2 = await Schedule.get_schedule(True, client)
-        # Gets the old Schedule objects
-        scheduleOld1 = Schedule.db_schedule(False)
-        scheduleOld2 = Schedule.db_schedule(True)
-        # If bakalari server is down
-        if scheduleNew1 is None or scheduleNew2 is None:
+        # If bakalari server is down, return
+        if schedulesCurrentWeek[1] is None or schedulesNextWeek[1] is None:
             return None
 
-        # Detects any changes and sends the message and saves the schedule if needed
-        # Current schedule
-        changed = find_changes(scheduleOld1, scheduleNew1)
-        if changed:
-            # When the weeks are changing
-            if is_week_change():
-                await Schedule.new_week_message(scheduleNew1, scheduleNew2, client)
-            else:
-                await changed_message(changed, client, scheduleOld1, scheduleNew1)
-            write_db("schedule1", Schedule.json_dumps(scheduleNew1))
-        # Next week's schedule
-        changed = find_changes(scheduleOld2, scheduleNew2)
-        if changed:
-            if not is_week_change():
-                await changed_message(changed, client, scheduleOld2, scheduleNew2)
-            write_db("schedule2", Schedule.json_dumps(scheduleNew2))
+        # Iterates over the schedule pairs
+        for schedulePair in [schedulesCurrentWeek, schedulesNextWeek]:
+            # Finds all the changes between the schedules
+            changed = ChangeDetector.find_changes(*schedulePair)
+            # If there are any changes, sends a message and saves the schedule to the database
+            if changed:
+                await ChangeDetector.changed_message(changed, client, *schedulePair)
+                schedulePair[1].db_save()
 
-    # Starts an infinite loop for checking changes in the schedule
+    @staticmethod
+    def find_changes(scheduleOld: Schedule, scheduleNew: Schedule):
+        """Finds any changes in the schedule"""
+        changedlist = []
+        # Iterates over the days
+        for (dayOld, dayNew) in zip(scheduleOld.days, scheduleNew.days):
+            # Iterates over the lessons and looks for any differences
+            for (lessonOld, lessonNew) in zip(dayOld.lessons, dayNew.lessons):
+                changed = ChangeDetector.Changed(lessonOld, lessonNew, dayOld)
+                # The actuall differences that we are looking for
+                if (
+                    lessonOld.subject != lessonNew.subject
+                    or lessonOld.classroom != lessonNew.classroom
+                    or lessonOld.teacher != lessonNew.teacher
+                    or lessonOld.changeInfo != lessonNew.changeInfo
+                ):
+                    changedlist.append(changed)
+        if len(changedlist) != 0:
+            return changedlist
+        else:
+            return None
+
+    @staticmethod
+    async def changed_message(changed: list, client: discord.Client, scheduleOld: Schedule, scheduleNew: Schedule):
+        """Sends the changed schedules over discord"""
+        embedsColor = discord.Color.from_rgb(*rand_rgb())
+        # Makes the two embeds containing the changed schedule images
+        embedOld = discord.Embed(color=embedsColor, description="Zastaralý rozvrh")
+        embedNew = discord.Embed(color=embedsColor, description="Aktualizovaný rozvrh")
+        embedOld.title = f'Detekována změna v rozvrhu {"příštího" if scheduleOld.nextWeek else "aktuálního"} týdne'
+
+        # Makes the 2D exclusives array with the changed items
+        exclusives = [[False for i in range(14)] for i in range(5)]
+        for item in changed:
+            exclusives[item.day.weekDay][item.updatedLesson.hour] = True
+
+        # Gets the same random render style for both of the schedules
+        renderStyle = Table.Style()
+
+        # Generates some images of the changed schedule
+        fileNameOld = "scheduleOld.png"
+        imgOld = await scheduleOld.render(1, 5, True, True, exclusives, renderStyle, fileNameOld)
+        embedOld.set_image(url=f"attachment://{fileNameOld}")
+
+        fileNameNew = "scheduleNew.png"
+        imgNew = await scheduleNew.render(1, 5, True, True, exclusives, renderStyle, fileNameNew)
+        embedNew.set_image(url=f"attachment://{fileNameNew}")
+
+        # Detail of the changes
+        changedDetail = discord.Embed(color=embedsColor)
+        changedStr = ""
+        for change in changed:
+            lessonOld = change.previousLesson
+            lessonNew = change.updatedLesson
+
+            changedStr += f"{change.day.nameShort} {lessonOld.hour}. hodina: "
+            if lessonOld.empty:
+                changedStr += "**∅**"
+            else:
+                changedStr += f"**{lessonOld.subjectShort}{' ' + lessonOld.classroom if lessonOld.classroom else ''}**"
+            changedStr += " -> "
+            if lessonNew.empty:
+                changedStr += "**∅**"
+            else:
+                changedStr += f"**{lessonNew.subjectShort}{' ' + lessonNew.classroom if lessonNew.classroom else ''}**"
+            if lessonNew.changeInfo is not None:
+                changedStr += f"; *{lessonNew.changeInfo}*"
+            changedStr += "\n"
+        changedDetail.description = changedStr
+
+        # Sends the messages
+        channel = read_db("channelSchedule")
+        await client.get_channel(channel).send(file=imgOld, embed=embedOld)
+        await client.get_channel(channel).send(file=imgNew, embed=embedNew)
+        await client.get_channel(channel).send(embed=changedDetail)
+
     @staticmethod
     async def start_detecting_changes(interval: int, client: discord.Client):
+        """Starts an infinite loop for checking changes in the schedule"""
         while True:
-            await Schedule.detect_changes(client)
+            await ChangeDetector.detect_changes(client)
             await asyncio.sleep(interval)

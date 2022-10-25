@@ -154,20 +154,24 @@ class Grades:
 
     # Constants for all subjects with their short and long form
     SUBJECTS = {
-        "Inf": "Informatika a výpočetní technika",
-        "Evv": "Estetická výchova - výtvarná",
-        "Evh": "Estetická výchova - hudební",
-        "Zsv": "Základy společenských věd",
-        "Čj": "Český jazyk a literatura",
-        "Fj": "Jazyk francouzský",
-        "Tv": "Tělesná výchova",
         "Aj": "Jazyk anglický",
-        "M": "Matematika",
         "Bi": "Biologie",
-        "Fy": "Fyzika",
         "Ch": "Chemie",
+        "Čj": "Český jazyk a literatura",
         "D": "Dějepis",
+        "Evh": "Estetická výchova - hudební",
+        "Evv": "Estetická výchova - výtvarná",
+        "Fj": "Jazyk francouzský",
+        "Fy": "Fyzika",
+        "Inf": "Informatika a výpočetní technika",
+        "LpBi": "Laboratorní práce z biologie",
+        "LpCh": "Laboratorní práce z chemie",
+        "LpFy": "Laboratorní práce z fyziky",
+        "M": "Matematika",
+        "TH": "Třídnická hodina",
+        "Tv": "Tělesná výchova",
         "Z": "Zeměpis",
+        "Zsv": "Základy společenských věd",
     }
     SUBJECTS_REVERSED = {}
     for key, value in zip(SUBJECTS.keys(), SUBJECTS.values()):

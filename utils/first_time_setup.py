@@ -30,8 +30,8 @@ async def start(client: discord.Client):
             print("Bakalari's server is currently down. Wait until the server is back online and then restart the bot")
             return None
         else:
-            write_db("schedule1", Schedule.json_dumps(schedule1))
-            write_db("schedule2", Schedule.json_dumps(schedule2))
+            schedule1.db_save()
+            schedule2.db_save()
     if not read_db("grades"):
         grades = await Grades.get_grades(client)
         if grades is None:

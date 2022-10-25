@@ -41,9 +41,23 @@ class General(commands.Cog):
             default=1,
             choices=[discord.OptionChoice(name=str(i), value=i) for i in range(1, 3)],
         ),
+        show_day: discord.Option(
+            bool,
+            name="show_day",
+            description="Whether to show the days or not",
+            default=None,
+        ),
+        show_classroom: discord.Option(
+            bool,
+            name="show_classroom",
+            description="Whether to show the classrooms or not",
+            default=None,
+        ),
     ):
         await ctx.response.defer()
-        await ctx.followup.send(file=await Schedule.db_schedule(week - 1).render(day_start, day_end))
+        await ctx.followup.send(
+            file=await Schedule.db_schedule(week - 1).render(day_start, day_end, show_day, show_classroom)
+        )
 
     @commands.slash_command(name="grade_prediction", description="Makes a prediction of your grades")
     async def grades_command(

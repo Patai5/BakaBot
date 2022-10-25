@@ -7,7 +7,7 @@ import utils.first_time_setup as first_time_setup
 from core.bot_commands import COGS, Reactions, Responses
 from core.grades import Grades
 from core.reminder import Reminder
-from core.schedule import Schedule
+from core.schedule import ChangeDetector
 from html2img.html2img import Html2img
 from utils.utils import env_load, os_environ
 
@@ -65,7 +65,7 @@ async def start_feature_couroutines(client: discord.Client):
             Html2img.browser_init(),
             Reactions.query(client),
             Responses.query(client),
-            Schedule.start_detecting_changes(60, client),
+            ChangeDetector.start_detecting_changes(60, client),
             Grades.start_detecting_changes(60, client),
             Reminder.start_reminding(client),
         )
