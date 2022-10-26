@@ -159,9 +159,13 @@ class Schedule:
         await session.close()
 
         scheduleDiv = html.find("div", {"id": "schedule"})
-        # Gets the days from the schedule and iterates over them
+        # Gets the days from the schedule
+        dayDivs = scheduleDiv.find_all("div", {"class": "day-row"})
+        # A really rare case when bakalari glitches out and sends two weeks at the same time
+        if len(dayDivs) > 5:
+            return None
+        # Iterates over the days
         days = []
-        dayDivs = scheduleDiv.find_all("div", {"class": "day-row"})[:5]
         for day in dayDivs:
             lessons = []
 
