@@ -1,3 +1,4 @@
+import asyncio
 import os
 from io import BytesIO
 
@@ -8,6 +9,8 @@ from utils.utils import read_db
 
 
 class Html2img:
+    initialized = False
+
     @classmethod
     async def browser_init(cls):
         """Initializes the browser"""
@@ -16,6 +19,7 @@ class Html2img:
             args=["--no-sandbox"],
             executablePath=read_db("html2imgBrowserPath"),
         )
+        cls.initialized = True
 
     tempPNGPath = os.path.join(os.getcwd(), "html2img", "temp", "temp.png")
 
@@ -29,6 +33,9 @@ class Html2img:
             os.mkdir(path)
         path = os.path.join(path, "index.html")
 
+        # Waits for the browser to initialize
+        while not cls.initialized:
+            await asyncio.sleep(0.1)
         page = await cls.browser.newPage()
 
         with open(path, "w", encoding="utf-8") as f:
