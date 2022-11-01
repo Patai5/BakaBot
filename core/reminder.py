@@ -91,9 +91,9 @@ class Reminder:
 
             # Creates a lastLesson database if needed for the first time
             if not read_db("lastLesson"):
-                write_db("lastLesson", Schedule.Lesson.json_dumps(lesson))
+                write_db("lastLesson", lesson)
             # Checking if the lesson isn't the same as the previously reminded one
-            lastLesson = Schedule.Lesson.json_loads(read_db("lastLesson"))
+            lastLesson = read_db("lastLesson")
             if (
                 lesson.hour != lastLesson.hour
                 or lesson.subject != lastLesson.subject
@@ -109,14 +109,14 @@ class Reminder:
 
                 # The lesson image
                 fileName = "nextLesson.png"
-                lessonImg = await lesson.render(True, file_name=fileName)
+                lessonImg = await lesson.render(True, read_db("reminderShort"), file_name=fileName)
                 embed.set_image(url=f"attachment://{fileName}")
 
                 # Sends the message
                 await client.get_channel(channel).send(file=lessonImg, embed=embed)
 
                 # Saves the current lesson into the lastLesson database
-                write_db("lastLesson", Schedule.Lesson.json_dumps(lesson))
+                write_db("lastLesson", lesson)
         # Prevents sending multiple reminders
         await asyncio.sleep(1)
 

@@ -78,12 +78,18 @@ class Schedule:
             if self.subject is None:
                 self.empty = True
 
-        def render(self, showClassroom: bool = None, renderStyle: Table.Style = None, file_name: str = "temp.png"):
+        def render(
+            self,
+            showClassroom: bool = None,
+            shortName: bool = False,
+            renderStyle: Table.Style = None,
+            file_name: str = "temp.png",
+        ):
             """Returns a lesson redered as an image"""
             if showClassroom == None:
                 showClassroom = read_db("showClassroom")
 
-            cell = Table.Cell([Table.Cell.Item(self.subject)])
+            cell = Table.Cell([Table.Cell.Item(self.subjectShort if shortName else self.subject)])
             if showClassroom:
                 cell.items.append(Table.Cell.Item(self.classroom))
             return Table([[cell]]).render(file_name=file_name, style=renderStyle)

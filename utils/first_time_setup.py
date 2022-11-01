@@ -63,6 +63,8 @@ async def start(client: discord.Client):
         write_db("showDay", False)
     if read_db("showClassroom") == None:
         write_db("showClassroom", False)
+    if read_db("reminderShort") == None:
+        write_db("reminderShort", False)
     # Looks if the bot was properly setup before continueing
     ready = True
     if read_db("html2imgBrowserPath") == None:

@@ -151,6 +151,16 @@ class Settings(commands.Cog):
         write_db(self.scheduleSettings[setting], boolean)
         await ctx.respond(f"Setting {setting} set to {boolean}", ephemeral=True)
 
+    @Admin.admin_user()
+    @group.command(name="reminder_short", description="Wheter to use the short lesson name or full name")
+    async def schedule_settings_command(
+        self,
+        ctx,
+        boolean: discord.Option(bool, name="bool", description="True or False value"),
+    ):
+        write_db("reminderShort", boolean)
+        await ctx.respond(f"Setting Reminder_short set to {boolean}", ephemeral=True)
+
     @schedule_settings_command.error
     async def schedule_settings_command_error(self, ctx, error):
         await Admin.user_not_admin(ctx)
