@@ -1,10 +1,17 @@
 import asyncio
-import datetime
 
 import discord
-from utils.utils import from_sec_to_time, get_sec, rand_rgb, read_db, write_db
 
 from core.schedule import Schedule
+from utils.utils import (
+    from_sec_to_time,
+    get_sec,
+    get_week_day,
+    get_weekday_sec,
+    rand_rgb,
+    read_db,
+    write_db,
+)
 
 
 class Reminder:
@@ -24,47 +31,44 @@ class Reminder:
         [56100, 59100],
         [59400, 62100],
     ]
+    FULL_DAY = 86400
 
-    # Gets the needed wait time for the nearest lesson and creates the reminder
     @staticmethod
     async def create_reminder(client: discord.Client):
-        weekday = datetime.datetime.today().weekday()
+        """Gets the needed wait time for the nearest lesson and creates the reminder"""
+        weekDay, currentTimeSec = get_weekday_sec()
+
         # Friday after school
-        if weekday == 4 and get_sec() > Reminder.REMIND[-1]:
-            when = 86400 - get_sec() + 172800 + Reminder.REMIND[0]
-            await Reminder.reminder(client, when)
+        if weekDay == 4 and currentTimeSec > Reminder.REMIND[-1]:
+            when = Reminder.FULL_DAY * 3 + Reminder.REMIND[0] - currentTimeSec
         # Saturday
-        elif weekday == 5:
-            when = 86400 - get_sec() + 86400 + Reminder.REMIND[0]
-            await Reminder.reminder(client, when)
+        elif weekDay == 5:
+            when = Reminder.FULL_DAY * 2 + Reminder.REMIND[0] - currentTimeSec
         # Sunday
-        elif weekday == 6:
-            when = 86400 - get_sec() + Reminder.REMIND[0]
-            await Reminder.reminder(client, when)
+        elif weekDay == 6:
+            when = Reminder.FULL_DAY + Reminder.REMIND[0] - currentTimeSec
         # School day
         else:
-            lesson = await Reminder.next_reminder_lesson()
+            lesson = await Reminder.next_reminder_lesson(weekDaySec=(weekDay, currentTimeSec))
             # If there are anymore lessons for the day
             if lesson:
                 # Gets the needed time for the next lesson
                 for remindTime in Reminder.REMIND:
-                    if remindTime > get_sec():
-                        when = remindTime - get_sec()
+                    if remindTime > currentTimeSec:
+                        when = remindTime - currentTimeSec
                         break
-                await Reminder.reminder(client, when)
             else:
                 # Waits until the next day
-                when = 86400 - get_sec() + Reminder.REMIND[0]
-                await Reminder.reminder(client, when)
+                when = Reminder.FULL_DAY - currentTimeSec + Reminder.REMIND[0]
+        await Reminder.reminder(client, when)
 
-    # Gets the next nearest lesson for reminder
     @staticmethod
-    async def next_reminder_lesson(current: bool = None):
+    async def next_reminder_lesson(current: bool = None, weekDaySec: tuple = (get_week_day(), get_sec())):
+        """Gets the next nearest lesson for reminder"""
         schedule = Schedule.db_schedule()
-        weekday = datetime.datetime.today().weekday()
-        day = schedule.days[weekday]
+        weekDay, currentTimeSec = weekDaySec
+        day = schedule.days[weekDay]
 
-        currentTimeSec = get_sec()
         for lesson in day.lessons:
             # Current in case the time is dirrectly on the lessons yet you still want it
             if current:
@@ -125,7 +129,7 @@ class Reminder:
     async def remind_whole_day_schedule(client: discord.Client):
         # Gets the schedule to be shown
         schedule = Schedule.db_schedule()
-        weekday = datetime.datetime.today().weekday()
+        weekday = get_week_day()
 
         # Creates the embed with today's schedule
         embed = discord.Embed(color=discord.Color.from_rgb(*rand_rgb()))

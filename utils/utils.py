@@ -145,12 +145,22 @@ def time_since_epoch_utc():
     return int(utcTime.timestamp())
 
 
-# Returns the current time in the Czech republic
-def get_sec():
+def get_weekday_sec():
+    """Returns the current week day and the time in seconds for the Czech republic"""
     utcTime = pytz.timezone("UTC").localize(datetime.datetime.utcnow())
     czechTime = utcTime.astimezone(pytz.timezone("Europe/Vienna"))
     sec = czechTime.hour * 3600 + czechTime.minute * 60 + czechTime.second
-    return sec
+    return czechTime.weekday(), sec
+
+
+def get_sec():
+    """Returns the current time in seconds for the Czech republic"""
+    return get_weekday_sec()[1]
+
+
+def get_week_day():
+    """Returns the current week day in the Czech republic"""
+    return get_weekday_sec()[0]
 
 
 # Returns string of inputed time in seconds to {hours:minutes}
