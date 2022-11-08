@@ -93,13 +93,11 @@ class Reminder:
             if Reminder.REMIND[0] - 60 < get_sec() < Reminder.REMIND[0] + 60:
                 await Reminder.remind_whole_day_schedule(client)
 
-            # Creates a lastLesson database if needed for the first time
-            if not read_db("lastLesson"):
-                write_db("lastLesson", lesson)
             # Checking if the lesson isn't the same as the previously reminded one
             lastLesson = read_db("lastLesson")
             if (
-                lesson.hour != lastLesson.hour
+                lastLesson is None
+                or lesson.hour != lastLesson.hour
                 or lesson.subject != lastLesson.subject
                 or lesson.classroom != lastLesson.classroom
             ):
