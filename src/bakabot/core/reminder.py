@@ -1,12 +1,11 @@
 import asyncio
+from typing import Tuple
 
 import discord
 
-from core.schedule import Schedule
-from utils.utils import (
+from bakabot.core.schedule import Schedule
+from bakabot.utils.utils import (
     from_sec_to_time,
-    get_sec,
-    get_week_day,
     get_weekday_sec,
     rand_rgb,
     read_db,
@@ -28,47 +27,40 @@ class Reminder:
         [47100, 49800],
         [50400, 53100],
         [53400, 56100],
-        [56100, 59100],
+        [56400, 59100],
         [59400, 62100],
     ]
     FULL_DAY = 86400
 
     @staticmethod
-    async def create_reminder(client: discord.Client):
-        """Gets the needed wait time for the nearest lesson and creates the reminder"""
-        weekDay, currentTimeSec = get_weekday_sec()
-
-        # Friday after school
-        if weekDay == 4 and currentTimeSec > Reminder.REMIND[-1]:
-            when = Reminder.FULL_DAY * 3 + Reminder.REMIND[0] - currentTimeSec
+    def get_remind_time(schedule: Schedule, weekDaySec: Tuple[int, int]) -> int:
+        """Gets the needed wait time for the nearest lesson and returns it"""
+        weekDay, currentTimeSec = weekDaySec
         # Saturday
-        elif weekDay == 5:
-            when = Reminder.FULL_DAY * 2 + Reminder.REMIND[0] - currentTimeSec
+        if weekDay == 5:
+            return Reminder.FULL_DAY * 2 + Reminder.REMIND[0] - currentTimeSec
         # Sunday
-        elif weekDay == 6:
-            when = Reminder.FULL_DAY + Reminder.REMIND[0] - currentTimeSec
-        # School day
-        else:
-            lesson = await Reminder.next_reminder_lesson(weekDaySec=(weekDay, currentTimeSec))
-            # If there are anymore lessons for the day
-            if lesson:
-                # Gets the needed time for the next lesson
-                for remindTime in Reminder.REMIND:
-                    if remindTime > currentTimeSec:
-                        when = remindTime - currentTimeSec
-                        break
-            else:
-                # Waits until the next day
-                when = Reminder.FULL_DAY - currentTimeSec + Reminder.REMIND[0]
-        await Reminder.reminder(client, when)
+        if weekDay == 6:
+            return Reminder.FULL_DAY + Reminder.REMIND[0] - currentTimeSec
+
+        # Gets the next lesson for the day (if there is one)
+        nextLesson = Reminder.next_reminder_lesson(schedule.days[weekDay], currentTimeSec)
+        # Friday after no more lessons
+        if weekDay == 4 and nextLesson is None:
+            return Reminder.FULL_DAY * 3 + Reminder.REMIND[0] - currentTimeSec
+
+        # School day with some upcoming lessons
+        if nextLesson:
+            # Gets the needed time for the next lesson
+            for remindTime in Reminder.REMIND:
+                if remindTime > currentTimeSec:
+                    return remindTime - currentTimeSec
+        # School day with no upcoming lessons (waits for the next day)
+        return Reminder.FULL_DAY - currentTimeSec + Reminder.REMIND[0]
 
     @staticmethod
-    async def next_reminder_lesson(current: bool = None, weekDaySec: tuple = (get_week_day(), get_sec())):
+    def next_reminder_lesson(day: Schedule.Day, currentTimeSec: int, current: bool = None):
         """Gets the next nearest lesson for reminder"""
-        schedule = Schedule.db_schedule()
-        weekDay, currentTimeSec = weekDaySec
-        day = schedule.days[weekDay]
-
         for lesson in day.lessons:
             # Current in case the time is dirrectly on the lessons yet you still want it
             if current:
@@ -79,19 +71,21 @@ class Reminder:
                 if Reminder.REMIND[lesson.hour] > currentTimeSec:
                     if not lesson.empty:
                         return lesson
-        return None
 
-    # Sends a reminder of the lesson to the discord channel
     @staticmethod
     async def reminder(client: discord, when: int):
+        """Sends a reminder of the lesson to the discord channel"""
         await asyncio.sleep(when)
 
+        weekDay, currentTimeSec = get_weekday_sec()
+        scheduleDay = Schedule.db_schedule().days[weekDay]
+
         channel = read_db("channelReminder")
-        lesson = await Reminder.next_reminder_lesson(current=True)
+        lesson = Reminder.next_reminder_lesson(scheduleDay, currentTimeSec, current=True)
         if lesson:
             # Sends the full day schedule at 6:00am
-            if Reminder.REMIND[0] - 60 < get_sec() < Reminder.REMIND[0] + 60:
-                await Reminder.remind_whole_day_schedule(client)
+            if Reminder.REMIND[0] - 60 < currentTimeSec < Reminder.REMIND[0] + 60:
+                await Reminder.remind_whole_day_schedule(scheduleDay, client)
 
             # Checking if the lesson isn't the same as the previously reminded one
             lastLesson = read_db("lastLesson")
@@ -122,28 +116,25 @@ class Reminder:
         # Prevents sending multiple reminders
         await asyncio.sleep(1)
 
-    # Sends the whole day schedule
     @staticmethod
-    async def remind_whole_day_schedule(client: discord.Client):
-        # Gets the schedule to be shown
-        schedule = Schedule.db_schedule()
-        weekday = get_week_day()
-
+    async def remind_whole_day_schedule(day: Schedule.Day, client: discord.Client):
+        """Sends the whole day schedule"""
         # Creates the embed with today's schedule
         embed = discord.Embed(color=discord.Color.from_rgb(*rand_rgb()))
         embed.title = "Dnešní rozvrh"
 
         # The schedule image
         fileName = "todaysSchedule.png"
-        scheduleImg = await schedule.render(weekday + 1, weekday + 1, False, True, file_name=fileName)
+        scheduleImg = await day.render(False, True, file_name=fileName)
         embed.set_image(url=f"attachment://{fileName}")
 
         # Sends the message
         channel = read_db("channelReminder")
         await client.get_channel(channel).send(file=scheduleImg, embed=embed)
 
-    # Starts an infinite loop for checking changes in the grades
     @staticmethod
     async def start_reminding(client: discord.Client):
+        """Starts an infinite loop for checking changes in the grades"""
         while True:
-            await Reminder.create_reminder(client)
+            when = Reminder.get_remind_time(Schedule.db_schedule(), get_weekday_sec())
+            await Reminder.reminder(client, when)

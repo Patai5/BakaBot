@@ -1,7 +1,7 @@
 import discord
-from utils.utils import MessageTimers
 
-from core.grades import Grades
+from bakabot.core.grades import Grades
+from bakabot.utils.utils import MessageTimers
 
 
 class Predictor:

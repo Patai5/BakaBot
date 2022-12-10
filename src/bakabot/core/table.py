@@ -2,7 +2,8 @@ import random
 from typing import List
 
 import discord
-from html2img.html2img import Html2img
+
+from bakabot.html2img.html2img import Html2img
 
 
 class Table:

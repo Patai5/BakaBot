@@ -5,7 +5,8 @@ from io import BytesIO
 import discord
 import pyppeteer
 from PIL import Image
-from utils.utils import read_db
+
+from bakabot.utils.utils import read_db
 
 
 class Html2img:
@@ -21,9 +22,10 @@ class Html2img:
         )
         cls.initialized = True
 
-    tempPNGPath = os.path.join(os.getcwd(), "html2img", "temp", "temp.png")
+    html2imgDir = os.path.join(os.getcwd(), "src", "bakabot", "html2img")
 
-    cssPathTable = os.path.join(os.getcwd(), "html2img", "css", "table")
+    tempPNGPath = os.path.join(html2imgDir, "temp", "temp.png")
+    cssPathTable = os.path.join(html2imgDir, "css", "table")
 
     @classmethod
     async def render(cls, html: str, css_path: str):
@@ -50,6 +52,10 @@ class Html2img:
             }"""
         )
         await page.setViewport({"width": size[0], "height": size[1]})
+
+        tempDir = os.path.join(cls.html2imgDir, "temp")
+        if not os.path.isdir(tempDir):
+            os.mkdir(tempDir)
         await page.screenshot({"path": cls.tempPNGPath})
 
     @classmethod

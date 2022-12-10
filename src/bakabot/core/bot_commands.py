@@ -4,12 +4,12 @@ import datetime
 
 import discord
 from discord.ext import commands
-from utils.utils import MessageTimers, os_environ, read_db, write_db
 
-from core.betting import Betting
-from core.grades import Grades
-from core.predictor import Predictor
-from core.schedule import Schedule
+from bakabot.core.betting import Betting
+from bakabot.core.grades import Grades
+from bakabot.core.predictor import Predictor
+from bakabot.core.schedule import Schedule
+from bakabot.utils.utils import MessageTimers, os_environ, read_db, write_db
 
 
 class General(commands.Cog):

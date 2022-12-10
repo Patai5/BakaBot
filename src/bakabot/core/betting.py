@@ -2,9 +2,15 @@ import asyncio
 import re
 
 import discord
-from utils.utils import MessageTimers, fetch_message, rand_rgb, read_db, write_db
 
-from core.schedule import Schedule
+from bakabot.core.schedule import Schedule
+from bakabot.utils.utils import (
+    MessageTimers,
+    fetch_message,
+    rand_rgb,
+    read_db,
+    write_db,
+)
 
 
 class Betting:

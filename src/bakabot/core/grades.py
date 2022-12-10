@@ -6,7 +6,15 @@ import re
 
 import discord
 from bs4 import BeautifulSoup
-from utils.utils import MessageTimers, get_sec, login, read_db, request, write_db
+
+from bakabot.utils.utils import (
+    MessageTimers,
+    get_sec,
+    login,
+    read_db,
+    request,
+    write_db,
+)
 
 
 class Grades:
@@ -201,7 +209,7 @@ class Grades:
         data = html.find("div", {"id": "cphmain_DivByTime"})
         if not data:
             return False
-        data = re.findall("\[\{.*?](?=;)", data.script.text)[0]
+        data = re.findall(r"\[\{.*?](?=;)", data.script.text)[0]
         # Creates an empty Grades object
         grades = Grades([])
         # Parses the data into a dicture
@@ -250,7 +258,7 @@ class Grades:
 
     @staticmethod
     async def create_predection(message: discord.message.Message, client: discord.Client):
-        from core.predictor import Predictor
+        from bakabot.core.predictor import Predictor
 
         """Generates a predict message with the current subject"""
         # Subject

@@ -6,10 +6,10 @@ from typing import Union
 
 import discord
 from bs4 import BeautifulSoup
-from utils.utils import login, rand_rgb, read_db, request, write_db
 
-from core.grades import Grades
-from core.table import Table
+from bakabot.core.grades import Grades
+from bakabot.core.table import Table
+from bakabot.utils.utils import login, rand_rgb, read_db, request, write_db
 
 
 class Schedule:
@@ -18,7 +18,7 @@ class Schedule:
     for key, value in zip(DAYS.keys(), DAYS.values()):
         DAYS_REVERSED.update({value: key})
 
-    def __init__(self, days: list, nextWeek: bool):
+    def __init__(self, days: list, nextWeek: bool = False):
         self.days = days
         self.nextWeek = nextWeek
 
@@ -40,6 +40,23 @@ class Schedule:
             for lesson in self.lessons:
                 if lesson.empty is False:
                     self.empty = False
+
+        def render(
+            self,
+            showDay: bool = None,
+            showClassroom: bool = None,
+            renderStyle: Table.Style = None,
+            file_name: str = "day.png",
+        ):
+            """Renders the day as an rendered image"""
+            return Schedule([self]).render(
+                self.weekDay + 1,
+                self.weekDay + 1,
+                showDay=showDay,
+                showClassroom=showClassroom,
+                renderStyle=renderStyle,
+                file_name=file_name,
+            )
 
         # Gets the first non empty lesson of the day. If none then returns None
         def first_non_empty_lesson(self):
@@ -142,7 +159,7 @@ class Schedule:
         for weekDay in range(start):
             self.days.insert(weekDay, Schedule.Day([Schedule.Lesson(i) for i in range(12)], weekDay, None))
         for weekDay in range(end, 4):
-            self.days.insert(weekDay, Schedule.Day([Schedule.Lesson(i) for i in range(12)], weekDay, None))
+            self.days.insert(weekDay + 1, Schedule.Day([Schedule.Lesson(i) for i in range(12)], weekDay, None))
 
     # Returns a Schedule object with the exctracted information
     @staticmethod

@@ -2,10 +2,10 @@ import logging
 import os
 
 import discord
-from core.grades import Grades
-from core.schedule import Schedule
 
-from utils.utils import read_db, write_db
+from bakabot.core.grades import Grades
+from bakabot.core.schedule import Schedule
+from bakabot.utils.utils import read_db, write_db
 
 
 # Prints the error to console
@@ -21,8 +21,6 @@ async def start(client: discord.Client):
     # First time startup
     if not os.path.isdir("./db"):
         os.mkdir("./db")
-    if not os.path.isdir("./html2img/temp"):
-        os.mkdir("./html2img/temp")
     if not read_db("schedule1") or not read_db("schedule2"):
         schedule1 = await Schedule.get_schedule(False, client)
         schedule2 = await Schedule.get_schedule(True, client)

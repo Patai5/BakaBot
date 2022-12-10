@@ -3,13 +3,13 @@ import logging
 
 import discord
 
-import utils.first_time_setup as first_time_setup
-from core.bot_commands import COGS, Reactions, Responses
-from core.grades import Grades
-from core.reminder import Reminder
-from core.schedule import ChangeDetector
-from html2img.html2img import Html2img
-from utils.utils import env_load, os_environ
+from bakabot.core.bot_commands import COGS, Reactions, Responses
+from bakabot.core.grades import Grades
+from bakabot.core.reminder import Reminder
+from bakabot.core.schedule import ChangeDetector
+from bakabot.html2img.html2img import Html2img
+from bakabot.utils import first_time_setup
+from bakabot.utils.utils import env_load, os_environ
 
 logger = logging.getLogger("discord")
 logger.setLevel(level=logging.DEBUG)
