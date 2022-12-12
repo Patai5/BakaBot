@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import asyncio
 import copy
 import json
@@ -18,14 +20,25 @@ class Schedule:
     for key, value in zip(DAYS.keys(), DAYS.values()):
         DAYS_REVERSED.update({value: key})
 
-    def __init__(self, days: list, nextWeek: bool = False):
+    def __init__(self, days: list[Schedule.Day], nextWeek: bool = False):
         self.days = days
         self.nextWeek = nextWeek
 
         self.insert_missing_days()
 
+    def __str__(self) -> str:
+        return f"Schedule(Days: {[(day.nameShort, day.date) for day in self.days]}, NextWeek: {self.nextWeek})"
+
+    def __eq__(self, other: Schedule) -> bool:
+        if not (self.nextWeek == other.nextWeek):
+            return False
+        for day1, day2 in zip(self.days, other.days):
+            if day1 != day2:
+                return False
+        return True
+
     class Day:
-        def __init__(self, lessons: list, weekDay: int, date: str):
+        def __init__(self, lessons: list[Schedule.Lesson], weekDay: int, date: str):
             self.lessons = lessons
             self.weekDay = weekDay
             self.nameShort = Schedule.DAYS_REVERSED[weekDay]
@@ -40,6 +53,17 @@ class Schedule:
             for lesson in self.lessons:
                 if lesson.empty is False:
                     self.empty = False
+
+        def __str__(self) -> str:
+            return f"Day(WeekDay: {self.weekDay}, NameShort: {self.nameShort}, Date: {self.date}, Lessons(subjects): {[lesson.subject for lesson in self.lessons]})"
+
+        def __eq__(self, other: Schedule.Day) -> bool:
+            if not (self.weekDay == other.weekDay and self.nameShort == other.nameShort and self.date == other.date):
+                return False
+            for lesson1, lesson2 in zip(self.lessons, other.lessons):
+                if lesson1 != lesson2:
+                    return False
+            return True
 
         def render(
             self,
@@ -94,6 +118,18 @@ class Schedule:
             self.empty = False
             if self.subject is None:
                 self.empty = True
+
+        def __str__(self) -> str:
+            return f"Lesson(Hour: {self.hour}, Subject: {self.subject}, Classroom: {self.classroom}, Teacher: {self.teacher}, ChangeInfo: {self.changeInfo})"
+
+        def __eq__(self, other: Schedule.Lesson) -> bool:
+            return (
+                self.hour == other.hour
+                and self.subject == other.subject
+                and self.classroom == other.classroom
+                and self.teacher == other.teacher
+                and self.changeInfo == other.changeInfo
+            )
 
         def render(
             self,
@@ -161,9 +197,9 @@ class Schedule:
         for weekDay in range(end, 4):
             self.days.insert(weekDay + 1, Schedule.Day([Schedule.Lesson(i) for i in range(12)], weekDay, None))
 
-    # Returns a Schedule object with the exctracted information
     @staticmethod
-    async def get_schedule(nextWeek: bool, client: discord.Client):
+    async def request_schedule(nextWeek: bool, client: discord.Client) -> BeautifulSoup:
+        """Returns a BeautifulSoup object from response of the schedule page"""
         # Gets response from the server
         session = await login(client)
         # If bakalari server is down
@@ -180,7 +216,11 @@ class Schedule:
         # Making an BS html parser object from the response
         html = BeautifulSoup(await response.text(), "html.parser")
         await session.close()
+        return html
 
+    @staticmethod
+    def parse_schedule(html: BeautifulSoup, nextWeek: bool) -> Schedule:
+        """Parses a schedule object from the html"""
         scheduleDiv = html.find("div", {"id": "schedule"})
         # Gets the days from the schedule
         dayDivs = scheduleDiv.find_all("div", {"class": "day-row"})
@@ -245,6 +285,14 @@ class Schedule:
                 lessons.append(Schedule.Lesson(hour, subject, classroom, teacher, changeInfo))
             days.append(Schedule.Day(lessons, weekDay, date))
         return Schedule(days, nextWeek)
+
+    @staticmethod
+    async def get_schedule(nextWeek: bool, client: discord.Client) -> Schedule:
+        """Returns a Schedule object with the exctracted information"""
+        html = await Schedule.request_schedule(nextWeek, client)
+        if not html:
+            return None
+        return Schedule.parse_schedule(html, nextWeek)
 
     def render(
         self,

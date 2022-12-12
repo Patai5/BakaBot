@@ -1,988 +1,1470 @@
-<div id="schedule">
-	<div id="hours" class="flex">
-		<div class="day-name"></div>
 
-		<div class="item">
-			<div class="num">0</div>
-
-			<div class="hour">
-				<span class="from">7:05</span> - <span class="to">7:50</span>
-			</div>
-		</div>
 
-		<div class="item">
-			<div class="num">1</div>
+<!DOCTYPE html>
 
-			<div class="hour">
-				<span class="from">8:00</span> - <span class="to">8:45</span>
-			</div>
-		</div>
 
-		<div class="item">
-			<div class="num">2</div>
 
-			<div class="hour">
-				<span class="from">8:55</span> - <span class="to">9:40</span>
-			</div>
-		</div>
+<html>
+<body>
+        <main class="scroll_box tooltip-border">
 
-		<div class="item">
-			<div class="num">3</div>
+            <div id="schedule">
+                            <div class="day-row normal" style="height:87px;">
 
-			<div class="hour">
-				<span class="from">10:00</span> - <span class="to">10:45</span>
-			</div>
-		</div>
+                                <div class="">
 
-		<div class="item">
-			<div class="num">4</div>
+                                    <div class="clearfix">
 
-			<div class="hour">
-				<span class="from">10:55</span> - <span class="to">11:40</span>
-			</div>
-		</div>
+                                        <div class="day-name odd-name normal" style="height:87px;">
 
-		<div class="item">
-			<div class="num">5a</div>
+                                            <div>
 
-			<div class="hour">
-				<span class="from">11:50</span> - <span class="to">12:35</span>
-			</div>
-		</div>
+                                                po<br />
 
-		<div class="item">
-			<div class="num">5b</div>
+                                                <span>1.1.</span>
 
-			<div class="hour">
-				<span class="from">12:10</span> - <span class="to">12:55</span>
-			</div>
-		</div>
+                                            </div>
 
-		<div class="item">
-			<div class="num">6a</div>
+                                        </div>
 
-			<div class="hour">
-				<span class="from">12:45</span> - <span class="to">13:30</span>
-			</div>
-		</div>
 
-		<div class="item">
-			<div class="num">6b</div>
 
-			<div class="hour">
-				<span class="from">13:05</span> - <span class="to">13:50</span>
-			</div>
-		</div>
 
-		<div class="item">
-			<div class="num">7</div>
 
-			<div class="hour">
-				<span class="from">14:00</span> - <span class="to">14:45</span>
-			</div>
-		</div>
 
-		<div class="item">
-			<div class="num">8</div>
 
-			<div class="hour">
-				<span class="from">14:50</span> - <span class="to">15:35</span>
-			</div>
-		</div>
 
-		<div class="item">
-			<div class="num">9</div>
 
-			<div class="hour">
-				<span class="from">15:40</span> - <span class="to">16:25</span>
-			</div>
-		</div>
+                                                <!-- fixme: add info about lesson removal -->
 
-		<div class="item">
-			<div class="num">10</div>
 
-			<div class="hour">
-				<span class="from">16:30</span> - <span class="to">17:15</span>
-			</div>
-		</div>
-	</div>
 
-	<script id="atomTemplate" type="text/x-jsrender">
+                                                <span>
 
-		    <div class="flex flex--column">
+                                                    <div class='day-item  border-levy border-horni  normal' style="height:87px;">
 
-		    <span class="line">
+                                                        <div class="empty" style="height:87px;"></div>
 
-		        <span class="bold">{{:subjecttext}}</span>
+                                                    </div>
 
-		    </span>
+                                                </span>
 
-		    {{if (teacher||""!="")}}
 
-		    <span class="line">Učitel: <span class="bold">{{:teacher}}</span>
 
-		    </span>
+                                                <span>
 
-		    {{/if}}
+                                                    <div class='day-item  border-horni odd normal' style='height:87px;'>
 
-		<span class="line">Místnost: <span class="bold">{{:room}}</span>
+                                                        <div class="empty" style="height:87px;"></div>
 
-		</span>
+                                                    </div>
 
-		    {{if (group||""!="")}}
+                                                </span>
 
-		    <span class="line">Skupina: <span class="bold">{{:group}}</span>
 
-		    </span>
 
-		    {{/if}}
+                                                <!-- fixme: add info about lesson removal -->
 
-		{{if (theme||""!="")}}
 
-		    <span class="line">Téma:
 
-		        <span class="bold">{{:theme}}</span>
 
-		    </span>
 
-		    {{/if}}
 
-		{{if (notice||""!="")}}
+                                                <span>
 
-		    <span class="line">Poznámka:
+                                                    <div class='day-item  border-horni odd normal' style='height:87px;'>
 
-		        <span class="bold">{{:notice}}</span>
+                                                        <div class="empty" style="height:87px;"></div>
 
-		    </span>
+                                                    </div>
 
-		    {{/if}}
+                                                </span>
 
-		{{if (changeinfo)}}
 
-		    <span class="line">Změna:
 
-		        <span class="bold">{{:changeinfo}}</span>
+                                                <!-- fixme: add info about lesson removal -->
 
-		    </span>
 
-		    {{/if}}
 
-		{{if (homeworks.length!=0)}}
 
-		    {{if (homeworks.length > 1)}}
 
-		    <span class="line clear-items">{{else}}
 
-		    <span class="line">{{/if}}
 
-		        <span class="fl hw-label">DÚ:</span>
+                                                <span>
 
-		        {{for homeworks}}
+                                                    <div class='day-item  border-horni odd normal' style='height:87px;'>
 
-		            <span class='bold fl item hw-content'>{{:#data}}</span>
+                                                        <div class="empty" style="height:87px;"></div>
 
-		        {{/for}}
+                                                    </div>
 
-		    </span>
+                                                </span>
 
-		        {{/if}}
 
-		{{if (absencetext)}}
 
-		    <span class="line fl clear-left">Docházka:
+                                                <!-- fixme: add info about lesson removal -->
 
-		        <span class="bold">{{:absencetext}}</span>
 
-		    </span>
 
-		        {{/if}}
 
-		        {{if (identcode)}}
 
 
 
-		        <span class="line bubble-actions">
+                                                <span>
 
-		            <span>Akce:</span>
+                                                    <div class='day-item  border-horni odd normal' style='height:87px;'>
 
-		            <span>
+                                                        <div class="empty" style="height:87px;"></div>
 
+                                                    </div>
 
+                                                </span>
 
-		                    <a class="ico32-data-dokumentOko" href="vyuka.aspx?atomIdentCode={{:identcode}}" title="Přehled výuky"></a>
 
 
+                                                <!-- fixme: add info about lesson removal -->
 
-		            </span>
 
-		        </span>
 
-		        {{/if}}
 
-		        </div>
-	</script>
 
-	<script id="absentTemplate" type="text/x-jsrender">
 
-		    <span class="line">
 
-		        <span class="bold">{{:subjecttext}}</span>
 
-		    </span>
 
-		    {{if (notice||""!="")}}
 
-		    <span class="line">Informace:
 
-		        <span class="bold">{{:notice}}</span>
+                                                <!-- fixme: add info about lesson removal -->
 
-		    </span>
 
-		    {{/if}}
 
-		{{if (absentinfo)}}
+                                                <span>
 
-		    <span class="line">
+                                                    <div class='day-item  border-horni  normal' style="height:87px;">
 
-		        <span class="bold">{{:absentinfo}}</span>
+                                                        <div class="empty" style="height:87px;"></div>
 
-		    </span>
+                                                    </div>
 
-		    {{/if}}
+                                                </span>
 
-		{{if (removedinfo)}}
 
-		    <span class="line">
 
-		        <span class="bold">{{:removedinfo}}</span>
+                                                <span>
 
-		    </span>
+                                                    <div class='day-item  border-horni odd normal' style='height:87px;'>
 
-		    {{/if}}
-	</script>
+                                                        <div class="empty" style="height:87px;"></div>
 
-	<script id="removedTemplate" type="text/x-jsrender">
+                                                    </div>
 
-		    <span class="line">
+                                                </span>
 
-		        <span class="bold">{{:subjecttext}}</span>
 
-		    </span>
 
-		    {{if (notice||""!="")}}
+                                                <!-- fixme: add info about lesson removal -->
 
-		    <span class="line">Poznámka:
 
-		        <span class="bold bubble-item">{{:notice}}</span>
 
-		    </span>
 
-		    {{/if}}
 
-		{{if (absentinfo)}}
 
-		    <span class="line absentInfo">
 
-		        <span class="bold">{{:absentinfo}}</span>
 
-		    </span>
 
-		    {{/if}}
 
-		{{if (removedinfo)}}
 
-		    <span class="line removedInfo">
+                                                <!-- fixme: add info about lesson removal -->
 
-		        <span class="bold">{{:removedinfo}}</span>
 
-		    </span>
 
-		    {{/if}}
-	</script>
+                                                <span>
 
-	<div class="day-row normal" style="height: 87px">
-		<div class="">
-			<div class="clearfix">
-				<div class="day-name odd-name normal" style="height: 87px">
-					<div>
-						po<br />
+                                                    <div class='day-item  border-horni  normal' style="height:87px;">
 
-						<span>17.10.</span>
-					</div>
-				</div>
+                                                        <div class="empty" style="height:87px;"></div>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    </div>
 
-				<span>
-					<div
-						class="day-item border-levy border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                </span>
 
-				<span>
-					<div
-						class="day-item border-horni odd normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                <span>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    <div class='day-item  border-horni odd normal' style='height:87px;'>
 
-				<span>
-					<div
-						class="day-item border-horni odd normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                        <div class="empty" style="height:87px;"></div>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    </div>
 
-				<span>
-					<div
-						class="day-item border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                </span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                <!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<span>
-					<div
-						class="day-item border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
+                                                <!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-pravy border-horni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
-			</div>
-		</div>
-	</div>
+                                                <span>
 
-	<div class="day-row normal" style="height: 87px">
-		<div class="odd-day-row">
-			<div class="clearfix">
-				<div class="day-name odd-name normal" style="height: 87px">
-					<div>
-						út<br />
+                                                    <div class='day-item  border-horni  normal' style="height:87px;">
 
-						<span>18.10.</span>
-					</div>
-				</div>
+                                                        <div class="empty" style="height:87px;"></div>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    </div>
 
-				<span>
-					<div
-						class="day-item border-levy normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                </span>
 
-				<span>
-					<div class="day-item odd normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item odd normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                <!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item odd normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
+                                                <span>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    <div class='day-item  border-horni  normal' style="height:87px;">
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                        <div class="empty" style="height:87px;"></div>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    </div>
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                </span>
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
+                                                <!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-pravy normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
-			</div>
-		</div>
-	</div>
+                                                <span>
 
-	<div class="day-row normal" style="height: 87px">
-		<div class="">
-			<div class="clearfix">
-				<div class="day-name odd-name normal" style="height: 87px">
-					<div>
-						st<br />
+                                                    <div class='day-item  border-horni  normal' style="height:87px;">
 
-						<span>19.10.</span>
-					</div>
-				</div>
+                                                        <div class="empty" style="height:87px;"></div>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    </div>
 
-				<span>
-					<div
-						class="day-item border-levy normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                </span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
+                                                <!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                <span>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    <div class='day-item  border-pravy border-horni  normal' style="height:87px;">
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                        <div class="empty" style="height:87px;"></div>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    </div>
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                </span>
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
+                                    </div>
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                </div>
 
-				<!-- fixme: add info about lesson removal -->
+                            </div>
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                            <div class="day-row normal" style="height:87px;">
 
-				<!-- fixme: add info about lesson removal -->
+                                <div class="odd-day-row">
 
-				<span>
-					<div
-						class="day-item border-pravy normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
-			</div>
-		</div>
-	</div>
+                                    <div class="clearfix">
 
-	<div class="day-row normal" style="height: 87px">
-		<div class="odd-day-row">
-			<div class="clearfix">
-				<div class="day-name odd-name normal" style="height: 87px">
-					<div>
-						čt<br />
+                                        <div class="day-name odd-name normal" style="height:87px;">
 
-						<span>20.10.</span>
-					</div>
-				</div>
+                                            <div>
 
-				<!-- fixme: add info about lesson removal -->
+                                                út<br />
 
-				<span>
-					<div
-						class="day-item border-levy normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                <span>2.1.</span>
 
-				<span>
-					<div class="day-item odd normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                            </div>
 
-				<!-- fixme: add info about lesson removal -->
+                                        </div>
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item odd normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item odd normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
+                                                <!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                <span>
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                    <div class='day-item  border-levy  normal' style="height:87px;">
 
-				<!-- fixme: add info about lesson removal -->
+                                                        <div class="empty" style="height:87px;"></div>
 
-				<span>
-					<div class="day-item odd normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                    </div>
 
-				<!-- fixme: add info about lesson removal -->
+                                                </span>
 
-				<span>
-					<div class="day-item normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div class="day-item odd normal" style="height: 87px">
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                <span>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    <div class='day-item  border-levy  normal' style="height:87px;">
 
-				<!-- fixme: add info about lesson removal -->
+                                                        <div class="empty" style="height:87px;"></div>
 
-				<span>
-					<div
-						class="day-item border-pravy normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
-			</div>
-		</div>
-	</div>
+                                                    </div>
 
-	<div class="day-row normal" style="height: 87px">
-		<div class="">
-			<div class="clearfix">
-				<div class="day-name odd-name normal" style="height: 87px">
-					<div>
-						pá<br />
+                                                </span>
 
-						<span>21.10.</span>
-					</div>
-				</div>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-levy border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                <!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                <span>
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                    <div class='day-item  border-levy  normal' style="height:87px;">
 
-				<!-- fixme: add info about lesson removal -->
+                                                        <div class="empty" style="height:87px;"></div>
 
-				<!-- fixme: add info about lesson removal -->
+                                                    </div>
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                </span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
+                                                <!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
 
-				<span>
-					<div
-						class="day-item border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
 
-				<!-- fixme: add info about lesson removal -->
+                                                <span>
 
-				<span>
-					<div
-						class="day-item border-pravy border-spodni normal"
-						style="height: 87px"
-					>
-						<div class="empty" style="height: 87px"></div>
-					</div>
-				</span>
-			</div>
-		</div>
-	</div>
-</div>
+                                                    <div class='day-item  border-levy  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-levy  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-levy  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item   normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item   normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-levy  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item   normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item   normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item   normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-pravy  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <div class="day-row normal" style="height:87px;">
+
+                                <div class="">
+
+                                    <div class="clearfix">
+
+                                        <div class="day-name odd-name normal" style="height:87px;">
+
+                                            <div>
+
+                                                st<br />
+
+                                                <span>3.1.</span>
+
+                                            </div>
+
+                                        </div>
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-levy  normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item   normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item   normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item   normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item   normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-pravy  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <div class="day-row normal" style="height:87px;">
+
+                                <div class="odd-day-row">
+
+                                    <div class="clearfix">
+
+                                        <div class="day-name odd-name normal" style="height:87px;">
+
+                                            <div>
+
+                                                čt<br />
+
+                                                <span>4.1.</span>
+
+                                            </div>
+
+                                        </div>
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-levy  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item   normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-pravy  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+
+                            <div class="day-row normal" style="height:87px;">
+
+                                <div class="">
+
+                                    <div class="clearfix">
+
+                                        <div class="day-name odd-name normal" style="height:87px;">
+
+                                            <div>
+
+                                                pá<br />
+
+                                                <span>5.1.</span>
+
+                                            </div>
+
+                                        </div>
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-levy border-spodni  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni odd normal' style='height:87px;'>
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-spodni  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+
+
+
+
+                                                <!-- fixme: add info about lesson removal -->
+
+
+
+                                                <span>
+
+                                                    <div class='day-item  border-pravy border-spodni  normal' style="height:87px;">
+
+                                                        <div class="empty" style="height:87px;"></div>
+
+                                                    </div>
+
+                                                </span>
+
+
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+                    </main>
+
+        </body>
+
+</html>
+
