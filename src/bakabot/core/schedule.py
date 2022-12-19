@@ -20,7 +20,7 @@ class Schedule:
     for key, value in zip(DAYS.keys(), DAYS.values()):
         DAYS_REVERSED.update({value: key})
 
-    def __init__(self, days: list[Schedule.Day], nextWeek: bool = False):
+    def __init__(self, days: list[Schedule.Day], nextWeek: bool = False) -> Schedule:
         self.days = days
         self.nextWeek = nextWeek
 
@@ -38,27 +38,42 @@ class Schedule:
         return True
 
     class Day:
-        def __init__(self, lessons: list[Schedule.Lesson], weekDay: int, date: str):
+        def __init__(self, lessons: list[Schedule.Lesson], weekDay: int, date: str) -> Schedule.Day:
             self.lessons = lessons
             self.weekDay = weekDay
             self.nameShort = Schedule.DAYS_REVERSED[weekDay]
             self.date = date
+            self.lessons = lessons
 
+        @property
+        def lessons(self) -> list[Schedule.Lesson]:
+            return self._lessons
+
+        @lessons.setter
+        def lessons(self, lessons: list[Schedule.Lesson]):
             # Adds empty lessons if there have been none given
             if lessons == []:
                 lessons = [Schedule.Lesson(i) for i in range(12)]
+            self._lessons = lessons
 
-            # Sets the empty attribute to True if every lesson is empty else False
-            self.empty = True
-            for lesson in self.lessons:
-                if lesson.empty is False:
-                    self.empty = False
+        @property
+        def empty(self) -> bool:
+            return any([lesson.empty for lesson in self.lessons])
+
+        def change_lesson(self, index: int, lesson: Schedule.Lesson):
+            """Changes the lesson at the given index to the given lesson. This function is needed for property setter"""
+            self._lessons[index] = lesson
 
         def __str__(self) -> str:
-            return f"Day(WeekDay: {self.weekDay}, NameShort: {self.nameShort}, Date: {self.date}, Lessons(subjects): {[lesson.subject for lesson in self.lessons]})"
+            return f"Day(WeekDay: {self.weekDay}, NameShort: {self.nameShort}, Date: {self.date}, Empty: {self.empty})"
 
         def __eq__(self, other: Schedule.Day) -> bool:
-            if not (self.weekDay == other.weekDay and self.nameShort == other.nameShort and self.date == other.date):
+            if not (
+                self.weekDay == other.weekDay
+                and self.nameShort == other.nameShort
+                and self.date == other.date
+                and self.empty == other.empty
+            ):
                 return False
             for lesson1, lesson2 in zip(self.lessons, other.lessons):
                 if lesson1 != lesson2:
@@ -106,18 +121,26 @@ class Schedule:
             changeInfo: Union[str, None] = None,
         ):
             self.hour = hour
-            self.subject = subject
             self.classroom = classroom
             self.teacher = teacher
             self.changeInfo = changeInfo
+            self.empty = None
+            self.subject = subject
 
+        @property
+        def subject(self) -> str:
+            return self._subject
+
+        @subject.setter
+        def subject(self, name: bool):
+            self._subject = name
+
+            # Sets the short name of the subject
             self.subjectShort = Grades.SUBJECTS_REVERSED.get(self.subject)
             if self.subjectShort is None:
                 self.subjectShort = self.subject
 
-            self.empty = False
-            if self.subject is None:
-                self.empty = True
+            self.empty = bool(self.subject)
 
         def __str__(self) -> str:
             return f"Lesson(Hour: {self.hour}, Subject: {self.subject}, Classroom: {self.classroom}, Teacher: {self.teacher}, ChangeInfo: {self.changeInfo})"
@@ -258,17 +281,24 @@ class Schedule:
                 # Gets the lesson detail for non-empty lessons
                 lessonDetail = json.loads(lesson.attrs["data-detail"])
 
-                # Removed lesson
-                if lessonDetail["type"] == "removed":
-                    lessons.append(Schedule.Lesson(hour, changeInfo=lessonDetail.get("removedinfo")))
-                    continue
+                # Change info
+                changeInfo = lessonDetail.get("changeinfo")
+                if not changeInfo:
+                    changeInfo = lessonDetail.get("removedinfo")
+                if changeInfo == "":
+                    changeInfo = None
 
                 # Speacial case of the lesson being half empty
-                if "green" in lesson.attrs["class"]:
-                    lessons.append(Schedule.Lesson(hour, lessonDetail.get("absentinfo")))
+                if lessonDetail.get("absentinfo"):
+                    lessons.append(Schedule.Lesson(hour, lessonDetail.get("absentinfo"), changeInfo=changeInfo))
                     continue
 
-                # Normal or removed lesson
+                # Removed lesson
+                if lessonDetail.get("type") == "removed":
+                    lessons.append(Schedule.Lesson(hour, changeInfo=changeInfo))
+                    continue
+
+                # Normal or changed lesson
                 # Subject
                 subject = lessonDetail.get("subjecttext")
                 if subject is not None:
@@ -277,10 +307,6 @@ class Schedule:
                 classroom = lessonDetail.get("room")
                 # Teacher
                 teacher = lessonDetail.get("teacher")
-                # Change info
-                changeInfo = lessonDetail.get("changeinfo")
-                if changeInfo == "":
-                    changeInfo = None
                 # Adds the lesson to the list
                 lessons.append(Schedule.Lesson(hour, subject, classroom, teacher, changeInfo))
             days.append(Schedule.Day(lessons, weekDay, date))

@@ -1,4 +1,3 @@
-import asyncio
 import os
 
 import pytest
@@ -12,14 +11,28 @@ class TestSchedules:
 
     only4thLessons = Schedule([], False)
     for day in only4thLessons.days:
-        day.empty = False
-        lesson = day.lessons[3]
-        lesson.empty = False
-        lesson.subject = f"Subject{day.weekDay}"
-        lesson.classroom = f"Room{day.weekDay}"
-        lesson.teacher = f"Mr.{day.weekDay}"
+        day.lessons[3] = Schedule.Lesson(3, f"Subject{day.weekDay}", f"Room{day.weekDay}", f"Mr.{day.weekDay}")
 
-    schedules = [emptySchedule, only4thLessons]
+    normalSchedule = Schedule([], False)
+    # Monday
+    normalSchedule.days[0].lessons[1] = Schedule.Lesson(1, "Jazyk francouzský", "123", "Mr. Fj")
+    normalSchedule.days[0].lessons[2] = Schedule.Lesson(2, "Český jazyk a literatura", "1", "Mr. Cj")
+    normalSchedule.days[0].lessons[3] = Schedule.Lesson(3, "Matematika", "2", "M")
+    normalSchedule.days[0].lessons[4] = Schedule.Lesson(4, "Matematika", "2", "M")
+    normalSchedule.days[0].lessons[6] = Schedule.Lesson(6, "Informatika a výpočetní technika", "321", "XX")
+    # Tuesday is empty
+    # Wednesday
+    normalSchedule.days[2].lessons[0] = Schedule.Lesson(0, "Green", None, None)
+    normalSchedule.days[2].lessons[1] = Schedule.Lesson(1, "Red", None, None, "Přesun na 3.1., 3. hod (Bi, Mr. X)")
+    normalSchedule.days[2].lessons[2] = Schedule.Lesson(2, "Biologie", "1", "Mr. X", "Suplování (Mr. Z, 2)")
+    normalSchedule.days[2].lessons[3] = Schedule.Lesson(3, "Dějepis", "abc", "Mr. X")
+    # Thursday is empty but because removed
+    normalSchedule.days[3].lessons[4] = Schedule.Lesson(4, None, None, None, "Zrušeno (Fy, XX)")
+    # Friday
+    normalSchedule.days[4].lessons[0] = Schedule.Lesson(0, None, None, None, "Přesun na 5.1., 1. hod (D, Mr. X)")
+    normalSchedule.days[4].lessons[1] = Schedule.Lesson(1, "Dějepis", "1", "Mr. X", "Přesun z 5.1., 0")
+
+    schedules = [emptySchedule, only4thLessons, normalSchedule]
     for schedule in schedules:
         for i, day in enumerate(schedule.days, start=1):
             day.date = f"{i}.1."
@@ -33,35 +46,25 @@ def open_schedule(filename: str, nextWeek: bool) -> Schedule:
         return Schedule.parse_schedule(BeautifulSoup(f.read(), "html.parser"), nextWeek)
 
 
+def print_schedule_differences(schedule1: Schedule, schedule2: Schedule):
+    for day1, day2 in zip(schedule1.days, schedule2.days):
+        if day1 != day2:
+            print(f"Day {day1.weekDay} is different:")
+            print(f"\tInput:    {day1}\n\tExpected: {day2}\n")
+            for lesson1, lesson2 in zip(day1.lessons, day2.lessons):
+                if lesson1 != lesson2:
+                    print(f"\tInput:    {lesson1}\n\tExpected: {lesson2}\n")
+
+
 empty_schedule = open_schedule("schedule_empty.html", False)
-
-
-@pytest.mark.parametrize(
-    "lesson, expected",
-    [
-        (empty_schedule.days[0].lessons[0], TestSchedules.emptySchedule.days[0].lessons[0]),
-        (empty_schedule.days[0].lessons[4], TestSchedules.emptySchedule.days[0].lessons[4]),
-        (empty_schedule.days[4].lessons[10], TestSchedules.emptySchedule.days[4].lessons[10]),
-    ],
-)
-def test_multi_empty_schedule_lessons(lesson: Schedule.Lesson, expected: Schedule.Lesson):
-    print(f"Input: {lesson}\nExpected: {expected}")
-    assert lesson == expected
-
-
-@pytest.mark.parametrize(
-    "day, expected",
-    [
-        (empty_schedule.days[0], TestSchedules.emptySchedule.days[0]),
-        (empty_schedule.days[2], TestSchedules.emptySchedule.days[2]),
-        (empty_schedule.days[4], TestSchedules.emptySchedule.days[4]),
-    ],
-)
-def test_multi_empty_schedule_days(day: Schedule.Day, expected: Schedule.Day):
-    print(f"Input: {day}\nExpected: {expected}")
-    assert day == expected
+normal_schedule = open_schedule("schedule_normal.html", False)
 
 
 def test_empty_schedule():
-    print(f"Input: {empty_schedule}\nExpected: {TestSchedules.emptySchedule}")
+    print_schedule_differences(normal_schedule, TestSchedules.normalSchedule)
     assert empty_schedule == TestSchedules.emptySchedule
+
+
+def test_schedule():
+    print_schedule_differences(normal_schedule, TestSchedules.normalSchedule)
+    assert normal_schedule == TestSchedules.normalSchedule
