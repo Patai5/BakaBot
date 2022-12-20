@@ -30,6 +30,8 @@ class Schedule:
         return f"Schedule(Days: {[(day.nameShort, day.date) for day in self.days]}, NextWeek: {self.nextWeek})"
 
     def __eq__(self, other: Schedule) -> bool:
+        if not isinstance(other, Schedule):
+            return False
         if not (self.nextWeek == other.nextWeek):
             return False
         for day1, day2 in zip(self.days, other.days):
@@ -43,7 +45,6 @@ class Schedule:
             self.weekDay = weekDay
             self.nameShort = Schedule.DAYS_REVERSED[weekDay]
             self.date = date
-            self.lessons = lessons
 
         @property
         def lessons(self) -> list[Schedule.Lesson]:
@@ -68,6 +69,8 @@ class Schedule:
             return f"Day(WeekDay: {self.weekDay}, NameShort: {self.nameShort}, Date: {self.date}, Empty: {self.empty})"
 
         def __eq__(self, other: Schedule.Day) -> bool:
+            if not isinstance(other, Schedule.Day):
+                return False
             if not (
                 self.weekDay == other.weekDay
                 and self.nameShort == other.nameShort
@@ -132,20 +135,22 @@ class Schedule:
             return self._subject
 
         @subject.setter
-        def subject(self, name: bool):
+        def subject(self, name: Union[str, None]):
             self._subject = name
 
             # Sets the short name of the subject
-            self.subjectShort = Grades.SUBJECTS_REVERSED.get(self.subject)
+            self.subjectShort = Grades.SUBJECTS_REVERSED.get(name)
             if self.subjectShort is None:
-                self.subjectShort = self.subject
+                self.subjectShort = name
 
-            self.empty = bool(self.subject)
+            self.empty = not bool(name)
 
         def __str__(self) -> str:
             return f"Lesson(Hour: {self.hour}, Subject: {self.subject}, Classroom: {self.classroom}, Teacher: {self.teacher}, ChangeInfo: {self.changeInfo})"
 
         def __eq__(self, other: Schedule.Lesson) -> bool:
+            if not isinstance(other, Schedule.Lesson):
+                return False
             return (
                 self.hour == other.hour
                 and self.subject == other.subject
@@ -216,9 +221,9 @@ class Schedule:
             end = 4
 
         for weekDay in range(start):
-            self.days.insert(weekDay, Schedule.Day([Schedule.Lesson(i) for i in range(12)], weekDay, None))
+            self.days.insert(weekDay, Schedule.Day([], weekDay, None))
         for weekDay in range(end, 4):
-            self.days.insert(weekDay + 1, Schedule.Day([Schedule.Lesson(i) for i in range(12)], weekDay, None))
+            self.days.insert(weekDay + 1, Schedule.Day([], weekDay, None))
 
     @staticmethod
     async def request_schedule(nextWeek: bool, client: discord.Client) -> BeautifulSoup:
