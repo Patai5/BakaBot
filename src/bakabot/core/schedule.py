@@ -59,7 +59,7 @@ class Schedule:
 
         @property
         def empty(self) -> bool:
-            return any([lesson.empty for lesson in self.lessons])
+            return all([lesson.empty for lesson in self.lessons])
 
         def change_lesson(self, index: int, lesson: Schedule.Lesson):
             """Changes the lesson at the given index to the given lesson. This function is needed for property setter"""
