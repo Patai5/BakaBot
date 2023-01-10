@@ -89,8 +89,10 @@ class Admin(commands.Cog):
 
         return commands.check(predicate)
 
-    async def user_not_admin(ctx):
-        await ctx.respond("Only admins can use this command!")
+    async def user_not_admin(ctx: discord.ApplicationContext, error: discord.DiscordException):
+        if not isinstance(error, discord.errors.CheckFailure):
+            raise error
+        await ctx.respond("Only admins can use this command! " + str(ctx.author.id))
 
     @admin_user()
     @group.command(name="update_schedule_database", description="Updates the schedule database")
@@ -102,13 +104,13 @@ class Admin(commands.Cog):
         if schedule1 is None or schedule2 is None:
             await ctx.followup.send("Bakalari's server is currently down.")
         else:
-            write_db("schedule1", Schedule.json_dumps(schedule1))
-            write_db("schedule2", Schedule.json_dumps(schedule2))
+            write_db("schedule1", schedule1)
+            write_db("schedule2", schedule2)
             await ctx.followup.send("Updated schedule database")
 
     @update_schedule_database.error
     async def update_schedule_database_error(self, ctx, error):
-        await Admin.user_not_admin(ctx)
+        await Admin.user_not_admin(ctx, error)
 
     @admin_user()
     @group.command(name="update_grades_database", description="Updates the grades database")
@@ -124,7 +126,7 @@ class Admin(commands.Cog):
 
     @update_grades_database.error
     async def update_grades_database_error(self, ctx, error):
-        await Admin.user_not_admin(ctx)
+        await Admin.user_not_admin(ctx, error)
 
 
 class Settings(commands.Cog):
@@ -163,7 +165,7 @@ class Settings(commands.Cog):
 
     @schedule_settings_command.error
     async def schedule_settings_command_error(self, ctx, error):
-        await Admin.user_not_admin(ctx)
+        await Admin.user_not_admin(ctx, error)
 
     channels = ["Schedule", "Grades", "Predictor", "Reminder"]
 
@@ -187,7 +189,7 @@ class Settings(commands.Cog):
 
     @channel_schedule_command.error
     async def channel_schedule_command_error(self, ctx, error):
-        await Admin.user_not_admin(ctx)
+        await Admin.user_not_admin(ctx, error)
 
 
 COGS = [General, Settings, Admin]
