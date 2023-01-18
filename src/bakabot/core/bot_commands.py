@@ -76,6 +76,33 @@ class General(commands.Cog):
         await ctx.respond("Sending predictor embed message", delete_after=0)
         await Predictor.predict_embed(subject, ctx, self.client)
 
+    @commands.slash_command(name="grade_average", description="Gets the average grade for a given subject")
+    async def grades_command(
+        self,
+        ctx,
+        subject: discord.Option(
+            str,
+            name="subject",
+            description="Subject to get the average for",
+            choices=[
+                discord.OptionChoice(name=val, value=key)
+                for key, val in sorted(Grades.SUBJECTS.items(), key=lambda item: item[1])
+            ],
+        ),
+    ):
+        subjectLongName = Grades.SUBJECTS.get(subject)
+        average = Grades.db_grades().by_subject(subject).average()
+        if average == None:
+            await ctx.respond(f'Pro předmět "{subjectLongName}" nemáte dosud žádné známky.')
+            return
+
+        embed = discord.Embed()
+        embed.set_author(name=f"Průměr z {subjectLongName}:")
+        embed.title = str(average)
+        embed.color = discord.Color.from_rgb(0, 255, 255)
+
+        await ctx.respond(embed=embed)
+
 
 class Admin(commands.Cog):
     def __init__(self, client: discord.Bot):

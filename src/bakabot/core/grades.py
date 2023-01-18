@@ -89,7 +89,8 @@ class Grades:
 
     def average(self):
         """Returns the average grade from the self Grades\n
-        (Calculated with weights in mind)"""
+        (Calculated with weights in mind)\n
+        returns None if there are no grades"""
         # Total amount of grades
         gradesTotal = 0
         # Total amount of grades included with their weights
@@ -98,9 +99,13 @@ class Grades:
         for grade in self.grades:
             gradesTotal += grade.weight
             gradesWeightsTotal += grade.grade * grade.weight
+
+        # Returns None if there are no grades
+        if gradesTotal == 0:
+            return None
+
         # Rounds the average and returns it
-        average = self.round_average(gradesWeightsTotal / gradesTotal)
-        return average
+        return self.round_average(gradesWeightsTotal / gradesTotal)
 
     def future_average(self, grade):
         """Returns the possible future average with the given grade"""
