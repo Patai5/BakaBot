@@ -23,7 +23,7 @@ class Grades:
 
     class Grade:
         def __init__(
-            self, id: str, caption: str, subject: str, weight: int, note: str, date: list, grade: float or int
+            self, id: str, caption: str, subject: str, weight: int, note: str, date: list, grade: float | str
         ):
             self.id = id
             self.caption = caption
@@ -34,6 +34,12 @@ class Grades:
             self.grade = grade
 
         def grade_string(self):
+            """Returns the grade as a string with a minus if it's a decimal number"""
+            # If the grade is a string, we can just return it
+            if isinstance(self.grade, str):
+                return self.grade
+
+            # If the grade is a decimal number, we add a minus to it
             if self.grade % 1 != 0:
                 return str(int(self.grade)) + "-"
             else:
@@ -59,17 +65,28 @@ class Grades:
             # Weight
             embed.description = f"Váha: {self.weight}{captionsNotes}"
 
-            # Current and future average
-            content = f"Průměr z {self.subject}: {Grades.round_average((grades).by_subject(self.subject).average())}"
+            # Current average
+            gradesFromSubject = grades.by_subject(self.subject)
+            if gradesFromSubject.average() is None:
+                # If there are no grades for the subject with a number grade
+                content = f"Průměr z {self.subject}: *nelze spočítat (žádné známky s číselným ohodnocením)*"
+            else:
+                # Normal average calculation
+                content = f"Průměr z {self.subject}: {Grades.round_average(grades.by_subject(self.subject).average())}"
             embed.add_field(name="\u200b", value=content, inline=False)
 
             # Date
             embed.timestamp = datetime.datetime(*self.date)
 
-            # Color of the embed from green (good) to red (bad) determining how bad the grade is
-            green = int(255 / 4 * (self.grade - 1))
-            red = int(255 - 255 / 4 * (self.grade - 1))
-            embed.color = discord.Color.from_rgb(green, red, 0)
+            # Color of the embed
+            if isinstance(self.grade, str):
+                # If the grade is not a number, the color is simply gray
+                embed.color = discord.Color.from_rgb(128, 128, 128)
+            else:
+                # Color of the embed from green (good) to red (bad) determining how bad the grade is
+                green = int(255 / 4 * (self.grade - 1))
+                red = int(255 - 255 / 4 * (self.grade - 1))
+                embed.color = discord.Color.from_rgb(green, red, 0)
 
             # Returns the embed
             return embed
@@ -97,6 +114,9 @@ class Grades:
         gradesWeightsTotal = 0
 
         for grade in self.grades:
+            # If the grade is not a number, we skip it
+            if isinstance(grade.grade, str):
+                continue
             gradesTotal += grade.weight
             gradesWeightsTotal += grade.grade * grade.weight
 
@@ -245,11 +265,12 @@ class Grades:
                 note = None
             # Parses the date into list of [Year, Month, Day]
             date = [int(date) for date in re.search(r"(\d{4})-0?(\d{1,2})-0?(\d{1,2})", date).groups((1, 2, 3))]
-            # Parses the grade an int or a float because of this "-" symbol
-            if "-" in grade:
-                grade = int(grade.replace("-", "")) + 0.5
-            else:
-                grade = int(grade)
+            # Parses the grade as string or a float
+            if re.search(r"^\d-?$", grade):
+                if "-" in grade:
+                    grade = int(grade[0]) + 0.5
+                else:
+                    grade = int(grade)
 
             # Appends the grade to grades
             grades.grades.append(Grades.Grade(id, caption, subject, weight, note, date, grade))
