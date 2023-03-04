@@ -509,5 +509,13 @@ class ChangeDetector:
     async def start_detecting_changes(interval: int, client: discord.Client):
         """Starts an infinite loop for checking changes in the schedule"""
         while True:
-            await ChangeDetector.detect_changes(client)
+            try:
+                await ChangeDetector.detect_changes(client)
+            except Exception as e:
+                print("ERROR:", e)
+
+                # Notifies the user
+                unknownErrorMessage = "An unknown error occured while checking for changes in schedule."
+                await client.get_channel(read_db("channelSchedule")).send(unknownErrorMessage)
+                break
             await asyncio.sleep(interval)

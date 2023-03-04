@@ -370,5 +370,13 @@ class Grades:
     async def start_detecting_changes(interval: int, client: discord.Client):
         """Starts an infinite loop for checking changes in the grades"""
         while True:
-            await Grades.detect_changes(client)
+            try:
+                await Grades.detect_changes(client)
+            except Exception as e:
+                print("ERROR:", e)
+
+                # Notifies the user
+                unknownErrorMessage = "An unknown error occured while checking for changes in grades."
+                await client.get_channel(read_db("channelGrades")).send(unknownErrorMessage)
+                break
             await asyncio.sleep(interval)
