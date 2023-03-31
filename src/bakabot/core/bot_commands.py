@@ -60,7 +60,7 @@ class General(commands.Cog):
         )
 
     @commands.slash_command(name="grade_prediction", description="Makes a prediction of your grades")
-    async def grades_command(
+    async def grades_prediction(
         self,
         ctx,
         subject: discord.Option(
@@ -77,7 +77,7 @@ class General(commands.Cog):
         await Predictor.predict_embed(subject, ctx, self.client)
 
     @commands.slash_command(name="grade_average", description="Gets the average grade for a given subject")
-    async def grades_command(
+    async def grades_average(
         self,
         ctx,
         subject: discord.Option(
