@@ -12,9 +12,9 @@ from bakabot.utils import first_time_setup
 from bakabot.utils.utils import env_load, os_environ
 
 logger = logging.getLogger("discord")
-logger.setLevel(level=logging.DEBUG)
+logger.setLevel(level=logging.INFO)
 handler = logging.FileHandler(filename="discord.log", encoding="utf-8", mode="w")
-handler.setFormatter(logging.Formatter("%(asctime)s:%(levelname)s:%(name)s: %(message)s"))
+handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s [%(filename)s:%(lineno)d] %(message)s"))
 logger.addHandler(handler)
 
 

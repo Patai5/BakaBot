@@ -189,6 +189,13 @@ def rand_rgb():
     return random.randint(0, 255), random.randint(0, 255), random.randint(0, 255)
 
 
+def log_html(html: str, filename: str):
+    """Logs the html into a file"""
+    timeIdentifier = datetime.datetime.now().strftime("%H-%M")
+    with open(f"logs/{filename}-{timeIdentifier}.html", "w", encoding="utf-8") as f:
+        f.write(html)
+
+
 class MessageTimers:
     timers = []
     timers_reactions = []

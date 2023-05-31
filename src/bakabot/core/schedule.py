@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 
 from bakabot.core.grades import Grades
 from bakabot.core.table import Table
-from bakabot.utils.utils import login, rand_rgb, read_db, request, write_db
+from bakabot.utils.utils import log_html, login, rand_rgb, read_db, request, write_db
 
 
 class Schedule:
@@ -241,8 +241,13 @@ class Schedule:
         # If bakalari server is down
         if not response:
             return None
+        responseHtml = await response.text()
+
+        loggingName = "schedule"
+        log_html(responseHtml, loggingName)
+
         # Making an BS html parser object from the response
-        html = BeautifulSoup(await response.text(), "html.parser")
+        html = BeautifulSoup(responseHtml, "html.parser")
         await session.close()
         return html
 
@@ -434,9 +439,9 @@ class ChangeDetector:
         """Finds any changes in the schedule"""
         changedlist = []
         # Iterates over the days
-        for (dayOld, dayNew) in zip(scheduleOld.days, scheduleNew.days):
+        for dayOld, dayNew in zip(scheduleOld.days, scheduleNew.days):
             # Iterates over the lessons and looks for any differences
-            for (lessonOld, lessonNew) in zip(dayOld.lessons, dayNew.lessons):
+            for lessonOld, lessonNew in zip(dayOld.lessons, dayNew.lessons):
                 changed = ChangeDetector.Changed(lessonOld, lessonNew, dayOld)
                 # The actuall differences that we are looking for
                 if (

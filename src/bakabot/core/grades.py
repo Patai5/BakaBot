@@ -7,14 +7,7 @@ import re
 import discord
 from bs4 import BeautifulSoup
 
-from bakabot.utils.utils import (
-    MessageTimers,
-    get_sec,
-    login,
-    read_db,
-    request,
-    write_db,
-)
+from bakabot.utils.utils import MessageTimers, get_sec, log_html, login, read_db, request, write_db
 
 
 class Grades:
@@ -226,8 +219,13 @@ class Grades:
         # If bakalari server is down
         if not response:
             return None
+        responseHtml = await response.text()
+
+        loggingName = "grades"
+        log_html(responseHtml, loggingName)
+
         # Making an BS html parser object from the response
-        html = BeautifulSoup(await response.text(), "html.parser")
+        html = BeautifulSoup(responseHtml, "html.parser")
         await session.close()
 
         # Web scraping the response
@@ -320,6 +318,7 @@ class Grades:
     @staticmethod
     async def detect_changes(client: discord.Client):
         """Detects changes in grades and sends them to discord"""
+
         # Finds and returns the actual changes
         def find_changes(gradesOld: Grades, gradesNew: Grades):
             newGrades = []
