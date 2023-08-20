@@ -1,0 +1,12 @@
+.vscode
+
+db
+temp
+logs
+env
+
+.env
+*.log
+*.egg-info
+
+__pycache__
