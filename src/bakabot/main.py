@@ -6,7 +6,7 @@ import discord
 from bakabot.core.bot_commands import COGS, Reactions, Responses
 from bakabot.core.grades import Grades
 from bakabot.core.reminder import Reminder
-from bakabot.core.schedule import ChangeDetector
+from bakabot.core.schedule.schedule import ChangeDetector
 from bakabot.html2img.html2img import Html2img
 from bakabot.utils import first_time_setup
 from bakabot.utils.utils import env_load, os_environ

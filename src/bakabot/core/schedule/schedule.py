@@ -4,16 +4,15 @@ import asyncio
 import copy
 import json
 import re
-from typing import Union
 
 import discord
 from bs4 import BeautifulSoup
-
-from bakabot.core.grades import Grades
-from bakabot.core.table import Table
-from bakabot.utils.utils import log_html, login, rand_rgb, read_db, request, write_db
+from core.schedule.day import Day
+from core.schedule.lesson import Lesson
 
 from bakabot.constants import NUM_OF_LESSONS_IN_DAY, SCHOOL_DAYS_IN_WEEK
+from bakabot.core.table import Table
+from bakabot.utils.utils import log_html, login, rand_rgb, read_db, request, write_db
 
 
 class Schedule:
@@ -22,7 +21,7 @@ class Schedule:
     for key, value in zip(DAYS.keys(), DAYS.values()):
         DAYS_REVERSED.update({value: key})
 
-    def __init__(self, days: list[Schedule.Day], nextWeek: bool = False) -> Schedule:
+    def __init__(self, days: list[Day], nextWeek: bool = False) -> Schedule:
         self.days = days
         self.nextWeek = nextWeek
 
@@ -40,142 +39,6 @@ class Schedule:
             if day1 != day2:
                 return False
         return True
-
-    class Day:
-        def __init__(self, lessons: list[Schedule.Lesson], weekDay: int, date: str) -> Schedule.Day:
-            self.lessons = lessons
-            self.weekDay = weekDay
-            self.nameShort = Schedule.DAYS_REVERSED[weekDay]
-            self.date = date
-
-        @property
-        def lessons(self) -> list[Schedule.Lesson]:
-            return self._lessons
-
-        @lessons.setter
-        def lessons(self, lessons: list[Schedule.Lesson]):
-            # Adds empty lessons if there have been none given
-            if lessons == []:
-                lessons = [Schedule.Lesson(i) for i in range(NUM_OF_LESSONS_IN_DAY)]
-            self._lessons = lessons
-
-        @property
-        def empty(self) -> bool:
-            return all([lesson.empty for lesson in self.lessons])
-
-        def change_lesson(self, index: int, lesson: Schedule.Lesson):
-            """Changes the lesson at the given index to the given lesson. This function is needed for property setter"""
-            self._lessons[index] = lesson
-
-        def __str__(self) -> str:
-            return f"Day(WeekDay: {self.weekDay}, NameShort: {self.nameShort}, Date: {self.date}, Empty: {self.empty})"
-
-        def __eq__(self, other: Schedule.Day) -> bool:
-            if not isinstance(other, Schedule.Day):
-                return False
-            if not (
-                self.weekDay == other.weekDay
-                and self.nameShort == other.nameShort
-                and self.date == other.date
-                and self.empty == other.empty
-            ):
-                return False
-            for lesson1, lesson2 in zip(self.lessons, other.lessons):
-                if lesson1 != lesson2:
-                    return False
-            return True
-
-        def render(
-            self,
-            showDay: bool = None,
-            showClassroom: bool = None,
-            renderStyle: Table.Style = None,
-            file_name: str = "day.png",
-        ):
-            """Renders the day as an rendered image"""
-            return Schedule([self]).render(
-                self.weekDay + 1,
-                self.weekDay + 1,
-                showDay=showDay,
-                showClassroom=showClassroom,
-                renderStyle=renderStyle,
-                file_name=file_name,
-            )
-
-        # Gets the first non empty lesson of the day. If none then returns None
-        def first_non_empty_lesson(self):
-            for lesson in self.lessons:
-                if not lesson.empty:
-                    return lesson
-            return None
-
-        # Gets the last non empty lesson of the day. If none then returns None
-        def last_non_empty_lesson(self):
-            for lesson in reversed(self.lessons):
-                if not lesson.empty:
-                    return lesson
-            return None
-
-    class Lesson:
-        def __init__(
-            self,
-            hour: int,
-            subject: Union[str, None] = None,
-            classroom: Union[str, None] = None,
-            teacher: Union[str, None] = None,
-            changeInfo: Union[str, None] = None,
-        ):
-            self.hour = hour
-            self.classroom = classroom
-            self.teacher = teacher
-            self.changeInfo = changeInfo
-            self.empty = None
-            self.subject = subject
-
-        @property
-        def subject(self) -> str:
-            return self._subject
-
-        @subject.setter
-        def subject(self, name: Union[str, None]):
-            self._subject = name
-
-            # Sets the short name of the subject
-            self.subjectShort = Grades.SUBJECTS_REVERSED.get(name)
-            if self.subjectShort is None:
-                self.subjectShort = name
-
-            self.empty = not bool(name)
-
-        def __str__(self) -> str:
-            return f"Lesson(Hour: {self.hour}, Subject: {self.subject}, Classroom: {self.classroom}, Teacher: {self.teacher}, ChangeInfo: {self.changeInfo})"
-
-        def __eq__(self, other: Schedule.Lesson) -> bool:
-            if not isinstance(other, Schedule.Lesson):
-                return False
-            return (
-                self.hour == other.hour
-                and self.subject == other.subject
-                and self.classroom == other.classroom
-                and self.teacher == other.teacher
-                and self.changeInfo == other.changeInfo
-            )
-
-        def render(
-            self,
-            showClassroom: bool = None,
-            shortName: bool = False,
-            renderStyle: Table.Style = None,
-            file_name: str = "temp.png",
-        ):
-            """Returns a lesson redered as an image"""
-            if showClassroom == None:
-                showClassroom = read_db("showClassroom")
-
-            cell = Table.Cell([Table.Cell.Item(self.subjectShort if shortName else self.subject)])
-            if showClassroom:
-                cell.items.append(Table.Cell.Item(self.classroom))
-            return Table([[cell]]).render(file_name=file_name, style=renderStyle)
 
     # Gets the index of the first non empty lesson in common across all days
     def first_non_empty_lessons(self) -> int:
@@ -223,9 +86,9 @@ class Schedule:
             end = 4
 
         for weekDay in range(start):
-            self.days.insert(weekDay, Schedule.Day([], weekDay, None))
+            self.days.insert(weekDay, Day([], weekDay, None))
         for weekDay in range(end, 4):
-            self.days.insert(weekDay + 1, Schedule.Day([], weekDay, None))
+            self.days.insert(weekDay + 1, Day([], weekDay, None))
 
     @staticmethod
     async def request_schedule(nextWeek: bool, client: discord.Client) -> BeautifulSoup:
@@ -276,7 +139,7 @@ class Schedule:
             lessonDivs = day.find_all("div", {"class": "day-item"})
             # Removes the useless lesson from the day
             if not lessonDivs:
-                lessons = [Schedule.Lesson(i) for i in range(NUM_OF_LESSONS_IN_DAY)]
+                lessons = [Lesson(i) for i in range(NUM_OF_LESSONS_IN_DAY)]
 
             for hour, lesson in enumerate(lessonDivs):
                 # Gets the actual lesson div
@@ -285,7 +148,7 @@ class Schedule:
 
                 # Empty lesson
                 if "empty" in lesson.attrs["class"]:
-                    lessons.append(Schedule.Lesson(hour))
+                    lessons.append(Lesson(hour))
                     continue
 
                 # Gets the lesson detail for non-empty lessons
@@ -300,12 +163,12 @@ class Schedule:
 
                 # Speacial case of the lesson being half empty
                 if lessonDetail.get("absentinfo"):
-                    lessons.append(Schedule.Lesson(hour, lessonDetail.get("absentinfo"), changeInfo=changeInfo))
+                    lessons.append(Lesson(hour, lessonDetail.get("absentinfo"), changeInfo=changeInfo))
                     continue
 
                 # Removed lesson
                 if lessonDetail.get("type") == "removed":
-                    lessons.append(Schedule.Lesson(hour, changeInfo=changeInfo))
+                    lessons.append(Lesson(hour, changeInfo=changeInfo))
                     continue
 
                 # Normal or changed lesson
@@ -318,8 +181,8 @@ class Schedule:
                 # Teacher
                 teacher = lessonDetail.get("teacher")
                 # Adds the lesson to the list
-                lessons.append(Schedule.Lesson(hour, subject, classroom, teacher, changeInfo))
-            days.append(Schedule.Day(lessons, weekDay, date))
+                lessons.append(Lesson(hour, subject, classroom, teacher, changeInfo))
+            days.append(Day(lessons, weekDay, date))
         return Schedule(days, nextWeek)
 
     @staticmethod

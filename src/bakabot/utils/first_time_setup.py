@@ -2,9 +2,9 @@ import logging
 import os
 
 import discord
+from core.schedule.schedule import Schedule
 
 from bakabot.core.grades import Grades
-from bakabot.core.schedule import Schedule
 from bakabot.utils.utils import read_db, write_db
 
 

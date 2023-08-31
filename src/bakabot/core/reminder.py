@@ -2,8 +2,9 @@ import asyncio
 from typing import Tuple
 
 import discord
+from core.schedule.day import Day
 
-from bakabot.core.schedule import Schedule
+from bakabot.core.schedule.schedule import Schedule
 from bakabot.utils.utils import (
     from_sec_to_time,
     get_weekday_sec,
@@ -59,7 +60,7 @@ class Reminder:
         return Reminder.FULL_DAY - currentTimeSec + Reminder.REMIND[0]
 
     @staticmethod
-    def next_reminder_lesson(day: Schedule.Day, currentTimeSec: int, current: bool = None):
+    def next_reminder_lesson(day: Day, currentTimeSec: int, current: bool = None):
         """Gets the next nearest lesson for reminder"""
         for lesson in day.lessons:
             # Current in case the time is dirrectly on the lessons yet you still want it
@@ -117,7 +118,7 @@ class Reminder:
         await asyncio.sleep(1)
 
     @staticmethod
-    async def remind_whole_day_schedule(day: Schedule.Day, client: discord.Client):
+    async def remind_whole_day_schedule(day: Day, client: discord.Client):
         """Sends the whole day schedule"""
         # Creates the embed with today's schedule
         embed = discord.Embed(color=discord.Color.from_rgb(*rand_rgb()))
