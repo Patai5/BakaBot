@@ -5,7 +5,6 @@ import datetime
 import discord
 from discord.ext import commands
 
-from bakabot.core.betting import Betting
 from bakabot.core.grades import Grades
 from bakabot.core.predictor import Predictor
 from bakabot.core.schedule import Schedule
@@ -306,38 +305,7 @@ class Reactions:
             if reaction.emoji.name == Grades.PREDICTOR_EMOJI:
                 await Grades.create_predection(reaction.message, reaction.client)
 
-    class Betting:
-        queryMessagesDatabase = "bettingMessages"
-
-        @classmethod
-        async def query(cls, client: discord.Client):
-            # Deletes some removed messages from the database while the bot was off
-            messages = await MessageTimers.query_messages_reactions(cls.queryMessagesDatabase, client)
-            if messages:
-                for message in messages:
-                    createdFromNowSec = (datetime.datetime.now(datetime.timezone.utc) - message.created_at).seconds
-                    if createdFromNowSec > 43200:
-                        await MessageTimers.delete_message_reaction(
-                            message, cls.queryMessagesDatabase, Betting.BETT_EMOJI, client
-                        )
-                    else:
-                        asyncio.ensure_future(
-                            MessageTimers.delete_message_reaction(
-                                message,
-                                cls.queryMessagesDatabase,
-                                Betting.BETT_EMOJI,
-                                client,
-                                43200 - createdFromNowSec,
-                            )
-                        )
-
-        # Executes the method for of this function
-        @classmethod
-        async def execute(cls, reaction):
-            if reaction.emoji.name == Betting.BETT_EMOJI:
-                await Betting.make_bet(reaction, reaction.client)
-
-    REACTIONS = {Predictor, Grades, Betting}
+    REACTIONS = {Predictor, Grades}
 
     # Executes the message's command
     async def execute(self):
@@ -362,41 +330,6 @@ class Responses:
         self.message = message
         self.client = client
         self.isResponse = message.channel.id in self.client.response_channel_cache
-
-    class Bett:
-        queryMessagesDatabase = "bettMessages"
-
-        @classmethod
-        async def query(cls, client: discord.Client):
-            # Deletes some removed messages from the database while the bot was off
-            messages = await MessageTimers.query_messages(cls.queryMessagesDatabase, client)
-            if messages:
-                for message in messages:
-                    message_id = message.id
-                    message_channel = message.channel.id
-
-                    createdFromNowSec = (datetime.datetime.now(datetime.timezone.utc) - message.created_at).seconds
-                    if createdFromNowSec > 300:
-                        await MessageTimers.delete_message(
-                            [message_id, message_channel],
-                            cls.queryMessagesDatabase,
-                            client,
-                            0,
-                            lambda: Betting.remove_unfinished_bet([message_id, message_channel], client),
-                        )
-                    else:
-                        asyncio.ensure_future(
-                            MessageTimers.delete_message(
-                                [message_id, message_channel],
-                                cls.queryMessagesDatabase,
-                                client,
-                                300 - createdFromNowSec,
-                                lambda: Betting.remove_unfinished_bet([message_id, message_channel], client),
-                            )
-                        )
-
-    RESPONSE_FOR = {"betting": Betting}
-    RESPONSES = {Bett}
 
     # Executes the message's command
     async def execute(self):

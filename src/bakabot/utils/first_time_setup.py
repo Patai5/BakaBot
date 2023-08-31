@@ -49,16 +49,8 @@ async def start(client: discord.Client):
         write_db("betts", {})
     if not read_db("bettMessages"):
         write_db("bettMessages", [])
-    if not read_db("bettingMessages"):
-        write_db("bettingMessages", [])
     if not read_db("responseChannels"):
         write_db("responseChannels", {})
-    if not read_db("bettingScore"):
-        write_db("bettingScore", {})
-    if not read_db("bettingResponseChannel"):
-        write_db("bettingResponseChannel", {})
-    if not read_db("bettingSchedule"):
-        write_db("bettingSchedule", Schedule.json_dumps(Schedule.db_schedule(False)))
     if read_db("showDay") == None:
         write_db("showDay", False)
     if read_db("showClassroom") == None:
