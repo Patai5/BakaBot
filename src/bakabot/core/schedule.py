@@ -13,6 +13,8 @@ from bakabot.core.grades import Grades
 from bakabot.core.table import Table
 from bakabot.utils.utils import log_html, login, rand_rgb, read_db, request, write_db
 
+from bakabot.constants import NUM_OF_LESSONS_IN_DAY, SCHOOL_DAYS_IN_WEEK
+
 
 class Schedule:
     DAYS = {"po": 0, "út": 1, "st": 2, "čt": 3, "pá": 4}
@@ -54,7 +56,7 @@ class Schedule:
         def lessons(self, lessons: list[Schedule.Lesson]):
             # Adds empty lessons if there have been none given
             if lessons == []:
-                lessons = [Schedule.Lesson(i) for i in range(12)]
+                lessons = [Schedule.Lesson(i) for i in range(NUM_OF_LESSONS_IN_DAY)]
             self._lessons = lessons
 
         @property
@@ -258,7 +260,7 @@ class Schedule:
         # Gets the days from the schedule
         dayDivs = scheduleDiv.find_all("div", {"class": "day-row"})
         # A really rare case when bakalari glitches out and sends two weeks at the same time
-        if len(dayDivs) > 5:
+        if len(dayDivs) > SCHOOL_DAYS_IN_WEEK:
             return None
         # Iterates over the days
         days = []
@@ -273,10 +275,8 @@ class Schedule:
             # Gets the lessons from the day and iterates over them
             lessonDivs = day.find_all("div", {"class": "day-item"})
             # Removes the useless lesson from the day
-            if lessonDivs:
-                lessonDivs.pop(7)
-            else:
-                lessons = [Schedule.Lesson(i) for i in range(12)]
+            if not lessonDivs:
+                lessons = [Schedule.Lesson(i) for i in range(NUM_OF_LESSONS_IN_DAY)]
 
             for hour, lesson in enumerate(lessonDivs):
                 # Gets the actual lesson div
@@ -349,7 +349,7 @@ class Schedule:
 
         # Full exclusives of False if None as parameter
         if exclusives == None:
-            exclusives = [[False for i in range(13)] for i in range(5)]
+            exclusives = [[False for i in range(NUM_OF_LESSONS_IN_DAY)] for i in range(SCHOOL_DAYS_IN_WEEK)]
 
         # Copyies itself to work with a Schedule object without damaging the original
         schedule = copy.deepcopy(self)
@@ -466,7 +466,7 @@ class ChangeDetector:
         embedOld.title = f'Detekována změna v rozvrhu {"příštího" if scheduleOld.nextWeek else "aktuálního"} týdne'
 
         # Makes the 2D exclusives array with the changed items
-        exclusives = [[False for i in range(14)] for i in range(5)]
+        exclusives = [[False for i in range(NUM_OF_LESSONS_IN_DAY)] for i in range(SCHOOL_DAYS_IN_WEEK)]
         for item in changed:
             exclusives[item.day.weekDay][item.updatedLesson.hour] = True
 
