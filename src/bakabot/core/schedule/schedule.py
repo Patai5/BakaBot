@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import asyncio
 import copy
-import json
-import re
 
 import discord
 from bs4 import BeautifulSoup
 from core.schedule.day import Day
-from core.schedule.lesson import Lesson
+from core.schedule.parse_schedule import parseSchedule
 
 from bakabot.constants import NUM_OF_LESSONS_IN_DAY, SCHOOL_DAYS_IN_WEEK
 from bakabot.core.table import Table
@@ -91,7 +89,7 @@ class Schedule:
             self.days.insert(weekDay + 1, Day([], weekDay, None))
 
     @staticmethod
-    async def request_schedule(nextWeek: bool, client: discord.Client) -> BeautifulSoup:
+    async def request_schedule(nextWeek: bool, client: discord.Client) -> BeautifulSoup | None:
         """Returns a BeautifulSoup object from response of the schedule page"""
         # Gets response from the server
         session = await login(client)
@@ -117,81 +115,14 @@ class Schedule:
         return html
 
     @staticmethod
-    def parse_schedule(html: BeautifulSoup, nextWeek: bool) -> Schedule:
-        """Parses a schedule object from the html"""
-        scheduleDiv = html.find("div", {"id": "schedule"})
-        # Gets the days from the schedule
-        dayDivs = scheduleDiv.find_all("div", {"class": "day-row"})
-        # A really rare case when bakalari glitches out and sends two weeks at the same time
-        if len(dayDivs) > SCHOOL_DAYS_IN_WEEK:
-            return None
-        # Iterates over the days
-        days = []
-        for day in dayDivs:
-            lessons = []
-
-            # Gets the week day and date of the day
-            dayInfo = day.find("div", {"class": "day-name"}).div
-            weekDay, date = re.findall(r"([^\n|\r| ]+)", dayInfo.text)
-            weekDay = Schedule.DAYS[weekDay]
-
-            # Gets the lessons from the day and iterates over them
-            lessonDivs = day.find_all("div", {"class": "day-item"})
-            # Removes the useless lesson from the day
-            if not lessonDivs:
-                lessons = [Lesson(i) for i in range(NUM_OF_LESSONS_IN_DAY)]
-
-            for hour, lesson in enumerate(lessonDivs):
-                # Gets the actual lesson div
-                if "day-item-hover" not in lesson.attrs["class"]:
-                    lesson = lesson.div
-
-                # Empty lesson
-                if "empty" in lesson.attrs["class"]:
-                    lessons.append(Lesson(hour))
-                    continue
-
-                # Gets the lesson detail for non-empty lessons
-                lessonDetail = json.loads(lesson.attrs["data-detail"])
-
-                # Change info
-                changeInfo = lessonDetail.get("changeinfo")
-                if not changeInfo:
-                    changeInfo = lessonDetail.get("removedinfo")
-                if changeInfo == "":
-                    changeInfo = None
-
-                # Speacial case of the lesson being half empty
-                if lessonDetail.get("absentinfo"):
-                    lessons.append(Lesson(hour, lessonDetail.get("absentinfo"), changeInfo=changeInfo))
-                    continue
-
-                # Removed lesson
-                if lessonDetail.get("type") == "removed":
-                    lessons.append(Lesson(hour, changeInfo=changeInfo))
-                    continue
-
-                # Normal or changed lesson
-                # Subject
-                subject = lessonDetail.get("subjecttext")
-                if subject is not None:
-                    subject = re.search(r"(.*?) \|", subject).group(1)
-                # Classroom
-                classroom = lessonDetail.get("room")
-                # Teacher
-                teacher = lessonDetail.get("teacher")
-                # Adds the lesson to the list
-                lessons.append(Lesson(hour, subject, classroom, teacher, changeInfo))
-            days.append(Day(lessons, weekDay, date))
-        return Schedule(days, nextWeek)
-
-    @staticmethod
-    async def get_schedule(nextWeek: bool, client: discord.Client) -> Schedule:
+    async def get_schedule(nextWeek: bool, client: discord.Client) -> Schedule | None:
         """Returns a Schedule object with the exctracted information"""
         html = await Schedule.request_schedule(nextWeek, client)
-        if not html:
+
+        if html is None:
             return None
-        return Schedule.parse_schedule(html, nextWeek)
+
+        return parseSchedule(html, nextWeek)
 
     def render(
         self,
