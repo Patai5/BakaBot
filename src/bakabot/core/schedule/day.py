@@ -7,7 +7,7 @@ from core.table import Table
 
 
 class Day:
-    def __init__(self, lessons: list[Lesson], weekDay: int, date: str) -> Day:
+    def __init__(self, lessons: list[Lesson], weekDay: int, date: str | None):
         self.lessons = lessons
         self.weekDay = weekDay
         self.nameShort = Schedule.DAYS_REVERSED[weekDay]
@@ -35,7 +35,7 @@ class Day:
     def __str__(self) -> str:
         return f"Day(WeekDay: {self.weekDay}, NameShort: {self.nameShort}, Date: {self.date}, Empty: {self.empty})"
 
-    def __eq__(self, other: Day) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Day):
             return False
         if not (
@@ -52,9 +52,9 @@ class Day:
 
     def render(
         self,
-        showDay: bool = None,
-        showClassroom: bool = None,
-        renderStyle: Table.Style = None,
+        showDay: bool | None = None,
+        showClassroom: bool | None = None,
+        renderStyle: Table.Style | None = None,
         file_name: str = "day.png",
     ):
         """Renders the day as an rendered image"""

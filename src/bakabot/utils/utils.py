@@ -39,6 +39,15 @@ def os_environ(key: str):
         return os.environ[key]
 
 
+def getThreadChannel(threadId: int, client: discord.Client):
+    """Gets the thread channel by the given id. Throws an error if the channel doesn't exist or is not a thread"""
+    channel = client.get_channel(threadId)
+    if not isinstance(channel, discord.threads.Thread):
+        raise Exception(f"No thread channel found for id: '{threadId}'")
+
+    return channel
+
+
 # Logs into the server and returns the login session
 async def login(client: discord.Client):
     username = os_environ("bakalariUsername")

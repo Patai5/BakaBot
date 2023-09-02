@@ -6,20 +6,21 @@ import copy
 import discord
 from bs4 import BeautifulSoup
 from core.schedule.day import Day
+from core.schedule.lesson import Lesson
 from core.schedule.parse_schedule import parseSchedule
 
 from bakabot.constants import NUM_OF_LESSONS_IN_DAY, SCHOOL_DAYS_IN_WEEK
-from bakabot.core.table import Table
-from bakabot.utils.utils import log_html, login, rand_rgb, read_db, request, write_db
+from bakabot.core.table import ColumnType, Table
+from bakabot.utils.utils import getThreadChannel, log_html, login, rand_rgb, read_db, request, write_db
 
 
 class Schedule:
     DAYS = {"po": 0, "út": 1, "st": 2, "čt": 3, "pá": 4}
-    DAYS_REVERSED = {}
+    DAYS_REVERSED: dict[int, str] = {}
     for key, value in zip(DAYS.keys(), DAYS.values()):
         DAYS_REVERSED.update({value: key})
 
-    def __init__(self, days: list[Day], nextWeek: bool = False) -> Schedule:
+    def __init__(self, days: list[Day], nextWeek: bool = False):
         self.days = days
         self.nextWeek = nextWeek
 
@@ -28,7 +29,7 @@ class Schedule:
     def __str__(self) -> str:
         return f"Schedule(Days: {[(day.nameShort, day.date) for day in self.days]}, NextWeek: {self.nextWeek})"
 
-    def __eq__(self, other: Schedule) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Schedule):
             return False
         if not (self.nextWeek == other.nextWeek):
@@ -40,27 +41,23 @@ class Schedule:
 
     # Gets the index of the first non empty lesson in common across all days
     def first_non_empty_lessons(self) -> int:
-        firstPerDays = []
+        firstPerDays: list[int] = []
         for day in self.days:
             lesson = day.first_non_empty_lesson()
             if lesson:
                 firstPerDays.append(lesson.hour)
-        if firstPerDays:
-            return min(firstPerDays)
-        else:
-            return None
+
+        return min(firstPerDays)
 
     # Gets the index of the last non empty lesson in common across all days
     def last_non_empty_lessons(self) -> int:
-        lastPerDays = []
+        lastPerDays: list[int] = []
         for day in self.days:
             lesson = day.last_non_empty_lesson()
             if lesson:
                 lastPerDays.append(lesson.hour)
-        if lastPerDays:
-            return max(lastPerDays)
-        else:
-            return None
+
+        return max(lastPerDays)
 
     @staticmethod
     def db_schedule(nextWeek: bool = False):
@@ -128,10 +125,10 @@ class Schedule:
         self,
         dayStart: int,
         dayEnd: int,
-        showDay: bool = None,
-        showClassroom: bool = None,
-        exclusives: list = None,
-        renderStyle: Table.Style = None,
+        showDay: bool | None = None,
+        showClassroom: bool | None = None,
+        exclusives: list[list[bool]] | None = None,
+        renderStyle: Table.Style | None = None,
         file_name: str = "table.png",
     ):
         """Renders the schedule into an image"""
@@ -143,7 +140,7 @@ class Schedule:
 
         # Full exclusives of False if None as parameter
         if exclusives == None:
-            exclusives = [[False for i in range(NUM_OF_LESSONS_IN_DAY)] for i in range(SCHOOL_DAYS_IN_WEEK)]
+            exclusives = [[False for _ in range(NUM_OF_LESSONS_IN_DAY)] for _ in range(SCHOOL_DAYS_IN_WEEK)]
 
         # Copyies itself to work with a Schedule object without damaging the original
         schedule = copy.deepcopy(self)
@@ -172,7 +169,7 @@ class Schedule:
                         day.lessons.remove(lesson)
 
             # Prepares columns for the Table object
-            columns = []
+            columns: ColumnType = []
             # Adds short names of the days to the left of the table
             if showDay:
                 column = [Table.Cell([Table.Cell.Item("")])]
@@ -203,13 +200,13 @@ class Schedule:
 
 class ChangeDetector:
     class Changed:
-        def __init__(self, previousLesson, updatedLesson, day):
+        def __init__(self, previousLesson: Lesson, updatedLesson: Lesson, day: Day):
             self.previousLesson = previousLesson
             self.updatedLesson = updatedLesson
             self.day = day
 
     @staticmethod
-    async def detect_changes(client: discord.Bot):
+    async def detect_changes(client: discord.Client):
         """Detects any changes in the schedule and sends a discord notification of the changes if there are any"""
         # Gets the schedules from bakalari and the database and pairs them together
         schedulesCurrentWeek = [Schedule.db_schedule(False), await Schedule.get_schedule(False, client)]
@@ -229,9 +226,9 @@ class ChangeDetector:
                 schedulePair[1].db_save()
 
     @staticmethod
-    def find_changes(scheduleOld: Schedule, scheduleNew: Schedule):
+    def find_changes(scheduleOld: Schedule, scheduleNew: Schedule) -> list[ChangeDetector.Changed] | None:
         """Finds any changes in the schedule"""
-        changedlist = []
+        changedlist: list[ChangeDetector.Changed] = []
         # Iterates over the days
         for dayOld, dayNew in zip(scheduleOld.days, scheduleNew.days):
             # Iterates over the lessons and looks for any differences
@@ -251,7 +248,9 @@ class ChangeDetector:
             return None
 
     @staticmethod
-    async def changed_message(changed: list, client: discord.Client, scheduleOld: Schedule, scheduleNew: Schedule):
+    async def changed_message(
+        changed: list[ChangeDetector.Changed], client: discord.Client, scheduleOld: Schedule, scheduleNew: Schedule
+    ):
         """Sends the changed schedules over discord"""
         embedsColor = discord.Color.from_rgb(*rand_rgb())
         # Makes the two embeds containing the changed schedule images
@@ -260,7 +259,7 @@ class ChangeDetector:
         embedOld.title = f'Detekována změna v rozvrhu {"příštího" if scheduleOld.nextWeek else "aktuálního"} týdne'
 
         # Makes the 2D exclusives array with the changed items
-        exclusives = [[False for i in range(NUM_OF_LESSONS_IN_DAY)] for i in range(SCHOOL_DAYS_IN_WEEK)]
+        exclusives = [[False for _ in range(NUM_OF_LESSONS_IN_DAY)] for _ in range(SCHOOL_DAYS_IN_WEEK)]
         for item in changed:
             exclusives[item.day.weekDay][item.updatedLesson.hour] = True
 
@@ -299,10 +298,14 @@ class ChangeDetector:
         changedDetail.description = changedStr
 
         # Sends the messages
-        channel = read_db("channelSchedule")
-        await client.get_channel(channel).send(file=imgOld, embed=embedOld)
-        await client.get_channel(channel).send(file=imgNew, embed=embedNew)
-        await client.get_channel(channel).send(embed=changedDetail)
+        scheduleChannelId = read_db("channelSchedule")
+        if scheduleChannelId is None:
+            raise Exception("Schedule channel not found in database")
+
+        channel = getThreadChannel(scheduleChannelId, client)
+        await channel.send(file=imgOld, embed=embedOld)
+        await channel.send(file=imgNew, embed=embedNew)
+        await channel.send(embed=changedDetail)
 
     @staticmethod
     async def start_detecting_changes(interval: int, client: discord.Client):
@@ -313,8 +316,13 @@ class ChangeDetector:
             except Exception as e:
                 print("ERROR:", e)
 
+                scheduleChannelId = read_db("channelSchedule")
+                if scheduleChannelId is None:
+                    raise Exception("Schedule channel not found in database")
+
                 # Notifies the user
                 unknownErrorMessage = "An unknown error occured while checking for changes in schedule."
-                await client.get_channel(read_db("channelSchedule")).send(unknownErrorMessage)
+                await getThreadChannel(scheduleChannelId, client).send(unknownErrorMessage)
+
                 break
             await asyncio.sleep(interval)

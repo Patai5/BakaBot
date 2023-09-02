@@ -24,15 +24,14 @@ class Lesson:
         self.subject = subject
 
     @property
-    def subject(self) -> str:
+    def subject(self) -> str | None:
         return self._subject
 
     @subject.setter
-    def subject(self, name: Union[str, None]):
+    def subject(self, name: str | None):
         self._subject = name
 
-        # Sets the short name of the subject
-        self.subjectShort = Grades.SUBJECTS_REVERSED.get(name)
+        self.subjectShort = Grades.SUBJECTS_REVERSED.get(name) if name else None
         if self.subjectShort is None:
             self.subjectShort = name
 
@@ -41,7 +40,7 @@ class Lesson:
     def __str__(self) -> str:
         return f"Lesson(Hour: {self.hour}, Subject: {self.subject}, Classroom: {self.classroom}, Teacher: {self.teacher}, ChangeInfo: {self.changeInfo})"
 
-    def __eq__(self, other: Lesson) -> bool:
+    def __eq__(self, other: object) -> bool:
         if not isinstance(other, Lesson):
             return False
         return (
@@ -54,9 +53,9 @@ class Lesson:
 
     def render(
         self,
-        showClassroom: bool = None,
-        shortName: bool = False,
-        renderStyle: Table.Style = None,
+        showClassroom: bool | None = None,
+        shortName: bool | None = False,
+        renderStyle: Table.Style | None = None,
         file_name: str = "temp.png",
     ):
         """Returns a lesson redered as an image"""
