@@ -2,33 +2,32 @@ from __future__ import annotations
 
 import asyncio
 import copy
-import json
 
 import discord
 from core.grades.grade import Grade
 from core.grades.parse_grades import parseGrades
 
-from bakabot.utils.utils import MessageTimers, get_sec, log_html, login, read_db, request, write_db
+from bakabot.utils.utils import MessageTimers, get_sec, getThreadChannel, log_html, login, read_db, request, write_db
 
 
 class Grades:
-    def __init__(self, grades):
+    def __init__(self, grades: list[Grade]):
         self.grades = grades
 
     @staticmethod
-    def empty_grade(subject=None, weight=1, grade=1, date=None, id=None):
+    def empty_grade(subject: str = "", weight: int = 1, grade: float = 1):
         """Makes a Grade object with as little parameters as possible"""
-        return Grade(id, None, subject, weight, None, date, grade)
+        return Grade("", "", subject, weight, "", [0, 0, 0], grade)
 
-    def by_subject(self, subject):
+    def by_subject(self, subject: str):
         """Returns only Grades with the wanted subject"""
-        gradesBySubject = []
+        gradesBySubject: list[Grade] = []
         for grade in self.grades:
             if grade.subject == subject:
                 gradesBySubject.append(grade)
         return Grades(gradesBySubject)
 
-    def average(self):
+    def average(self) -> float | None:
         """Returns the average grade from the self Grades\n
         (Calculated with weights in mind)\n
         returns None if there are no grades"""
@@ -51,7 +50,7 @@ class Grades:
         # Rounds the average and returns it
         return self.round_average(gradesWeightsTotal / gradesTotal)
 
-    def future_average(self, grade):
+    def future_average(self, grade: Grade):
         """Returns the possible future average with the given grade"""
         # Copyies itself to work with a Grades object without damaging the original
         grades = copy.deepcopy(self)
@@ -73,41 +72,18 @@ class Grades:
             return int(average * 100) / 100
 
     @staticmethod
-    def json_loads(jsonstring: str):
-        """Loads a Grades object from JSON"""
-        dictGrades = json.loads(jsonstring)
-        grades = Grades([])
-        for grade in dictGrades["grades"]:
-            grades.grades.append(
-                Grade(
-                    grade["id"],
-                    grade["caption"],
-                    grade["subject"],
-                    grade["weight"],
-                    grade["note"],
-                    grade["date"],
-                    grade["grade"],
-                )
-            )
+    def db_grades() -> Grades:
+        """Gets Grades object from the database"""
+        grades: Grades | None = read_db("grades")
+
+        if grades is None:
+            raise Exception("Grades not found in database")
+
         return grades
 
-    @staticmethod
-    def json_dumps(grades):
-        """Makes a JSON from Grades object"""
-        output = '{"grades": ['
-        for grade in grades.grades:
-            output += json.dumps(grade.__dict__) + ", "
-        if grades.grades:
-            output = output[:-2]
-        output += "]}"
-
-        return output
-
-    @staticmethod
-    def db_grades():
-        """Gets Grades object from the database"""
-        grades = read_db("grades")
-        return Grades.json_loads(grades)
+    def db_save(self):
+        """Saves the grades to the database"""
+        write_db("grades", self)
 
     # Constants for all subjects with their short and long form
     SUBJECTS = {
@@ -130,10 +106,10 @@ class Grades:
         "Z": "Zeměpis",
         "Zsv": "Základy společenských věd",
     }
-    SUBJECTS_REVERSED = {}
+    SUBJECTS_REVERSED: dict[str, str] = {}
     for key, value in zip(SUBJECTS.keys(), SUBJECTS.values()):
         SUBJECTS_REVERSED.update({value: key})
-    SUBJECTS_LOWER = {}
+    SUBJECTS_LOWER: dict[str, str] = {}
     for key in SUBJECTS.keys():
         SUBJECTS_LOWER.update({key.lower(): key})
 
@@ -172,7 +148,7 @@ class Grades:
         return parseGrades(gradesResponse)
 
     # Variable to store running timers
-    message_remove_timers = []
+    message_remove_timers: list[list[int]] = []
 
     PREDICTOR_EMOJI = "📊"
 
@@ -182,16 +158,26 @@ class Grades:
 
         """Generates a predict message with the current subject"""
         # Subject
-        subject = Grades.SUBJECTS_REVERSED.get(message.embeds[0].author.name)
+        embed = message.embeds[0].to_dict()
+
+        embedAuthor = embed.get("author")
+        if embedAuthor is None:
+            raise Exception("No author in prediction embed")
+
+        subjectFromEmbed = embedAuthor.get("name")
+        if subjectFromEmbed is None:
+            raise Exception("No subject in prediction embed")
+
+        subject = Grades.SUBJECTS_REVERSED.get(subjectFromEmbed) or subjectFromEmbed
 
         # Removes the reaction
         await MessageTimers.delete_message_reaction(message, "gradesMessages", Grades.PREDICTOR_EMOJI, client)
 
         # Sends the grade predictor
-        predictorMessage = await Predictor.predict_embed(subject, message.channel, client)
+        await Predictor.predict_embed(subject, message.channel.id, client)
 
     @staticmethod
-    async def delete_grade_reaction(message: discord.Message, emoji: discord.emoji, delay: int):
+    async def delete_grade_reaction(message: discord.Message, emoji: discord.message.EmojiInputType, delay: int):
         """Deletes the reaction from the message after some delay"""
         # Puts the message into the timer variable
         Grades.message_remove_timers.append([message.id, get_sec() + delay])
@@ -204,8 +190,12 @@ class Grades:
                 try:
                     # Removes the reaction
                     await message.clear_reaction(emoji)
-                    toRemoveMessages = read_db("gradesMessages")
                     Grades.message_remove_timers.remove(timer)
+
+                    toRemoveMessages: list[list[int]] | None = read_db("gradesMessages")
+                    if toRemoveMessages is None:
+                        raise Exception("No gradesMessages in database")
+
                     toRemoveMessages.remove([message.id, message.channel.id])
                     write_db("gradesMessages", toRemoveMessages)
                 except:
@@ -216,25 +206,27 @@ class Grades:
         """Detects changes in grades and sends them to discord"""
 
         # Finds and returns the actual changes
-        def find_changes(gradesOld: Grades, gradesNew: Grades):
-            newGrades = []
+        def find_changes(gradesOld: Grades, gradesNew: Grades) -> list[Grade]:
+            newGrades: list[Grade] = []
             oldIDs = [grade.id for grade in gradesOld.grades]
-            if gradesNew != False:
-                for grade in gradesNew.grades:
-                    # New unrecognized ID
-                    if grade.id not in oldIDs:
-                        newGrades.append(grade)
+            for grade in gradesNew.grades:
+                # New unrecognized ID
+                if grade.id not in oldIDs:
+                    newGrades.append(grade)
             return newGrades
 
         # Discord message with the information about the changes
-        async def changed_message(changed: list, grades: Grades, client: discord.Client):
-            channel = read_db("channelGrades")
+        async def changed_message(changed: list[Grade], grades: Grades, client: discord.Client):
+            channelId: int | None = read_db("channelGrades")
+            if channelId is None:
+                raise Exception("No channelGrades in database")
+
             for grade in changed:
                 # Makes the embed
                 embed = grade.show(grades)
 
                 # Sends the embed
-                message = await client.get_channel(channel).send(embed=embed)
+                message = await getThreadChannel(channelId, client).send(embed=embed)
 
                 # Adds the reaction emoji
                 await message.add_reaction(Grades.PREDICTOR_EMOJI)
@@ -248,7 +240,7 @@ class Grades:
 
         # The main detection code
         # Gets the new Grade object
-        gradesNew = await Grades.get_grades(client)
+        gradesNew = await Grades.getGrades(client)
         # Gets the old Grades object
         gradesOld = Grades.db_grades()
         # If bakalari server is down
@@ -259,7 +251,7 @@ class Grades:
         changed = find_changes(gradesOld, gradesNew)
         if changed:
             await changed_message(changed, gradesNew, client)
-            write_db("grades", Grades.json_dumps(gradesNew))
+            gradesNew.db_save()
 
     @staticmethod
     async def start_detecting_changes(interval: int, client: discord.Client):
@@ -270,8 +262,13 @@ class Grades:
             except Exception as e:
                 print("ERROR:", e)
 
+                channelId: int | None = read_db("channelGrades")
+                if channelId is None:
+                    raise Exception("No channelGrades in database")
+
                 # Notifies the user
                 unknownErrorMessage = "An unknown error occured while checking for changes in grades."
-                await client.get_channel(read_db("channelGrades")).send(unknownErrorMessage)
+                await getThreadChannel(channelId, client).send(unknownErrorMessage)
+
                 break
             await asyncio.sleep(interval)

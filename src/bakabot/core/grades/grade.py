@@ -5,7 +5,9 @@ from core.grades.grades import Grades
 
 
 class Grade:
-    def __init__(self, id: str, caption: str, subject: str, weight: int, note: str, date: list, grade: float | str):
+    def __init__(
+        self, id: str, caption: str, subject: str, weight: int, note: str, date: list[int], grade: float | str
+    ):
         self.id = id
         self.caption = caption
         self.subject = subject
@@ -26,7 +28,7 @@ class Grade:
         else:
             return str(int(self.grade))
 
-    def show(self, grades):
+    def show(self, grades: Grades):
         # Creation of the embed
         embed = discord.Embed()
 
@@ -48,16 +50,17 @@ class Grade:
 
         # Current average
         gradesFromSubject = grades.by_subject(self.subject)
-        if gradesFromSubject.average() is None:
+        subjectAverage = gradesFromSubject.average()
+        if subjectAverage is None:
             # If there are no grades for the subject with a number grade
             content = f"Průměr z {self.subject}: *nelze spočítat (žádné známky s číselným ohodnocením)*"
         else:
             # Normal average calculation
-            content = f"Průměr z {self.subject}: {Grades.round_average(grades.by_subject(self.subject).average())}"
+            content = f"Průměr z {self.subject}: {subjectAverage}"
         embed.add_field(name="\u200b", value=content, inline=False)
 
         # Date
-        embed.timestamp = datetime.datetime(*self.date)
+        embed.timestamp = datetime.datetime(self.date[0], self.date[1], self.date[2])
 
         # Color of the embed
         if isinstance(self.grade, str):
