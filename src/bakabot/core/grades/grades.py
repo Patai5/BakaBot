@@ -1,11 +1,12 @@
+from __future__ import annotations
+
 import asyncio
 import copy
 import json
-import re
 
 import discord
-from bs4 import BeautifulSoup
 from core.grades.grade import Grade
+from core.grades.parse_grades import parseGrades
 
 from bakabot.utils.utils import MessageTimers, get_sec, log_html, login, read_db, request, write_db
 
@@ -137,8 +138,9 @@ class Grades:
         SUBJECTS_LOWER.update({key.lower(): key})
 
     @staticmethod
-    async def get_grades(client: discord.Client):
-        """Returns a Grades object with the exctracted information from the server"""
+    async def request_grades(client: discord.Client) -> str | None:
+        """Requests grades from bakalari server and returns the response as a string"""
+
         # Gets response from the server
         session = await login(client)
         # If bakalari server is down
@@ -149,61 +151,25 @@ class Grades:
         # If bakalari server is down
         if not response:
             return None
+
+        await session.close()
+
         responseHtml = await response.text()
 
         loggingName = "grades"
         log_html(responseHtml, loggingName)
 
-        # Making an BS html parser object from the response
-        html = BeautifulSoup(responseHtml, "html.parser")
-        await session.close()
+        return responseHtml
 
-        # Web scraping the response
-        data = html.find("div", {"id": "cphmain_DivByTime"})
-        if not data:
-            return False
-        data = re.findall(r"\[\{.*?](?=;)", data.script.text)[0]
-        # Creates an empty Grades object
-        grades = Grades([])
-        # Parses the data into a dicture
-        dictData = json.loads(data)
-        for row in dictData:
-            # Reads the data from the dicture (Still need to properly parse it)
-            caption = row["caption"]
-            id = row["id"]
-            subject = row["nazev"]
-            weight = row["vaha"]
-            note = row["poznamkakzobrazeni"]
-            date = row["datum"]
-            grade = row["MarkText"]
+    @staticmethod
+    async def getGrades(client: discord.Client) -> Grades | None:
+        """Requests grades from bakalari server and parses them into a Grades object"""
+        gradesResponse = await Grades.request_grades(client)
 
-            # If a there is a caption parse it else None
-            if caption != "":
-                caption = caption.replace(" <br>", "")
-            else:
-                caption = None
-            # Gets a short name for the subject
-            subject = Grades.SUBJECTS_REVERSED[subject]
-            # Gets an int of the weight
-            weight = int(weight)
-            # If a there is a note parse it else None
-            if note != "":
-                note = note.replace(" <br>", "")
-            else:
-                note = None
-            # Parses the date into list of [Year, Month, Day]
-            date = [int(date) for date in re.search(r"(\d{4})-0?(\d{1,2})-0?(\d{1,2})", date).groups((1, 2, 3))]
-            # Parses the grade as string or a float
-            if re.search(r"^\d-?$", grade):
-                if "-" in grade:
-                    grade = int(grade[0]) + 0.5
-                else:
-                    grade = int(grade)
+        if gradesResponse is None:
+            return None
 
-            # Appends the grade to grades
-            grades.grades.append(Grade(id, caption, subject, weight, note, date, grade))
-        # Returns full Grades object
-        return grades
+        return parseGrades(gradesResponse)
 
     # Variable to store running timers
     message_remove_timers = []
