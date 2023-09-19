@@ -1,12 +1,26 @@
-import datetime
+from __future__ import annotations
 
-import discord
-from core.grades.grades import Grades
+import datetime
+from typing import TYPE_CHECKING
+
+import disnake
+from constants import SUBJECTS
+
+if TYPE_CHECKING:
+    from core.grades.grades import Grades
 
 
 class Grade:
     def __init__(
-        self, id: str, caption: str, subject: str, weight: int, note: str, date: list[int], grade: float | str
+        self,
+        id: str,
+        caption: str,
+        subject: str,
+        weight: int,
+        note: str,
+        date: list[int],
+        gradeText: str,
+        gradeValue: float | None,
     ):
         self.id = id
         self.caption = caption
@@ -14,26 +28,32 @@ class Grade:
         self.weight = weight
         self.note = note
         self.date = date
-        self.grade = grade
+        self.gradeText = gradeText
+        self.gradeValue = gradeValue
+
+    @staticmethod
+    def empty_grade(subject: str = "", weight: int = 1, gradeValue: float = 1):
+        """Makes a Grade object with as little parameters as possible"""
+        return Grade("", "", subject, weight, "", [0, 0, 0], "", gradeValue)
 
     def grade_string(self):
-        """Returns the grade as a string with a minus if it's a decimal number"""
-        # If the grade is a string, we can just return it
-        if isinstance(self.grade, str):
-            return self.grade
+        """Returns the `gradeValue` as a string. If the grade is a decimal number, adds a minus to it.
+        - `gradeValue` can also be non-number, in which case we return the `gradeText`"""
+        if self.gradeValue is None:
+            return self.gradeText
 
         # If the grade is a decimal number, we add a minus to it
-        if self.grade % 1 != 0:
-            return str(int(self.grade)) + "-"
+        if self.gradeValue % 1 != 0:
+            return str(int(self.gradeValue)) + "-"
         else:
-            return str(int(self.grade))
+            return str(int(self.gradeValue))
 
     def show(self, grades: Grades):
         # Creation of the embed
-        embed = discord.Embed()
+        embed = disnake.Embed()
 
         # Subject
-        embed.set_author(name=Grades.SUBJECTS.get(self.subject))
+        embed.set_author(name=SUBJECTS.get(self.subject))
 
         # Grade
         embed.title = self.grade_string()
@@ -63,14 +83,14 @@ class Grade:
         embed.timestamp = datetime.datetime(self.date[0], self.date[1], self.date[2])
 
         # Color of the embed
-        if isinstance(self.grade, str):
+        if self.gradeValue is None:
             # If the grade is not a number, the color is simply gray
-            embed.color = discord.Color.from_rgb(128, 128, 128)
+            embed.color = disnake.Color.from_rgb(128, 128, 128)
         else:
             # Color of the embed from green (good) to red (bad) determining how bad the grade is
-            green = int(255 / 4 * (self.grade - 1))
-            red = int(255 - 255 / 4 * (self.grade - 1))
-            embed.color = discord.Color.from_rgb(green, red, 0)
+            green = int(255 / 4 * (self.gradeValue - 1))
+            red = int(255 - 255 / 4 * (self.gradeValue - 1))
+            embed.color = disnake.Color.from_rgb(green, red, 0)
 
         # Returns the embed
         return embed

@@ -22,7 +22,7 @@ class General(commands.Cog):
         showClassroom: bool | None = None,
     ):
         await inter.response.defer()
-        await inter.response.send_message(
+        await inter.followup.send(
             file=await Schedule.db_schedule(bool(week - 1)).render(dayStart, dayEnd, showDay, showClassroom)
         )
 
@@ -86,6 +86,7 @@ class General(commands.Cog):
                     for key, val in sorted(SUBJECTS.items(), key=lambda item: item[1])
                 ],
                 type=disnake.OptionType.string,
+                required=True,
             )
         ],
     )
@@ -121,6 +122,7 @@ class General(commands.Cog):
                     for key, val in sorted(SUBJECTS.items(), key=lambda item: item[1])
                 ],
                 type=disnake.OptionType.string,
+                required=True,
             ),
         ],
     )
@@ -144,8 +146,9 @@ class Admin(commands.Cog):
         if schedule1 is None or schedule2 is None:
             await inter.followup.send("Bakalari's server is currently down.")
         else:
-            write_db("schedule1", schedule1)
-            write_db("schedule2", schedule2)
+            schedule1.db_save()
+            schedule2.db_save()
+
             await inter.followup.send("Updated schedule database")
 
     slashUpdateScheduleDatabase = commands.InvokableSlashCommand(
@@ -163,7 +166,7 @@ class Admin(commands.Cog):
         if grades is None:
             await inter.followup.send("Bakalari's server is currently down.")
         else:
-            write_db("grades", Grades.db_save(grades))
+            grades.db_save()
             await inter.followup.send("Updated grades database")
 
     slashUpdateGradesDatabase = commands.InvokableSlashCommand(
@@ -187,10 +190,10 @@ class Settings(commands.Cog):
         self,
         inter: disnake.ApplicationCommandInteraction,
         setting: str,
-        boolean: bool,
+        bool: bool,
     ):
-        write_db(self.scheduleSettings[setting], boolean)
-        await inter.response.send_message(f"Setting {setting} set to {boolean}", ephemeral=True)
+        write_db(self.scheduleSettings[setting], bool)
+        await inter.response.send_message(f"Setting {setting} set to {bool}", ephemeral=True)
 
     slashScheduleSettings = commands.InvokableSlashCommand(
         scheduleSettingsCommand,
@@ -204,11 +207,13 @@ class Settings(commands.Cog):
                 description="Which setting to change",
                 choices=[disnake.OptionChoice(name=key, value=key) for key in scheduleSettings.keys()],
                 type=disnake.OptionType.string,
+                required=True,
             ),
             disnake.Option(
                 name="bool",
                 description="True or False value",
                 type=disnake.OptionType.boolean,
+                required=True,
             ),
         ],
     )
@@ -216,10 +221,10 @@ class Settings(commands.Cog):
     async def reminderShortSettings(
         self,
         inter: disnake.ApplicationCommandInteraction,
-        boolean: bool,
+        bool: bool,
     ):
-        write_db("reminderShort", boolean)
-        await inter.response.send_message(f"Setting Reminder_short set to {boolean}", ephemeral=True)
+        write_db("reminderShort", bool)
+        await inter.response.send_message(f"Setting Reminder_short set to {bool}", ephemeral=True)
 
     slashReminderShortSettings = commands.InvokableSlashCommand(
         reminderShortSettings,
@@ -227,10 +232,14 @@ class Settings(commands.Cog):
         description="Whether to use the short lesson name or full name",
         checks=[admin_user_check],
         group=group,
-        options=[disnake.Option(name="bool", description="True or False value", type=disnake.OptionType.boolean)],
+        options=[
+            disnake.Option(
+                name="bool", description="True or False value", type=disnake.OptionType.boolean, required=True
+            )
+        ],
     )
 
-    channels = ["Schedule", "Grades", "Predictor", "Reminder"]
+    channels = ["Grades", "Schedule", "Reminder", "Status"]
 
     async def channelSchedule(self, inter: disnake.ApplicationCommandInteraction, function: str):
         write_db(f"channel{function}", inter.channel_id)
@@ -248,9 +257,10 @@ class Settings(commands.Cog):
                 description="Select the function for this channel",
                 choices=[disnake.OptionChoice(name=channel, value=channel) for channel in channels],
                 type=disnake.OptionType.string,
+                required=True,
             ),
         ],
     )
 
 
-COGS: list[commands.CogMeta] = [General]
+COGS: list[commands.CogMeta] = [General, Admin, Settings]

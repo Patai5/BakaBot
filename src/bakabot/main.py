@@ -1,15 +1,18 @@
 import asyncio
 import logging
 
-import discord
+import disnake
+from disnake.ext import commands
+from message_timers import MessageTimers
 
-from bakabot.core.bot_commands import COGS, Reactions, Responses
-from bakabot.core.grades import Grades
+from bakabot.bot_commands.bot_commands import COGS
+from bakabot.bot_commands.reactions import Reactions
+from bakabot.core.grades.grades import Grades
 from bakabot.core.reminder import Reminder
 from bakabot.core.schedule.schedule import ChangeDetector
 from bakabot.html2img.html2img import Html2img
 from bakabot.utils import first_time_setup
-from bakabot.utils.utils import env_load, os_environ
+from bakabot.utils.utils import env_load, getTextChannel, os_environ
 
 logger = logging.getLogger("discord")
 logger.setLevel(level=logging.INFO)
@@ -21,50 +24,45 @@ logger.addHandler(handler)
 def main():
     env_load()
 
-    client = discord.Bot(command_prefix=None, intents=discord.Intents.all())
+    client = commands.InteractionBot(intents=disnake.Intents.all())
 
     for cog in COGS:
         client.add_cog(cog(client))
 
-    client.cached_messages_react = []
-    client.response_channel_cache = {}
-
-    # After client gets ready
-    @client.event
     async def on_ready():
         print("Ready!")
 
-        await client.change_presence(activity=discord.Activity(name="Bakaláři", type=3))
+        await client.change_presence(activity=disnake.Activity(name="Bakaláři", type=3))
         await start_feature_couroutines(client)
 
     @client.event
-    async def on_message(message: discord.Message):
-        if not message.author.bot:
-            await Responses(message, client).execute()
-
-    @client.event
-    async def on_raw_reaction_add(reaction: discord.RawReactionActionEvent):
-        for message in client.cached_messages_react:
+    async def on_raw_reaction_add(reaction: disnake.RawReactionActionEvent):
+        for message in MessageTimers.cached_messages_react:
             if reaction.message_id == message.id:
+                if reaction.member is None:
+                    raise Exception("Reaction member is None")
+
                 if not reaction.member.bot:
                     await Reactions(
-                        await client.get_channel(reaction.channel_id).fetch_message(reaction.message_id),
+                        await getTextChannel(reaction.channel_id, client).fetch_message(reaction.message_id),
                         reaction.member,
                         reaction.emoji,
                         client,
                     ).execute()
 
+    client.add_listener(on_ready)
+    client.add_listener(on_raw_reaction_add)
+
     client.run(os_environ("token"))
 
 
 # Starts couroutines needed for some features
-async def start_feature_couroutines(client: discord.Client):
+async def start_feature_couroutines(client: disnake.Client):
     if await first_time_setup.start(client):
         # Starts the courutines
         await asyncio.gather(
             Html2img.browser_init(),
             Reactions.query(client),
-            Responses.query(client),
             ChangeDetector.start_detecting_changes(60, client),
             Grades.start_detecting_changes(60, client),
             Reminder.start_reminding(client),

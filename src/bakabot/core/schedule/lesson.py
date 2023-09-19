@@ -1,10 +1,8 @@
-from __future__ import annotations
-
 from typing import Union
 
-from core.grades import Grades
-from core.table import Table
-from utils.utils import read_db
+from bakabot.constants import SUBJECTS_REVERSED
+from bakabot.core.table import Table
+from bakabot.utils.utils import read_db
 
 
 class Lesson:
@@ -31,7 +29,7 @@ class Lesson:
     def subject(self, name: str | None):
         self._subject = name
 
-        self.subjectShort = Grades.SUBJECTS_REVERSED.get(name) if name else None
+        self.subjectShort = SUBJECTS_REVERSED.get(name) if name else None
         if self.subjectShort is None:
             self.subjectShort = name
 
@@ -53,16 +51,30 @@ class Lesson:
 
     def render(
         self,
+        shortName: bool = False,
         showClassroom: bool | None = None,
-        shortName: bool | None = False,
         renderStyle: Table.Style | None = None,
         file_name: str = "temp.png",
     ):
-        """Returns a lesson redered as an image"""
+        """Returns a lesson rendered as an image"""
         if showClassroom == None:
             showClassroom = read_db("showClassroom")
+            if showClassroom == None:
+                raise ValueError("DB value for 'showClassroom' is None")
 
-        cell = Table.Cell([Table.Cell.Item(self.subjectShort if shortName else self.subject)])
+        lessonCell = self.buildLessonTableCell(showClassroom, shortName)
+
+        return Table([[lessonCell]]).render(file_name=file_name, style=renderStyle)
+
+    def buildLessonTableCell(
+        self,
+        showClassroom: bool,
+        shortName: bool,
+    ) -> Table.Cell:
+        """Builds a `Table.Cell` object of the lesson."""
+
+        lessonCell = Table.Cell([Table.Cell.Item(self.subjectShort if shortName else self.subject)])
         if showClassroom:
-            cell.items.append(Table.Cell.Item(self.classroom))
-        return Table([[cell]]).render(file_name=file_name, style=renderStyle)
+            lessonCell.items.append(Table.Cell.Item(self.classroom))
+
+        return lessonCell

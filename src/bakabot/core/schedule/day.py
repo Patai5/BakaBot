@@ -1,16 +1,14 @@
-from __future__ import annotations
-
-from constants import NUM_OF_LESSONS_IN_DAY
+from constants import DAYS_REVERSED, NUM_OF_LESSONS_IN_DAY
 from core.schedule.lesson import Lesson
-from core.schedule.schedule import Schedule
 from core.table import Table
+from utils.utils import read_db
 
 
 class Day:
     def __init__(self, lessons: list[Lesson], weekDay: int, date: str | None):
         self.lessons = lessons
         self.weekDay = weekDay
-        self.nameShort = Schedule.DAYS_REVERSED[weekDay]
+        self.nameShort = DAYS_REVERSED[weekDay]
         self.date = date
 
     @property
@@ -52,20 +50,58 @@ class Day:
 
     def render(
         self,
+        shortName: bool = True,
         showDay: bool | None = None,
         showClassroom: bool | None = None,
         renderStyle: Table.Style | None = None,
         file_name: str = "day.png",
     ):
         """Renders the day as an rendered image"""
-        return Schedule([self]).render(
-            self.weekDay + 1,
-            self.weekDay + 1,
-            showDay=showDay,
-            showClassroom=showClassroom,
-            renderStyle=renderStyle,
-            file_name=file_name,
-        )
+        if showClassroom == None:
+            # TODO: Add mongo db and db typing support
+            showClassroom = read_db("showClassroom")
+            if showClassroom == None:
+                raise ValueError("DB value for 'showClassroom' is None")
+        if showDay == None:
+            # TODO: Add mongo db and db typing support
+            showDay = read_db("showDay")
+            if showDay == None:
+                raise ValueError("DB value for 'showDay' is None")
+
+        if self.empty:
+            raise ValueError("Cannot render an empty day")
+
+        dayTableToRender = self.buildDayTable(showClassroom, shortName, showDay)
+
+        return Table([dayTableToRender]).render(file_name=file_name, style=renderStyle)
+
+    def buildDayTable(self, showClassroom: bool, shortName: bool, showDay: bool) -> list[Table.Cell]:
+        """Builds a `Table` object of the day."""
+
+        startHour, endHour = self.getStartEndHours()
+        if startHour is None or endHour is None:
+            raise ValueError("Cannot render an empty day")
+
+        lessonCells: list[Table.Cell] = []
+        if showDay:
+            lessonCells.append(Table.Cell([Table.Cell.Item(self.nameShort)]))
+
+        for lesson in self.lessons[startHour : endHour + 1]:
+            lessonCell = lesson.buildLessonTableCell(showClassroom, shortName)
+            lessonCells.append(lessonCell)
+
+        return lessonCells
+
+    def getStartEndHours(self) -> tuple[int | None, int | None]:
+        """Gets the start and end hours of the day. Empty lessons are not counted"""
+        startHour = None
+        endHour = None
+        for lesson in self.lessons:
+            if not lesson.empty:
+                if startHour is None:
+                    startHour = lesson.hour
+                endHour = lesson.hour
+        return startHour, endHour
 
     # Gets the first non empty lesson of the day. If none then returns None
     def first_non_empty_lesson(self):

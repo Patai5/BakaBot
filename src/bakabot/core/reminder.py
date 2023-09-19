@@ -1,17 +1,11 @@
 import asyncio
 from typing import Tuple
 
-import discord
+import disnake
 from core.schedule.day import Day
 
 from bakabot.core.schedule.schedule import Schedule
-from bakabot.utils.utils import (
-    from_sec_to_time,
-    get_weekday_sec,
-    rand_rgb,
-    read_db,
-    write_db,
-)
+from bakabot.utils.utils import from_sec_to_time, get_weekday_sec, getTextChannel, rand_rgb, read_db, write_db
 
 
 class Reminder:
@@ -60,7 +54,7 @@ class Reminder:
         return Reminder.FULL_DAY - currentTimeSec + Reminder.REMIND[0]
 
     @staticmethod
-    def next_reminder_lesson(day: Day, currentTimeSec: int, current: bool = None):
+    def next_reminder_lesson(day: Day, currentTimeSec: int, current: bool | None = None):
         """Gets the next nearest lesson for reminder"""
         for lesson in day.lessons:
             # Current in case the time is dirrectly on the lessons yet you still want it
@@ -74,14 +68,17 @@ class Reminder:
                         return lesson
 
     @staticmethod
-    async def reminder(client: discord, when: int):
+    async def reminder(client: disnake.Client, when: int):
         """Sends a reminder of the lesson to the discord channel"""
         await asyncio.sleep(when)
 
         weekDay, currentTimeSec = get_weekday_sec()
         scheduleDay = Schedule.db_schedule().days[weekDay]
 
-        channel = read_db("channelReminder")
+        channelId = read_db("channelReminder")
+        if channelId is None:
+            raise ValueError("No reminder channel set")
+
         lesson = Reminder.next_reminder_lesson(scheduleDay, currentTimeSec, current=True)
         if lesson:
             # Sends the full day schedule at 6:00am
@@ -97,7 +94,7 @@ class Reminder:
                 or lesson.classroom != lastLesson.classroom
             ):
                 # Creates the embed with the reminder info
-                embed = discord.Embed(color=discord.Color.from_rgb(*rand_rgb()))
+                embed = disnake.Embed(color=disnake.Color.from_rgb(*rand_rgb()))
 
                 # Title with the start and end times of the lesson
                 lessonStartTime = from_sec_to_time(Reminder.LESSON_TIMES[lesson.hour][0])
@@ -110,7 +107,8 @@ class Reminder:
                 embed.set_image(url=f"attachment://{fileName}")
 
                 # Sends the message
-                await client.get_channel(channel).send(file=lessonImg, embed=embed)
+
+                await getTextChannel(channelId, client).send(file=lessonImg, embed=embed)
 
                 # Saves the current lesson into the lastLesson database
                 write_db("lastLesson", lesson)
@@ -118,10 +116,10 @@ class Reminder:
         await asyncio.sleep(1)
 
     @staticmethod
-    async def remind_whole_day_schedule(day: Day, client: discord.Client):
+    async def remind_whole_day_schedule(day: Day, client: disnake.Client):
         """Sends the whole day schedule"""
         # Creates the embed with today's schedule
-        embed = discord.Embed(color=discord.Color.from_rgb(*rand_rgb()))
+        embed = disnake.Embed(color=disnake.Color.from_rgb(*rand_rgb()))
         embed.title = "Dnešní rozvrh"
 
         # The schedule image
@@ -130,11 +128,14 @@ class Reminder:
         embed.set_image(url=f"attachment://{fileName}")
 
         # Sends the message
-        channel = read_db("channelReminder")
-        await client.get_channel(channel).send(file=scheduleImg, embed=embed)
+        channelId = read_db("channelReminder")
+        if channelId is None:
+            raise ValueError("No reminder channel set")
+
+        await getTextChannel(channelId, client).send(file=scheduleImg, embed=embed)
 
     @staticmethod
-    async def start_reminding(client: discord.Client):
+    async def start_reminding(client: disnake.Client):
         """Starts an infinite loop for checking changes in the grades"""
         while True:
             when = Reminder.get_remind_time(Schedule.db_schedule(), get_weekday_sec())

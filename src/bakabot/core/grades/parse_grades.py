@@ -2,6 +2,7 @@ import json
 import re
 
 from bs4 import BeautifulSoup
+from constants import SUBJECTS_REVERSED
 from core.grades.grade import Grade
 from core.grades.grades import Grades
 
@@ -10,11 +11,11 @@ def parseGrades(gradesHtml: str) -> Grades:
     """Returns a Grades object with the extracted information from the server"""
     gradesSoup = BeautifulSoup(gradesHtml, "html.parser")
 
-    jsonDataScript = gradesSoup.select_one("script#cphmain_DivByTime")
+    jsonDataScript = gradesSoup.select_one("div#cphmain_DivByTime > script")
     if jsonDataScript is None:
         raise ValueError("Could not find main data script for grades")
 
-    parsedJsonData = re.match(r"\[\{.*](?=;)", jsonDataScript.text)
+    parsedJsonData = re.search(r"\[\{.*](?=;)", jsonDataScript.text)
     if parsedJsonData is None:
         raise ValueError("Could not parse main data script for grades")
 
@@ -42,13 +43,13 @@ def parseGradeJson(jsonGrade: dict[str, str]) -> Grade:
     weight = int(jsonGrade["vaha"])
     note = jsonGrade["poznamkakzobrazeni"]
     date = jsonGrade["datum"]
-    grade = jsonGrade["MarkText"]
+    gradeText = jsonGrade["MarkText"]
 
     cleanNote = note.replace(" <br>", "")
 
     # Gets a short name for the subject
     # TODO: reformat: move this somewhere else
-    shortSubject = Grades.SUBJECTS_REVERSED[subject]
+    shortSubject = SUBJECTS_REVERSED[subject]
 
     # Parses the date into list of [Year, Month, Day]
     # TODO: reformat: wth is this, use a datetime object not a list
@@ -60,10 +61,11 @@ def parseGradeJson(jsonGrade: dict[str, str]) -> Grade:
 
     # Parses the grade as string or a float
     # TODO: reformat: move this logic somewhere else
-    if re.search(r"^\d-?$", grade):
-        if "-" in grade:
-            grade = int(grade[0]) + 0.5
+    gradeValue = None
+    if re.search(r"^\d-?$", gradeText):
+        if "-" in gradeText:
+            gradeValue = int(gradeText[0]) + 0.5
         else:
-            grade = int(grade)
+            gradeValue = int(gradeText)
 
-    return Grade(id, caption, shortSubject, weight, cleanNote, dateList, grade)
+    return Grade(id, caption, shortSubject, weight, cleanNote, dateList, gradeText, gradeValue)

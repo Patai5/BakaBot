@@ -2,9 +2,10 @@ import datetime
 import os
 import pickle
 import random
+from typing import Any
 
 import aiohttp
-import discord
+import disnake
 import dotenv
 import pytz
 
@@ -19,7 +20,7 @@ def read_db(key: str):
 
 
 # Writes to the database
-def write_db(key: str, value):
+def write_db(key: str, value: Any):
     with open(f"db/{key}.dat", "wb") as f:
         pickle.dump(value, f, protocol=2)
 
@@ -38,17 +39,17 @@ def os_environ(key: str):
         return os.environ[key]
 
 
-def getThreadChannel(threadId: int, client: discord.Client):
-    """Gets the thread channel by the given id. Throws an error if the channel doesn't exist or is not a thread"""
-    channel = client.get_channel(threadId)
-    if not isinstance(channel, discord.threads.Thread):
-        raise Exception(f"No thread channel found for id: '{threadId}'")
+def getTextChannel(channelId: int, client: disnake.Client):
+    """Gets the text channel by the given id. Throws an error if the channel doesn't exist or is not a text channel"""
+    channel = client.get_channel(channelId)
+    if not isinstance(channel, disnake.TextChannel):
+        raise Exception(f"No text channel found for id: '{channelId}'")
 
     return channel
 
 
 # Logs into the server and returns the login session
-async def login(client: discord.Client):
+async def login(client: disnake.Client):
     username = os_environ("bakalariUsername")
     password = os_environ("bakalariPassword")
 
@@ -72,7 +73,7 @@ async def login(client: discord.Client):
         return session
 
 
-async def request(session: aiohttp.ClientSession, url: str, get: bool, client: discord.Client):
+async def request(session: aiohttp.ClientSession, url: str, get: bool, client: disnake.Client):
     try:
         if get:
             response = await session.get(url, timeout=25)
@@ -91,34 +92,40 @@ async def request(session: aiohttp.ClientSession, url: str, get: bool, client: d
         return None
 
 
-async def status(online: bool, client: discord.Client):
+async def status(online: bool, client: disnake.Client):
     """Send's the current status of the bakalari server to discord"""
-    if not read_db("lastStatus"):
-        write_db("lastStatus", [online, time_since_epoch_utc()])
     lastStatus = read_db("lastStatus")
+
+    if lastStatus is None:
+        lastStatus = [online, time_since_epoch_utc()]
+        write_db("lastStatus", lastStatus)
+
     if lastStatus[0] != online:
         if online == True:
-            embed = discord.Embed()
+            embed = disnake.Embed()
 
             embed.title = "Server is back online!"
 
             time = for_time(lastStatus[1])
             embed.add_field(name="\u200b", value=f"Server was offline for: {time}")
 
-            embed.color = discord.Color.from_rgb(0, 255, 0)
+            embed.color = disnake.Color.from_rgb(0, 255, 0)
         else:
-            embed = discord.Embed()
+            embed = disnake.Embed()
 
             embed.title = "Server has gone offline!"
 
             time = for_time(lastStatus[1])
             embed.add_field(name="\u200b", value=f"Server was online for: {time}")
 
-            embed.color = discord.Color.from_rgb(255, 0, 0)
+            embed.color = disnake.Color.from_rgb(255, 0, 0)
 
-        channel = read_db("channelStatus")
+        channelId = read_db("channelStatus")
+        if channelId is None:
+            raise ValueError("No status channel set")
+
         write_db("lastStatus", [online, time_since_epoch_utc()])
-        channel = await client.get_channel(channel).send(embed=embed)
+        await getTextChannel(channelId, client).send(embed=embed)
 
 
 def for_time(time: int):
@@ -134,8 +141,8 @@ def for_time(time: int):
         ("seconds", 1),
     )
 
-    def display_time(seconds):
-        result = []
+    def display_time(seconds: int):
+        result: list[str] = []
         for name, count in intervals:
             value = seconds // count
             if value:
@@ -183,9 +190,9 @@ def from_sec_to_time(sec: int):
     return output
 
 
-async def fetch_message(message_channel: int, message_id: int, client: discord.Client):
+async def fetch_message(message_channel: int, message_id: int, client: disnake.Client):
     try:
-        return await client.get_channel(message_channel).fetch_message(message_id)
+        return await getTextChannel(message_channel, client).fetch_message(message_id)
     except:
         print(
             f"""Couldn't get the desired message! Was probably removed!:\n

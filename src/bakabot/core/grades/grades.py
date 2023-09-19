@@ -2,22 +2,20 @@ from __future__ import annotations
 
 import asyncio
 import copy
+import traceback
 
-import discord
+import core.predictor as predictor
+import disnake
+from constants import SUBJECTS_REVERSED
 from core.grades.grade import Grade
-from core.grades.parse_grades import parseGrades
+from message_timers import MessageTimers
 
-from bakabot.utils.utils import MessageTimers, get_sec, getThreadChannel, log_html, login, read_db, request, write_db
+from bakabot.utils.utils import get_sec, getTextChannel, log_html, login, read_db, request, write_db
 
 
 class Grades:
     def __init__(self, grades: list[Grade]):
         self.grades = grades
-
-    @staticmethod
-    def empty_grade(subject: str = "", weight: int = 1, grade: float = 1):
-        """Makes a Grade object with as little parameters as possible"""
-        return Grade("", "", subject, weight, "", [0, 0, 0], grade)
 
     def by_subject(self, subject: str):
         """Returns only Grades with the wanted subject"""
@@ -37,11 +35,10 @@ class Grades:
         gradesWeightsTotal = 0
 
         for grade in self.grades:
-            # If the grade is not a number, we skip it
-            if isinstance(grade.grade, str):
+            if grade.gradeValue is None:
                 continue
             gradesTotal += grade.weight
-            gradesWeightsTotal += grade.grade * grade.weight
+            gradesWeightsTotal += grade.gradeValue * grade.weight
 
         # Returns None if there are no grades
         if gradesTotal == 0:
@@ -52,7 +49,7 @@ class Grades:
 
     def future_average(self, grade: Grade):
         """Returns the possible future average with the given grade"""
-        # Copyies itself to work with a Grades object without damaging the original
+        # Copies itself to work with a Grades object without damaging the original
         grades = copy.deepcopy(self)
 
         # Appends the grade, calculates the average and removes it
@@ -85,36 +82,8 @@ class Grades:
         """Saves the grades to the database"""
         write_db("grades", self)
 
-    # Constants for all subjects with their short and long form
-    SUBJECTS = {
-        "Aj": "Jazyk anglický",
-        "Bi": "Biologie",
-        "Ch": "Chemie",
-        "Čj": "Český jazyk a literatura",
-        "D": "Dějepis",
-        "Evh": "Estetická výchova - hudební",
-        "Evv": "Estetická výchova - výtvarná",
-        "Fj": "Jazyk francouzský",
-        "Fy": "Fyzika",
-        "Inf": "Informatika a výpočetní technika",
-        "LpBi": "Laboratorní práce z biologie",
-        "LpCh": "Laboratorní práce z chemie",
-        "LpFy": "Laboratorní práce z fyziky",
-        "M": "Matematika",
-        "TH": "Třídnická hodina",
-        "Tv": "Tělesná výchova",
-        "Z": "Zeměpis",
-        "Zsv": "Základy společenských věd",
-    }
-    SUBJECTS_REVERSED: dict[str, str] = {}
-    for key, value in zip(SUBJECTS.keys(), SUBJECTS.values()):
-        SUBJECTS_REVERSED.update({value: key})
-    SUBJECTS_LOWER: dict[str, str] = {}
-    for key in SUBJECTS.keys():
-        SUBJECTS_LOWER.update({key.lower(): key})
-
     @staticmethod
-    async def request_grades(client: discord.Client) -> str | None:
+    async def request_grades(client: disnake.Client) -> str | None:
         """Requests grades from bakalari server and returns the response as a string"""
 
         # Gets response from the server
@@ -128,9 +97,9 @@ class Grades:
         if not response:
             return None
 
-        await session.close()
-
         responseHtml = await response.text()
+
+        await session.close()
 
         loggingName = "grades"
         log_html(responseHtml, loggingName)
@@ -138,8 +107,10 @@ class Grades:
         return responseHtml
 
     @staticmethod
-    async def getGrades(client: discord.Client) -> Grades | None:
+    async def getGrades(client: disnake.Client) -> Grades | None:
         """Requests grades from bakalari server and parses them into a Grades object"""
+        from core.grades.parse_grades import parseGrades
+
         gradesResponse = await Grades.request_grades(client)
 
         if gradesResponse is None:
@@ -153,9 +124,7 @@ class Grades:
     PREDICTOR_EMOJI = "📊"
 
     @staticmethod
-    async def create_predection(message: discord.message.Message, client: discord.Client):
-        from bakabot.core.predictor import Predictor
-
+    async def create_prediction(message: disnake.Message, client: disnake.Client):
         """Generates a predict message with the current subject"""
         # Subject
         embed = message.embeds[0].to_dict()
@@ -165,19 +134,21 @@ class Grades:
             raise Exception("No author in prediction embed")
 
         subjectFromEmbed = embedAuthor.get("name")
-        if subjectFromEmbed is None:
-            raise Exception("No subject in prediction embed")
 
-        subject = Grades.SUBJECTS_REVERSED.get(subjectFromEmbed) or subjectFromEmbed
+        subject = SUBJECTS_REVERSED.get(subjectFromEmbed) or subjectFromEmbed
 
         # Removes the reaction
         await MessageTimers.delete_message_reaction(message, "gradesMessages", Grades.PREDICTOR_EMOJI, client)
 
+        messageChannel = message.channel
+        if not isinstance(messageChannel, disnake.TextChannel):
+            raise Exception("Message channel is not a TextChannel")
+
         # Sends the grade predictor
-        await Predictor.predict_embed(subject, message.channel.id, client)
+        await predictor.predict_embed(subject, messageChannel, client)
 
     @staticmethod
-    async def delete_grade_reaction(message: discord.Message, emoji: discord.message.EmojiInputType, delay: int):
+    async def delete_grade_reaction(message: disnake.Message, emoji: disnake.message.EmojiInputType, delay: int):
         """Deletes the reaction from the message after some delay"""
         # Puts the message into the timer variable
         Grades.message_remove_timers.append([message.id, get_sec() + delay])
@@ -202,7 +173,7 @@ class Grades:
                     pass
 
     @staticmethod
-    async def detect_changes(client: discord.Client):
+    async def detect_changes(client: disnake.Client):
         """Detects changes in grades and sends them to discord"""
 
         # Finds and returns the actual changes
@@ -216,7 +187,7 @@ class Grades:
             return newGrades
 
         # Discord message with the information about the changes
-        async def changed_message(changed: list[Grade], grades: Grades, client: discord.Client):
+        async def changed_message(changed: list[Grade], grades: Grades, client: disnake.Client):
             channelId: int | None = read_db("channelGrades")
             if channelId is None:
                 raise Exception("No channelGrades in database")
@@ -226,7 +197,7 @@ class Grades:
                 embed = grade.show(grades)
 
                 # Sends the embed
-                message = await getThreadChannel(channelId, client).send(embed=embed)
+                message = await getTextChannel(channelId, client).send(embed=embed)
 
                 # Adds the reaction emoji
                 await message.add_reaction(Grades.PREDICTOR_EMOJI)
@@ -254,21 +225,19 @@ class Grades:
             gradesNew.db_save()
 
     @staticmethod
-    async def start_detecting_changes(interval: int, client: discord.Client):
+    async def start_detecting_changes(interval: int, client: disnake.Client):
         """Starts an infinite loop for checking changes in the grades"""
         while True:
             try:
                 await Grades.detect_changes(client)
             except Exception as e:
-                print("ERROR:", e)
+                errorMsgPrefix = "An error occurred while checking for changes in grades"
+                print(f"\n{errorMsgPrefix}:\n{traceback.format_exc()}\n")
 
                 channelId: int | None = read_db("channelGrades")
                 if channelId is None:
                     raise Exception("No channelGrades in database")
 
-                # Notifies the user
-                unknownErrorMessage = "An unknown error occured while checking for changes in grades."
-                await getThreadChannel(channelId, client).send(unknownErrorMessage)
-
+                await getTextChannel(channelId, client).send(f"{errorMsgPrefix}:\n```{type(e).__name__}: {e}``")
                 break
             await asyncio.sleep(interval)

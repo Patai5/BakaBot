@@ -2,16 +2,17 @@ import json
 import re
 
 from bs4 import BeautifulSoup, Tag
-from constants import SCHOOL_DAYS_IN_WEEK
-from core.schedule.day import Day
-from core.schedule.lesson import Lesson
-from core.schedule.schedule import Schedule
+
+from bakabot.constants import DAYS, SCHOOL_DAYS_IN_WEEK
+from bakabot.core.schedule.day import Day
+from bakabot.core.schedule.lesson import Lesson
+from bakabot.core.schedule.schedule import Schedule
 
 
 def parseSchedule(body: BeautifulSoup, nextWeek: bool) -> Schedule | None:
     """Parses a schedule object from the html. Returns None on bakalari's bugs. Throws ValueError on parsing errors"""
 
-    scheduleEl = body.select_one("div#schedule > div")
+    scheduleEl = body.select_one("div#schedule")
     if scheduleEl is None:
         raise ValueError("Couldn't find schedule element")
 
@@ -37,12 +38,12 @@ def parseDay(day: Tag) -> Day:
     if dayInfo is None:
         raise ValueError("Couldn't find day info element")
 
-    dayInfoGroups = re.match(r"([^\n|\r| ]+)", dayInfo.text)
-    if dayInfoGroups is None:
+    dayInfoGroups: list[str] = re.findall(r"([^(\\n)(\\r)\s]+)", dayInfo.text)
+    if len(dayInfoGroups) != 2:
         raise ValueError("Couldn't parse day info")
 
-    weekDay, date = dayInfoGroups.groups()
-    weekDay = Schedule.DAYS[weekDay]
+    weekDay, date = dayInfoGroups
+    weekDay = DAYS[weekDay]
 
     return Day(parseLessons(day), weekDay, date)
 
@@ -50,7 +51,7 @@ def parseDay(day: Tag) -> Day:
 def parseLessons(dayEl: Tag) -> list[Lesson]:
     """Parses and returns Lessons from the given day element"""
 
-    lessonsEls = dayEl.select("div.day-item > div")
+    lessonsEls = dayEl.select("div.day-item")
 
     return [parseLesson(lesson, hour) for hour, lesson in enumerate(lessonsEls)]
 
@@ -58,10 +59,14 @@ def parseLessons(dayEl: Tag) -> list[Lesson]:
 def parseLesson(lessonEl: Tag, hour: int) -> Lesson:
     """Parses and returns Lesson from the given lesson element"""
 
-    if "empty" in lessonEl.attrs["class"]:
+    lessonDetailEl = getLessonDetailEl(lessonEl)
+    if lessonDetailEl is None:
+        raise ValueError("Couldn't find lesson detail element")
+
+    if "empty" in lessonDetailEl.attrs["class"]:
         return Lesson(hour)
 
-    lessonDetail: dict[str, str] = json.loads(lessonEl.attrs["data-detail"])
+    lessonDetail: dict[str, str] = json.loads(lessonDetailEl.attrs["data-detail"])
     changeInfo = lessonDetail.get("changeinfo") or lessonDetail.get("removedinfo") or None
 
     absentInfo = lessonDetail.get("absentinfo")
@@ -79,6 +84,16 @@ def parseLesson(lessonEl: Tag, hour: int) -> Lesson:
     teacher = lessonDetail.get("teacher")
 
     return Lesson(hour, subject, classroom, teacher, changeInfo)
+
+
+def getLessonDetailEl(lessonEl: Tag) -> Tag | None:
+    """Returns the lesson detail element. This element is found differently for these lesson types:
+    - Normal lessons have this element placed in a div under the lesson element
+    - Removed lessons have it placed directly in the lesson element"""
+
+    isRemovedLesson = "day-item-hover" in lessonEl.attrs["class"]
+
+    return lessonEl if isRemovedLesson else lessonEl.select_one(":first-child")
 
 
 def isTwoWeeksBug(daysEls: list[Tag]) -> bool:
