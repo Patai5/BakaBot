@@ -2,10 +2,9 @@ import core.predictor as predictor
 import disnake
 from constants import SUBJECTS
 from core.grades.grades import Grades
+from core.schedule.schedule import Schedule
 from disnake.ext import commands
 from utils.utils import os_environ, write_db
-
-from bakabot.core.schedule.schedule import Schedule
 
 
 class General(commands.Cog):

@@ -3,8 +3,7 @@ from __future__ import annotations
 import random
 
 import disnake
-
-from bakabot.html2img.html2img import Html2img
+from html2img.html2img import Html2img
 
 
 class Table:

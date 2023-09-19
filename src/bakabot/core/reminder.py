@@ -3,9 +3,8 @@ from typing import Tuple
 
 import disnake
 from core.schedule.day import Day
-
-from bakabot.core.schedule.schedule import Schedule
-from bakabot.utils.utils import from_sec_to_time, get_weekday_sec, getTextChannel, rand_rgb, read_db, write_db
+from core.schedule.schedule import Schedule
+from utils.utils import from_sec_to_time, get_weekday_sec, getTextChannel, rand_rgb, read_db, write_db
 
 
 class Reminder:

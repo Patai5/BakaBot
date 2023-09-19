@@ -1,10 +1,9 @@
 import os
 
 import disnake
+from core.grades.grades import Grades
 from core.schedule.schedule import Schedule
-
-from bakabot.core.grades.grades import Grades
-from bakabot.utils.utils import read_db, write_db
+from utils.utils import read_db, write_db
 
 
 # Prints the error to console

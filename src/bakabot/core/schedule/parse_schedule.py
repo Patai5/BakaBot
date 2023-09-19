@@ -2,11 +2,10 @@ import json
 import re
 
 from bs4 import BeautifulSoup, Tag
-
-from bakabot.constants import DAYS, SCHOOL_DAYS_IN_WEEK
-from bakabot.core.schedule.day import Day
-from bakabot.core.schedule.lesson import Lesson
-from bakabot.core.schedule.schedule import Schedule
+from constants import DAYS, SCHOOL_DAYS_IN_WEEK
+from core.schedule.day import Day
+from core.schedule.lesson import Lesson
+from core.schedule.schedule import Schedule
 
 
 def parseSchedule(body: BeautifulSoup, nextWeek: bool) -> Schedule | None:

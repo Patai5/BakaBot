@@ -1,10 +1,11 @@
 from typing import Tuple
 
 import pytest
+from core.reminder import Reminder
+from core.schedule.day import Day
+from core.schedule.lesson import Lesson
+from core.schedule.schedule import Schedule
 from test_schedule import TestSchedules
-
-from bakabot.core.reminder import Reminder
-from bakabot.core.schedule import Schedule
 
 almostFullDayS = 60**2 * 23
 
@@ -31,7 +32,7 @@ almostFullDayS = 60**2 * 23
         ),
     ],
 )
-def test_multi_reminders(day: Schedule.Day, time: int, current: bool, expected):
+def test_multi_reminders(day: Day, time: int, current: bool, expected: Lesson | None):
     assert Reminder.next_reminder_lesson(day, time, current) == expected
 
 

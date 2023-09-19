@@ -7,12 +7,11 @@ import traceback
 import disnake
 from attr import dataclass
 from bs4 import BeautifulSoup
+from constants import NUM_OF_LESSONS_IN_DAY, SCHOOL_DAYS_IN_WEEK
 from core.schedule.day import Day
 from core.schedule.lesson import Lesson
-
-from bakabot.constants import NUM_OF_LESSONS_IN_DAY, SCHOOL_DAYS_IN_WEEK
-from bakabot.core.table import ColumnType, Table
-from bakabot.utils.utils import getTextChannel, log_html, login, rand_rgb, read_db, request, write_db
+from core.table import ColumnType, Table
+from utils.utils import getTextChannel, log_html, login, rand_rgb, read_db, request, write_db
 
 
 class Schedule:

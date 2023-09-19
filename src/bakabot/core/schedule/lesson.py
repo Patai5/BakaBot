@@ -1,8 +1,8 @@
 from typing import Union
 
-from bakabot.constants import SUBJECTS_REVERSED
-from bakabot.core.table import Table
-from bakabot.utils.utils import read_db
+from constants import SUBJECTS_REVERSED
+from core.table import Table
+from utils.utils import read_db
 
 
 class Lesson:

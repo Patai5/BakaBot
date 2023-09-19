@@ -2,17 +2,16 @@ import asyncio
 import logging
 
 import disnake
+from bot_commands.bot_commands import COGS
+from bot_commands.reactions import Reactions
+from core.grades.grades import Grades
+from core.reminder import Reminder
+from core.schedule.schedule import ChangeDetector
 from disnake.ext import commands
+from html2img.html2img import Html2img
 from message_timers import MessageTimers
-
-from bakabot.bot_commands.bot_commands import COGS
-from bakabot.bot_commands.reactions import Reactions
-from bakabot.core.grades.grades import Grades
-from bakabot.core.reminder import Reminder
-from bakabot.core.schedule.schedule import ChangeDetector
-from bakabot.html2img.html2img import Html2img
-from bakabot.utils import first_time_setup
-from bakabot.utils.utils import env_load, getTextChannel, os_environ
+from utils import first_time_setup
+from utils.utils import env_load, getTextChannel, os_environ
 
 logger = logging.getLogger("discord")
 logger.setLevel(level=logging.INFO)

@@ -9,8 +9,7 @@ import disnake
 from constants import SUBJECTS_REVERSED
 from core.grades.grade import Grade
 from message_timers import MessageTimers
-
-from bakabot.utils.utils import get_sec, getTextChannel, log_html, login, read_db, request, write_db
+from utils.utils import get_sec, getTextChannel, log_html, login, read_db, request, write_db
 
 
 class Grades:
