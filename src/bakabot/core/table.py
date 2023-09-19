@@ -1,14 +1,14 @@
+from __future__ import annotations
+
 import random
-from typing import List
 
-import discord
-
-from bakabot.html2img.html2img import Html2img
+import disnake
+from html2img.html2img import Html2img
 
 
 class Table:
     class Style:
-        def __init__(self, background: int = None, backgroundAngle: int = None):
+        def __init__(self, background: int | None = None, backgroundAngle: int | None = None):
             if background is None:
                 background = random.randint(0, len(self.backgrounds) - 1)
             self.background = self.backgrounds[background]
@@ -40,12 +40,12 @@ class Table:
             "linear-gradient({ANGLE}deg, rgba(156,252,248,1) 11.2%, rgba(110,123,251,1) 91.1% )",
         ]
 
-    def __init__(self, columns: list):
+    def __init__(self, columns: ColumnType):
         self.columns = columns
         self.rows = self.gen_rows()
 
     class Cell:
-        def __init__(self, items: List, exclusive: bool = False):
+        def __init__(self, items: list[Table.Cell.Item], exclusive: bool = False):
             self.items = items
             self.exclusive = exclusive
             self.empty = True
@@ -54,22 +54,22 @@ class Table:
                     self.empty = False
 
         class Item:
-            def __init__(self, value: str):
+            def __init__(self, value: str | None):
                 self.value = value
 
-    def gen_rows(self) -> list:
+    def gen_rows(self) -> RowType:
         """Generates rows for the table"""
-        rows = [[] for i in range(len(self.columns[0]))]
+        rows: RowType = [[] for _ in range(len(self.columns[0]))]
         for column in self.columns:
             for i, item in enumerate(column):
                 rows[i].append(item)
         return rows
 
-    async def render(self, file_name: str = "table.png", style: Style = None) -> discord.File:
+    async def render(self, file_name: str = "table.png", style: Style | None = None) -> disnake.File:
         """Returns a rendered table as a discord.File"""
         return await Html2img.html2discord_file(self.renderHTML(style), Html2img.cssPathTable, file_name)
 
-    def renderHTML(self, style: Style = None) -> str:
+    def renderHTML(self, style: Style | None = None) -> str:
         """Returns an HTML table"""
         if style is None:
             style = self.Style()
@@ -101,3 +101,7 @@ class Table:
         </script></body></html>"""
 
         return output
+
+
+ColumnType = list[list[Table.Cell]]
+RowType = ColumnType
