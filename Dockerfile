@@ -7,5 +7,6 @@ COPY src /app/src
 
 RUN python3 -m venv env
 RUN env/bin/pip3 install -e .
+RUN env/bin/playwright install
 
 CMD ["env/bin/python3", "src/bakabot/main.py"]
