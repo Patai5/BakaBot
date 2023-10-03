@@ -1,12 +1,10 @@
-FROM python:3.11
+FROM mcr.microsoft.com/playwright/python:v1.32.0-jammy
 
 WORKDIR /app
 
 COPY .env setup.cfg pyproject.toml ./
 COPY src /app/src
 
-RUN python3 -m venv env
-RUN env/bin/pip3 install -e .
-RUN env/bin/playwright install
+RUN pip install -e .
 
-CMD ["env/bin/python3", "src/bakabot/main.py"]
+CMD ["python3", "src/bakabot/main.py"]
