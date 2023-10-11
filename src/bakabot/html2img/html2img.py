@@ -2,25 +2,29 @@ import asyncio
 from io import BytesIO
 
 import disnake
-from playwright.async_api import async_playwright
+from playwright.async_api import Browser, async_playwright
 
 
 class Html2img:
-    initialized = False
+    browser: Browser | None = None
+
+    browserInitLock = asyncio.Lock()
 
     @classmethod
-    async def browser_init(cls):
-        """Initializes the browser"""
+    async def getBrowserInstance(cls):
+        """Returns an initialized browser instance"""
         playwright = await async_playwright().start()
-        cls.browser = await playwright.chromium.launch(headless=True)
-        cls.initialized = True
+        browser = await playwright.chromium.launch(headless=True)
+
+        return browser
 
     @classmethod
     async def render(cls, html: str, css: str) -> BytesIO:
         """Renders the html with the css and returns a binary image"""
-        # Waits for the browser to initialize
-        while not cls.initialized:
-            await asyncio.sleep(0.1)
+        async with cls.browserInitLock:
+            if cls.browser is None:
+                cls.browser = await cls.getBrowserInstance()
+
         page = await cls.browser.new_page()
 
         await page.set_content(html)
