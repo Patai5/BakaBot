@@ -6,17 +6,14 @@ from playwright.async_api import Browser, async_playwright
 
 
 class Html2img:
-    browser: Browser | None = None
+    @classmethod
+    async def html2discord_file(cls, html: str, css: str, file_name: str = "table.png") -> disnake.File:
+        """Returns a discord file of the rendered html image"""
+        binaryImg = await cls.render(html, css)
+
+        return disnake.File(fp=binaryImg, filename=file_name)
 
     browserInitLock = asyncio.Lock()
-
-    @classmethod
-    async def getBrowserInstance(cls):
-        """Returns an initialized browser instance"""
-        playwright = await async_playwright().start()
-        browser = await playwright.chromium.launch(headless=True)
-
-        return browser
 
     @classmethod
     async def render(cls, html: str, css: str) -> BytesIO:
@@ -45,9 +42,12 @@ class Html2img:
         await page.close()
         return BytesIO(binaryImg)
 
-    @classmethod
-    async def html2discord_file(cls, html: str, css: str, file_name: str = "table.png") -> disnake.File:
-        """Returns a discord file of the rendered html image"""
-        binaryImg = await cls.render(html, css)
+    browser: Browser | None = None
 
-        return disnake.File(fp=binaryImg, filename=file_name)
+    @classmethod
+    async def getBrowserInstance(cls):
+        """Returns an initialized browser instance"""
+        playwright = await async_playwright().start()
+        browser = await playwright.chromium.launch(headless=True)
+
+        return browser
