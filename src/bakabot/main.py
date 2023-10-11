@@ -8,7 +8,6 @@ from core.grades.grades import Grades
 from core.reminder import Reminder
 from core.schedule.schedule import ChangeDetector
 from disnake.ext import commands
-from html2img.html2img import Html2img
 from message_timers import MessageTimers
 from utils import first_time_setup
 from utils.utils import env_load, getTextChannel, os_environ
@@ -60,7 +59,6 @@ async def start_feature_couroutines(client: disnake.Client):
     if await first_time_setup.start(client):
         # Starts the courutines
         await asyncio.gather(
-            Html2img.browser_init(),
             Reactions.query(client),
             ChangeDetector.start_detecting_changes(60, client),
             Grades.start_detecting_changes(60, client),
