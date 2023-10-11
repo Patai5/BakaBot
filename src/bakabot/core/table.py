@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import functools
 import random
 
 import disnake
+from constants import TABLE_CSS_PATH
 from html2img.html2img import Html2img
 
 
@@ -44,6 +46,12 @@ class Table:
         self.columns = columns
         self.rows = self.gen_rows()
 
+    @staticmethod
+    @functools.lru_cache
+    def tableCss() -> str:
+        with open(TABLE_CSS_PATH, "r") as f:
+            return f.read()
+
     class Cell:
         def __init__(self, items: list[Table.Cell.Item], exclusive: bool = False):
             self.items = items
@@ -66,15 +74,16 @@ class Table:
         return rows
 
     async def render(self, file_name: str = "table.png", style: Style | None = None) -> disnake.File:
-        """Returns a rendered table as a discord.File"""
-        return await Html2img.html2discord_file(self.renderHTML(style), Html2img.cssPathTable, file_name)
+        """Returns a rendered table as a disnake.File"""
+
+        return await Html2img.html2discord_file(self.renderHTML(style), Table.tableCss(), file_name)
 
     def renderHTML(self, style: Style | None = None) -> str:
         """Returns an HTML table"""
         if style is None:
             style = self.Style()
 
-        output = f"""<!DOCTYPE html><html><head><link rel="stylesheet" href="../styles.css"></head><body>"""
+        output = f"""<!DOCTYPE html><html><body>"""
 
         output += f'<table class="{random.randint(0, len(style.backgrounds) - 1)}, {random.randint(0, 360)}">'
         for row in self.rows:
