@@ -26,8 +26,7 @@ class Html2img:
 
         await page.set_content(html)
         await page.add_style_tag(content=css)
-
-        await page.wait_for_load_state("domcontentloaded")
+        await page.wait_for_function("document.fonts.ready")
 
         size = await page.evaluate(
             """() => {
