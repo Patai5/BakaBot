@@ -14,15 +14,15 @@ class General(commands.Cog):
     async def scheduleCommand(
         self,
         inter: disnake.ApplicationCommandInteraction,
-        dayStart: int = 1,
-        dayEnd: int = 5,
+        day_start: int = 1,
+        day_end: int = 5,
         week: int = 1,
-        showDay: bool | None = None,
-        showClassroom: bool | None = None,
+        show_day: bool | None = None,
+        show_classroom: bool | None = None,
     ):
         await inter.response.defer()
         await inter.followup.send(
-            file=await Schedule.db_schedule(bool(week - 1)).render(dayStart, dayEnd, showDay, showClassroom)
+            file=await Schedule.db_schedule(bool(week - 1)).render(day_start, day_end, show_day, show_classroom)
         )
 
     slashScheduleCommand = commands.InvokableSlashCommand(
