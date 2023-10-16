@@ -1,6 +1,6 @@
 from constants import DAYS_REVERSED, NUM_OF_LESSONS_IN_DAY
 from core.schedule.lesson import Lesson
-from core.table import Table
+from core.table import ColumnType, Table
 from utils.utils import read_db
 
 
@@ -73,24 +73,28 @@ class Day:
 
         dayTableToRender = self.buildDayTable(showClassroom, shortName, showDay)
 
-        return Table([dayTableToRender]).render(file_name=file_name, style=renderStyle)
+        return Table(dayTableToRender).render(file_name=file_name, style=renderStyle)
 
-    def buildDayTable(self, showClassroom: bool, shortName: bool, showDay: bool) -> list[Table.Cell]:
+    def buildDayTable(self, showClassroom: bool, shortName: bool, showDay: bool) -> ColumnType:
         """Builds a `Table` object of the day."""
 
         startHour, endHour = self.getStartEndHours()
         if startHour is None or endHour is None:
             raise ValueError("Cannot render an empty day")
 
-        lessonCells: list[Table.Cell] = []
+        columns: ColumnType = []
+
         if showDay:
-            lessonCells.append(Table.Cell([Table.Cell.Item(self.nameShort)]))
+            emptyCell = Table.Cell([Table.Cell.Item(None)])
+            dayNameCell = Table.Cell([Table.Cell.Item(self.nameShort)])
+            columns.append([emptyCell, dayNameCell])
 
         for lesson in self.lessons[startHour : endHour + 1]:
+            lessonHourCell = Table.Cell([Table.Cell.Item(f"{lesson.hour}.")])
             lessonCell = lesson.buildLessonTableCell(showClassroom, shortName)
-            lessonCells.append(lessonCell)
+            columns.append([lessonHourCell, lessonCell])
 
-        return lessonCells
+        return columns
 
     def getStartEndHours(self) -> tuple[int | None, int | None]:
         """Gets the start and end hours of the day. Empty lessons are not counted"""
