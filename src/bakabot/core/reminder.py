@@ -102,7 +102,12 @@ class Reminder:
 
                 # The lesson image
                 fileName = "nextLesson.png"
-                lessonImg = await lesson.render(True, read_db("reminderShort"), file_name=fileName)
+
+                reminderLessonShortName: bool | None = read_db("reminderShort")
+                if reminderLessonShortName is None:
+                    raise ValueError("DB value for 'reminderShort' is None")
+
+                lessonImg = await lesson.render(reminderLessonShortName, True, file_name=fileName)
                 embed.set_image(url=f"attachment://{fileName}")
 
                 # Sends the message
