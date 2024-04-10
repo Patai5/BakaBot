@@ -90,7 +90,7 @@ class Grades:
         # If bakalari server is down
         if not session:
             return None
-        url = "https://bakalari.ceskolipska.cz/next/prubzna.aspx?s=chrono"
+        url = "https://gymkh.bakalari.cz/next/prubzna.aspx?s=chrono"
         response = await request(session, url, True, client)
         # If bakalari server is down
         if not response:
