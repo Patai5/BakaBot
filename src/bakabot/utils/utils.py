@@ -53,7 +53,7 @@ async def login(client: disnake.Client):
     username = os_environ("bakalariUsername")
     password = os_environ("bakalariPassword")
 
-    url = "https://bakalari.ceskolipska.cz/Login"
+    url = "https://gymkh.bakalari.cz/login"
     data = {"username": username, "password": password, "returnUrl": "", "login": ""}
     session = aiohttp.ClientSession()
     try:
