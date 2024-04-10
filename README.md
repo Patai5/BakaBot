@@ -5,7 +5,15 @@ Receive instant updates on new grades and schedule changes directly in your Disc
 
 #### Note:
 This application wasn't initially designed for seamless integration with different Bakaláři instances.\
-You might need to adjust a few variables to adapt it to your specific school version.
+You might need to adjust a few variables to adapt it to your specific school version:
+
+Subjects in this file:
+* constants.py
+
+And urls in these:
+* grades.py
+* schedule.py
+* utils.py
 
 ## Usage examples
 
@@ -33,6 +41,8 @@ You might need to adjust a few variables to adapt it to your specific school ver
 
 1. Clone the repository
 2. Setup your `.env` file from `.env.example`
+   * Guide on how to get the YOUR DISCORD TOKEN can be found [here](https://www.writebots.com/discord-bot-token/).
+     * Aditionally you have to turn on all three options under "Privileged Gateway Intents" which can be found under the Bot option on left hand side.
 3. Create a virtual environment *(not required, but well recommended)*
 ```sh
 python -m venv env
@@ -45,7 +55,11 @@ env\Scripts\activate.bat
 ```sh
 pip install -e .
 ```
-6. Start the bot
+6. Install Playwright
+```sh
+playwright install
+```
+7. Start the bot
 ```sh
 python src/BakaBot/main.py
 ```
