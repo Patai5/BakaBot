@@ -94,9 +94,9 @@ class Schedule:
         if not session:
             return None
         if nextWeek:
-            url = "https://bakalari.ceskolipska.cz/next/rozvrh.aspx?s=next"
+            url = "https://gymkh.bakalari.cz/next/rozvrh.aspx?s=next"
         else:
-            url = "https://bakalari.ceskolipska.cz/next/rozvrh.aspx"
+            url = "https://gymkh.bakalari.cz/next/rozvrh.aspx"
         response = await request(session, url, True, client)
         # If bakalari server is down
         if not response:
