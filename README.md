@@ -43,6 +43,7 @@ And urls in these:
 2. Setup your `.env` file from `.env.example`
    * Guide on how to get the YOUR DISCORD TOKEN can be found [here](https://www.writebots.com/discord-bot-token/).
      * Aditionally you have to turn on all three options under "Privileged Gateway Intents" which can be found under the Bot option on left hand side.
+   * Guide on how to get the YOUR DISCORD ID can be found [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
 3. Create a virtual environment *(not required, but well recommended)*
 ```sh
 python -m venv env
