@@ -3,25 +3,24 @@ NUM_OF_LESSONS_IN_DAY = 13
 
 # TODO: Ideally not have this hardcoded, instead somehow scrape this
 SUBJECTS = {
-    "ANJ": "Anglický jazyk",
-    "BIO": "Biologie",
-    "CHE": "Chemie",
-    "CEJ": "Český jazyk",
-    "DEJ": "Dějepis",
-    "EHV": "Estetická výchova - hudební",
-    "EVV": "Estetická výchova - výtvarná",
-    "FRJ": "Francouzský jazyk",
-    "FYZ": "Fyzika",
-    "IVT": "Informatika a výpočetní technika",
+    "Aj": "Jazyk anglický",
+    "Bi": "Biologie",
+    "Ch": "Chemie",
+    "Čj": "Český jazyk a literatura",
+    "D": "Dějepis",
+    "Evh": "Estetická výchova - hudební",
+    "Evv": "Estetická výchova - výtvarná",
+    "Fj": "Jazyk francouzský",
+    "Fy": "Fyzika",
+    "Inf": "Informatika a výpočetní technika",
     "LpBi": "Laboratorní práce z biologie",
     "LpCh": "Laboratorní práce z chemie",
     "LpFy": "Laboratorní práce z fyziky",
-    "MAT": "Matematika",
+    "M": "Matematika",
     "TH": "Třídnická hodina",
-    "TEV": "Tělesná výchova",
-    "ZEM": "Zeměpis",
-    "ZSV": "Základy společenských věd",
-    "LIT": "Literatura"
+    "Tv": "Tělesná výchova",
+    "Z": "Zeměpis",
+    "Zsv": "Základy společenských věd",
 }
 
 SUBJECTS_REVERSED: dict[str, str] = {}
