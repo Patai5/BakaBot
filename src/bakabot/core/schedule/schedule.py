@@ -13,7 +13,7 @@ from core.schedule.lesson import Lesson
 from core.subjects.subjects_cache import SubjectsCache
 from core.table import ColumnType, Table
 from disnake.ext.commands import InteractionBot
-from utils.utils import getTextChannel, log_html, login, rand_rgb, read_db, request, write_db
+from utils.utils import getTextChannel, log_html, login, os_environ, rand_rgb, read_db, request, write_db
 
 
 class Schedule:
@@ -95,10 +95,11 @@ class Schedule:
         # If bakalari server is down
         if not session:
             return None
-        if nextWeek:
-            url = "https://bakalari.ceskolipska.cz/next/rozvrh.aspx?s=next"
-        else:
-            url = "https://bakalari.ceskolipska.cz/next/rozvrh.aspx"
+
+        bakalariUrl = os_environ("bakalariUrl")
+        scheduleUrlPath = "/next/rozvrh.aspx?s=next" if nextWeek else "/next/rozvrh.aspx"
+        url = f"{bakalariUrl}{scheduleUrlPath}"
+
         response = await request(session, url, True, client)
         # If bakalari server is down
         if not response:

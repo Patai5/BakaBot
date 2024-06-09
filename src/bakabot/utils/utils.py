@@ -53,8 +53,9 @@ def getTextChannel(channelId: int, client: InteractionBot):
 async def login(client: InteractionBot):
     username = os_environ("bakalariUsername")
     password = os_environ("bakalariPassword")
+    bakalariUrl = os_environ("bakalariUrl")
 
-    url = "https://bakalari.ceskolipska.cz/Login"
+    url = f"{bakalariUrl}/Login"
     data = {"username": username, "password": password, "returnUrl": "", "login": ""}
     session = aiohttp.ClientSession()
     try:

@@ -11,7 +11,7 @@ from core.subjects.subject import Subject
 from core.subjects.subjects_cache import SubjectsCache
 from disnake.ext.commands import InteractionBot
 from message_timers import MessageTimers
-from utils.utils import get_sec, getTextChannel, log_html, login, read_db, request, write_db
+from utils.utils import get_sec, getTextChannel, log_html, login, os_environ, read_db, request, write_db
 
 
 class Grades:
@@ -90,7 +90,9 @@ class Grades:
         # If bakalari server is down
         if not session:
             return None
-        url = "https://bakalari.ceskolipska.cz/next/prubzna.aspx?s=chrono"
+
+        bakalariUrl = os_environ("bakalariUrl")
+        url = f"{bakalariUrl}/next/prubzna.aspx?s=chrono"
         response = await request(session, url, True, client)
         # If bakalari server is down
         if not response:
