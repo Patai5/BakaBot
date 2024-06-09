@@ -6,6 +6,7 @@ from constants import DAYS, SCHOOL_DAYS_IN_WEEK
 from core.schedule.day import Day
 from core.schedule.lesson import Lesson
 from core.schedule.schedule import Schedule
+from core.subjects.subject import Subject
 
 
 def parseSchedule(body: BeautifulSoup, nextWeek: bool) -> Schedule | None:
@@ -68,16 +69,21 @@ def parseLesson(lessonEl: Tag, hour: int) -> Lesson:
     lessonDetail: dict[str, str] = json.loads(lessonDetailEl.attrs["data-detail"])
     changeInfo = lessonDetail.get("changeinfo") or lessonDetail.get("removedinfo") or None
 
-    absentInfo = lessonDetail.get("absentinfo")
-    if absentInfo:
-        return Lesson(hour, absentInfo, changeInfo=changeInfo)
-
     if lessonDetail.get("type") == "removed":
         return Lesson(hour, changeInfo=changeInfo)
 
-    subjectText = lessonDetail.get("subjecttext")
-    subjectRegex = re.match(r"^[^\|]+?(?= \|)", subjectText) if subjectText else None
-    subject = subjectRegex.group(0) if subjectRegex else None
+    subjectShortEl = lessonDetailEl.select_one(".middle")
+    if subjectShortEl is None:
+        raise ValueError("Couldn't find subject name short")
+    subjectNameShort = subjectShortEl.text
+
+    subjectLongText = lessonDetail.get("subjecttext")
+    if subjectLongText is None:
+        raise ValueError("Couldn't extract subject name long text")
+    maybeSubjectMatch = re.match(r"^[^\|]+?(?= \|.+\|)", subjectLongText)
+    subjectNameLong = maybeSubjectMatch.group(0) if maybeSubjectMatch else subjectNameShort
+
+    subject = Subject(subjectNameLong, subjectNameShort)
 
     classroom = lessonDetail.get("room")
     teacher = lessonDetail.get("teacher")

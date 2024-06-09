@@ -8,6 +8,7 @@ import aiohttp
 import disnake
 import dotenv
 import pytz
+from disnake.ext.commands import InteractionBot
 
 
 # Reads a from the database by key. Returns none if the key doesn't exist
@@ -39,7 +40,7 @@ def os_environ(key: str):
         return os.environ[key]
 
 
-def getTextChannel(channelId: int, client: disnake.Client):
+def getTextChannel(channelId: int, client: InteractionBot):
     """Gets the text channel by the given id. Throws an error if the channel doesn't exist or is not a text channel"""
     channel = client.get_channel(channelId)
     if not isinstance(channel, disnake.TextChannel):
@@ -49,7 +50,7 @@ def getTextChannel(channelId: int, client: disnake.Client):
 
 
 # Logs into the server and returns the login session
-async def login(client: disnake.Client):
+async def login(client: InteractionBot):
     username = os_environ("bakalariUsername")
     password = os_environ("bakalariPassword")
 
@@ -73,7 +74,7 @@ async def login(client: disnake.Client):
         return session
 
 
-async def request(session: aiohttp.ClientSession, url: str, get: bool, client: disnake.Client):
+async def request(session: aiohttp.ClientSession, url: str, get: bool, client: InteractionBot):
     try:
         if get:
             response = await session.get(url, timeout=25)
@@ -92,7 +93,7 @@ async def request(session: aiohttp.ClientSession, url: str, get: bool, client: d
         return None
 
 
-async def status(online: bool, client: disnake.Client):
+async def status(online: bool, client: InteractionBot):
     """Send's the current status of the bakalari server to discord"""
     lastStatus = read_db("lastStatus")
 
@@ -190,7 +191,7 @@ def from_sec_to_time(sec: int):
     return output
 
 
-async def fetch_message(message_channel: int, message_id: int, client: disnake.Client):
+async def fetch_message(message_channel: int, message_id: int, client: InteractionBot):
     try:
         return await getTextChannel(message_channel, client).fetch_message(message_id)
     except:

@@ -10,7 +10,9 @@ from bs4 import BeautifulSoup
 from constants import NUM_OF_LESSONS_IN_DAY, SCHOOL_DAYS_IN_WEEK
 from core.schedule.day import Day
 from core.schedule.lesson import Lesson
+from core.subjects.subjects_cache import SubjectsCache
 from core.table import ColumnType, Table
+from disnake.ext.commands import InteractionBot
 from utils.utils import getTextChannel, log_html, login, rand_rgb, read_db, request, write_db
 
 
@@ -86,7 +88,7 @@ class Schedule:
             self.days.insert(weekDay + 1, Day([], weekDay, None))
 
     @staticmethod
-    async def request_schedule(nextWeek: bool, client: disnake.Client) -> BeautifulSoup | None:
+    async def request_schedule(nextWeek: bool, client: InteractionBot) -> BeautifulSoup | None:
         """Returns a BeautifulSoup object from response of the schedule page"""
         # Gets response from the server
         session = await login(client)
@@ -113,7 +115,7 @@ class Schedule:
         return html
 
     @staticmethod
-    async def get_schedule(nextWeek: bool, client: disnake.Client) -> Schedule | None:
+    async def get_schedule(nextWeek: bool, client: InteractionBot) -> Schedule | None:
         """Returns a Schedule object with the extracted information"""
         from core.schedule.parse_schedule import parseSchedule
 
@@ -185,11 +187,10 @@ class Schedule:
 
                 # Adds the actual lessons to the table
                 for day_i, day in enumerate(schedule.days):
-                    column.append(
-                        Table.Cell(
-                            [Table.Cell.Item(day.lessons[i].subjectShort)], exclusives[day_i][day.lessons[i].hour]
-                        )
-                    )
+                    lessonSubject = day.lessons[i].subject
+                    subjectName = lessonSubject.shortName if lessonSubject else None
+
+                    column.append(Table.Cell([Table.Cell.Item(subjectName)], exclusives[day_i][day.lessons[i].hour]))
                     if showClassroom:
                         column[-1].items.append(Table.Cell.Item(day.lessons[i].classroom))
                 columns.append(column)
@@ -215,7 +216,7 @@ class ChangeDetector:
             self.day = day
 
     @staticmethod
-    async def detect_changes(client: disnake.Client):
+    async def detect_changes(client: InteractionBot):
         """Detects any changes in the schedule and sends a discord notification of the changes if there are any"""
         newCurrentWeek = await Schedule.get_schedule(False, client)
         newNextWeek = await Schedule.get_schedule(True, client)
@@ -223,6 +224,8 @@ class ChangeDetector:
         # If bakalari server is down, return
         if newCurrentWeek is None or newNextWeek is None:
             return None
+
+        ChangeDetector.handle_update_subjects_cache((newCurrentWeek, newNextWeek), client)
 
         schedulesCurrentWeek = OldNewSchedule(Schedule.db_schedule(False), newCurrentWeek)
         schedulesNextWeek = OldNewSchedule(Schedule.db_schedule(True), newNextWeek)
@@ -235,6 +238,22 @@ class ChangeDetector:
             if changed:
                 await ChangeDetector.changed_message(changed, client, schedulePair)
                 schedulePair.new.db_save()
+
+    @staticmethod
+    def handle_update_subjects_cache(schedules: tuple[Schedule, Schedule], client: InteractionBot):
+        """Updates the subjects cache with the subjects from the schedule"""
+
+        subjects = [
+            lesson.subject
+            for schedule in schedules
+            for day in schedule.days
+            for lesson in day.lessons
+            if lesson.subject
+        ]
+
+        hasMadeChanges = SubjectsCache.handleUpdateSubjects(subjects)
+        if hasMadeChanges:
+            SubjectsCache.updateCommandsWithSubjects(client)
 
     @staticmethod
     def find_changes(oldNewSchedule: OldNewSchedule) -> list[ChangeDetector.Changed] | None:
@@ -260,7 +279,9 @@ class ChangeDetector:
 
     @staticmethod
     async def changed_message(
-        changed: list[ChangeDetector.Changed], client: disnake.Client, oldNewSchedule: OldNewSchedule
+        changed: list[ChangeDetector.Changed],
+        client: InteractionBot,
+        oldNewSchedule: OldNewSchedule,
     ):
         """Sends the changed schedules over discord"""
         embedsColor = disnake.Color.from_rgb(*rand_rgb())
@@ -299,12 +320,22 @@ class ChangeDetector:
             if lessonOld.empty:
                 changedStr += "**∅**"
             else:
-                changedStr += f"**{lessonOld.subjectShort}{' ' + lessonOld.classroom if lessonOld.classroom else ''}**"
+                if lessonOld.subject is None:
+                    raise ValueError("Old outdated lesson is None")
+
+                changedStr += (
+                    f"**{lessonOld.subject.shortName}{' ' + lessonOld.classroom if lessonOld.classroom else ''}**"
+                )
             changedStr += " -> "
             if lessonNew.empty:
                 changedStr += "**∅**"
             else:
-                changedStr += f"**{lessonNew.subjectShort}{' ' + lessonNew.classroom if lessonNew.classroom else ''}**"
+                if lessonNew.subject is None:
+                    raise ValueError("New updated lesson is None")
+
+                changedStr += (
+                    f"**{lessonNew.subject.shortName}{' ' + lessonNew.classroom if lessonNew.classroom else ''}**"
+                )
             if lessonNew.changeInfo is not None:
                 changedStr += f"; *{lessonNew.changeInfo}*"
             changedStr += "\n"
@@ -321,7 +352,7 @@ class ChangeDetector:
         await channel.send(embed=changedDetail)
 
     @staticmethod
-    async def start_detecting_changes(interval: int, client: disnake.Client):
+    async def start_detecting_changes(interval: int, client: InteractionBot):
         """Starts an infinite loop for checking changes in the schedule"""
         while True:
             try:

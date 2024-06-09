@@ -1,14 +1,15 @@
 import core.predictor as predictor
 import disnake
-from constants import SUBJECTS
 from core.grades.grades import Grades
 from core.schedule.schedule import Schedule
+from core.subjects.subjects_cache import SubjectsCache
 from disnake.ext import commands
+from disnake.ext.commands import InteractionBot
 from utils.utils import os_environ, write_db
 
 
 class General(commands.Cog):
-    def __init__(self, client: disnake.Client):
+    def __init__(self, client: InteractionBot):
         self.client = client
 
     async def scheduleCommand(
@@ -64,13 +65,17 @@ class General(commands.Cog):
     async def gradesPrediction(
         self,
         inter: disnake.ApplicationCommandInteraction,
-        subject: str,
+        subject_name: str,
     ):
         if not isinstance(inter.channel, disnake.TextChannel):
             raise Exception("Channel is not a text channel")
 
+        subject = SubjectsCache.tryGetSubjectByName(subject_name)
+        if subject is None:
+            return await inter.response.send_message(f'Předmět "{subject_name}" neexistuje.')
+
         await inter.response.send_message("Sending predictor embed message", delete_after=0)
-        await predictor.predict_embed(subject, inter.channel, self.client)
+        await predictor.predict_embed(subject_name, inter.channel, self.client)
 
     slashGradePrediction = commands.InvokableSlashCommand(
         gradesPrediction,
@@ -78,12 +83,9 @@ class General(commands.Cog):
         description="Makes a prediction of your grades",
         options=[
             disnake.Option(
-                name="subject",
+                name="subject_name",
                 description="Subject to predict the grade for",
-                choices=[
-                    disnake.OptionChoice(name=val, value=key)
-                    for key, val in sorted(SUBJECTS.items(), key=lambda item: item[1])
-                ],
+                choices=SubjectsCache.getSlashCommandSubjectChoices(),
                 type=disnake.OptionType.string,
                 required=True,
             )
@@ -93,16 +95,18 @@ class General(commands.Cog):
     async def gradesAverage(
         self,
         inter: disnake.ApplicationCommandInteraction,
-        subject: str,
+        subject_name: str,
     ):
-        subjectLongName = SUBJECTS.get(subject)
-        average = Grades.db_grades().by_subject(subject).average()
+        subject = SubjectsCache.tryGetSubjectByName(subject_name)
+        if subject is None:
+            return await inter.response.send_message(f'Předmět "{subject_name}" neexistuje.')
+
+        average = Grades.db_grades().by_subject_name(subject_name).average()
         if average == None:
-            await inter.response.send_message(f'Pro předmět "{subjectLongName}" nemáte dosud žádné známky.')
-            return
+            return await inter.response.send_message(f'Pro předmět "{subject_name}" nemáte dosud žádné známky.')
 
         embed = disnake.Embed()
-        embed.set_author(name=f"Průměr z {subjectLongName}:")
+        embed.set_author(name=f"Průměr z {subject.fullName}:")
         embed.title = str(average)
         embed.color = disnake.Color.from_rgb(0, 255, 255)
 
@@ -114,12 +118,9 @@ class General(commands.Cog):
         description="Gets the average grade for a given subject",
         options=[
             disnake.Option(
-                name="subject",
+                name="subject_name",
                 description="Subject to get the average for",
-                choices=[
-                    disnake.OptionChoice(name=val, value=key)
-                    for key, val in sorted(SUBJECTS.items(), key=lambda item: item[1])
-                ],
+                choices=SubjectsCache.getSlashCommandSubjectChoices(),
                 type=disnake.OptionType.string,
                 required=True,
             ),
@@ -132,7 +133,7 @@ def admin_user_check(inter: disnake.ApplicationCommandInteraction) -> bool:
 
 
 class Admin(commands.Cog):
-    def __init__(self, client: disnake.Client):
+    def __init__(self, client: InteractionBot):
         self.client = client
 
     group = commands.group(name="admin", description="Admin commands")
@@ -176,9 +177,23 @@ class Admin(commands.Cog):
         group=group,
     )
 
+    async def getSubjects(self, inter: disnake.ApplicationCommandInteraction):
+        """Gets all cached subjects"""
+
+        subjects = [f"{subject.shortName}: {subject.fullName}" for subject in SubjectsCache.subjects]
+        await inter.send("\n".join(subjects))
+
+    slashGetSubjects = commands.InvokableSlashCommand(
+        getSubjects,
+        name="get_subjects",
+        description="Gets the subjects",
+        checks=[admin_user_check],
+        group=group,
+    )
+
 
 class Settings(commands.Cog):
-    def __init__(self, client: disnake.Client):
+    def __init__(self, client: InteractionBot):
         self.client = client
 
     group = commands.group(name="settings", description="Edits the bot's settings")
@@ -233,7 +248,10 @@ class Settings(commands.Cog):
         group=group,
         options=[
             disnake.Option(
-                name="bool", description="True or False value", type=disnake.OptionType.boolean, required=True
+                name="bool",
+                description="True or False value",
+                type=disnake.OptionType.boolean,
+                required=True,
             )
         ],
     )
@@ -263,3 +281,10 @@ class Settings(commands.Cog):
 
 
 COGS: list[commands.CogMeta] = [General, Admin, Settings]
+
+
+def setupBotInteractions(client: commands.InteractionBot):
+    """Sets up the bot's interactions (commands)"""
+
+    for cog in COGS:
+        client.add_cog(cog(client))

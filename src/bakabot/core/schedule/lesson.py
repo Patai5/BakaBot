@@ -1,6 +1,6 @@
 from typing import Union
 
-from constants import SUBJECTS_REVERSED
+from core.subjects.subject import Subject
 from core.table import Table
 from utils.utils import read_db
 
@@ -9,7 +9,7 @@ class Lesson:
     def __init__(
         self,
         hour: int,
-        subject: Union[str, None] = None,
+        subject: Subject | None = None,
         classroom: Union[str, None] = None,
         teacher: Union[str, None] = None,
         changeInfo: Union[str, None] = None,
@@ -18,22 +18,9 @@ class Lesson:
         self.classroom = classroom
         self.teacher = teacher
         self.changeInfo = changeInfo
-        self.empty = None
         self.subject = subject
 
-    @property
-    def subject(self) -> str | None:
-        return self._subject
-
-    @subject.setter
-    def subject(self, name: str | None):
-        self._subject = name
-
-        self.subjectShort = SUBJECTS_REVERSED.get(name) if name else None
-        if self.subjectShort is None:
-            self.subjectShort = name
-
-        self.empty = not bool(name)
+        self.empty = subject is None
 
     def __str__(self) -> str:
         return f"Lesson(Hour: {self.hour}, Subject: {self.subject}, Classroom: {self.classroom}, Teacher: {self.teacher}, ChangeInfo: {self.changeInfo})"
@@ -73,7 +60,14 @@ class Lesson:
     ) -> Table.Cell:
         """Builds a `Table.Cell` object of the lesson."""
 
-        lessonCell = Table.Cell([Table.Cell.Item(self.subjectShort if shortName else self.subject)])
+        if self.subject is None:
+            raise ValueError("Cannot render an empty lesson")
+
+        lessonCell = Table.Cell([])
+
+        lessonNameText = self.subject.shortName if shortName else self.subject.fullName
+        lessonCell.items.append(Table.Cell.Item(lessonNameText))
+
         if showClassroom:
             lessonCell.items.append(Table.Cell.Item(self.classroom))
 

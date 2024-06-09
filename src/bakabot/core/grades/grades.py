@@ -6,23 +6,23 @@ import traceback
 
 import core.predictor as predictor
 import disnake
-from constants import SUBJECTS_REVERSED
 from core.grades.grade import Grade
+from core.subjects.subject import Subject
+from core.subjects.subjects_cache import SubjectsCache
+from disnake.ext.commands import InteractionBot
 from message_timers import MessageTimers
 from utils.utils import get_sec, getTextChannel, log_html, login, read_db, request, write_db
 
 
 class Grades:
     def __init__(self, grades: list[Grade]):
-        self.grades = grades
+        self.grades = list(grades)
 
-    def by_subject(self, subject: str):
-        """Returns only Grades with the wanted subject"""
-        gradesBySubject: list[Grade] = []
-        for grade in self.grades:
-            if grade.subject == subject:
-                gradesBySubject.append(grade)
-        return Grades(gradesBySubject)
+    def by_subject_name(self, subjectName: str):
+        """Returns only Grades with the wanted subject name"""
+
+        gradesBySubject = filter(lambda grade: grade.subjectName == subjectName, self.grades)
+        return Grades(list(gradesBySubject))
 
     def average(self) -> float | None:
         """Returns the average grade from the self Grades\n
@@ -82,7 +82,7 @@ class Grades:
         write_db("grades", self)
 
     @staticmethod
-    async def request_grades(client: disnake.Client) -> str | None:
+    async def request_grades(client: InteractionBot) -> str | None:
         """Requests grades from bakalari server and returns the response as a string"""
 
         # Gets response from the server
@@ -106,7 +106,7 @@ class Grades:
         return responseHtml
 
     @staticmethod
-    async def getGrades(client: disnake.Client) -> Grades | None:
+    async def getGrades(client: InteractionBot) -> Grades | None:
         """Requests grades from bakalari server and parses them into a Grades object"""
         from core.grades.parse_grades import parseGrades
 
@@ -123,7 +123,7 @@ class Grades:
     PREDICTOR_EMOJI = "📊"
 
     @staticmethod
-    async def create_prediction(message: disnake.Message, client: disnake.Client):
+    async def create_prediction(message: disnake.Message, client: InteractionBot):
         """Generates a predict message with the current subject"""
         # Subject
         embed = message.embeds[0].to_dict()
@@ -134,7 +134,7 @@ class Grades:
 
         subjectFromEmbed = embedAuthor.get("name")
 
-        subject = SUBJECTS_REVERSED.get(subjectFromEmbed) or subjectFromEmbed
+        subject = SubjectsCache.getSubjectByName(subjectFromEmbed) or subjectFromEmbed
 
         # Removes the reaction
         await MessageTimers.delete_message_reaction(message, "gradesMessages", Grades.PREDICTOR_EMOJI, client)
@@ -144,7 +144,7 @@ class Grades:
             raise Exception("Message channel is not a TextChannel")
 
         # Sends the grade predictor
-        await predictor.predict_embed(subject, messageChannel, client)
+        await predictor.predict_embed(subject.fullName, messageChannel, client)
 
     @staticmethod
     async def delete_grade_reaction(message: disnake.Message, emoji: disnake.message.EmojiInputType, delay: int):
@@ -172,7 +172,17 @@ class Grades:
                     pass
 
     @staticmethod
-    async def detect_changes(client: disnake.Client):
+    def handle_update_subjects_cache(grades: list[Grade], client: InteractionBot):
+        """Updates the SubjectsCache with the new subjects, if needed"""
+
+        subjects = [Subject(grade.subjectName, None) for grade in grades]
+
+        hasMadeChanges = SubjectsCache.handleUpdateSubjects(subjects)
+        if hasMadeChanges:
+            SubjectsCache.updateCommandsWithSubjects(client)
+
+    @staticmethod
+    async def detect_changes(client: InteractionBot):
         """Detects changes in grades and sends them to discord"""
 
         # Finds and returns the actual changes
@@ -186,7 +196,7 @@ class Grades:
             return newGrades
 
         # Discord message with the information about the changes
-        async def changed_message(changed: list[Grade], grades: Grades, client: disnake.Client):
+        async def changed_message(changed: list[Grade], grades: Grades, client: InteractionBot):
             channelId: int | None = read_db("channelGrades")
             if channelId is None:
                 raise Exception("No channelGrades in database")
@@ -217,6 +227,8 @@ class Grades:
         if gradesNew is None:
             return None
 
+        Grades.handle_update_subjects_cache(gradesNew.grades, client)
+
         # Detects any changes and sends the message and saves the schedule if needed
         changed = find_changes(gradesOld, gradesNew)
         if changed:
@@ -224,7 +236,7 @@ class Grades:
             gradesNew.db_save()
 
     @staticmethod
-    async def start_detecting_changes(interval: int, client: disnake.Client):
+    async def start_detecting_changes(interval: int, client: InteractionBot):
         """Starts an infinite loop for checking changes in the grades"""
         while True:
             try:

@@ -1,8 +1,9 @@
 import disnake
 from bot_commands.reactions import Reactions
-from constants import SUBJECTS, SUBJECTS_LOWER, SUBJECTS_REVERSED
 from core.grades.grade import Grade
 from core.grades.grades import Grades
+from core.subjects.subjects_cache import SubjectsCache
+from disnake.ext.commands import InteractionBot
 from message_timers import MessageTimers
 
 GRADES_EMOJIS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
@@ -10,7 +11,7 @@ MINUS_EMOJI = "➖"
 WEIGHT_EMOJIS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟", "0️⃣", "*️⃣"]
 
 
-async def predict_embed(subject: str, channel: disnake.TextChannel, client: disnake.Client):
+async def predict_embed(subject: str, channel: disnake.TextChannel, client: InteractionBot):
     """Creates and sends the predictor embed"""
     # Creation of the embed
     embed = disnake.Embed()
@@ -18,13 +19,9 @@ async def predict_embed(subject: str, channel: disnake.TextChannel, client: disn
     # Title
     embed.title = "Predictor"
 
-    subjectText = SUBJECTS_LOWER.get(subject.lower())
-    if subjectText is None:
-        raise ValueError("Subject not found")
-
     # Subject
     embed.add_field(
-        name=f"Předmět: {SUBJECTS.get(subjectText)}",
+        name=f"Předmět: {subject}",
         value="\u200b",
         inline=False,
     )
@@ -46,7 +43,7 @@ async def predict_embed(subject: str, channel: disnake.TextChannel, client: disn
     await MessageTimers.delete_message(message, "predictorMessages", client, 300)
 
 
-async def update_grade(reaction: Reactions, client: disnake.Client):
+async def update_grade(reaction: Reactions, client: InteractionBot):
     """Edits the embed with the reacted grade"""
     for loopReaction in reaction.userReactions:
         # If reacted with the right emoji
@@ -83,7 +80,7 @@ async def update_grade(reaction: Reactions, client: disnake.Client):
                 await MessageTimers.delete_message(reaction.message, "predictorMessages", client, 300)
 
 
-async def update_weight(reaction: Reactions, client: disnake.Client):
+async def update_weight(reaction: Reactions, client: InteractionBot):
     """Edits the embed with the updated weight and shows the new grade average"""
     for loopReaction in reaction.userReactions:
         # If reacted with the right emoji
@@ -101,9 +98,8 @@ async def update_weight(reaction: Reactions, client: disnake.Client):
                 if embedSubject is None:
                     raise ValueError("Subject not found")
 
-                subject = SUBJECTS_REVERSED.get(embedSubject.replace("Předmět: ", ""))
-                if subject is None:
-                    raise ValueError("Subject not found in subjects")
+                subjectName = embedSubject.replace("Předmět: ", "")
+                subject = SubjectsCache.getSubjectByName(subjectName)
 
                 # Grade
                 embedGrade = editedEmbed.fields[1].name
@@ -111,7 +107,7 @@ async def update_weight(reaction: Reactions, client: disnake.Client):
                     raise ValueError("Grade not found")
 
                 grade = Grade.empty_grade(
-                    subject=subject,
+                    subjectName=subject.fullName,
                     weight=weight,
                     gradeValue=float(embedGrade.replace("Známka: ", "")),
                 )
@@ -125,7 +121,7 @@ async def update_weight(reaction: Reactions, client: disnake.Client):
                 )
 
                 # Average
-                average = Grades.db_grades().by_subject(grade.subject).future_average(grade)
+                average = Grades.db_grades().by_subject_name(grade.subjectName).future_average(grade)
                 editedEmbed.add_field(name=f"Nový průměr: {average}", value="\u200b", inline=False)
 
                 # Sends the edited message

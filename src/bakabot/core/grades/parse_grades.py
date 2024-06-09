@@ -2,7 +2,6 @@ import json
 import re
 
 from bs4 import BeautifulSoup
-from constants import SUBJECTS_REVERSED
 from core.grades.grade import Grade
 from core.grades.grades import Grades
 
@@ -39,17 +38,13 @@ def parseGradeJson(jsonGrade: dict[str, str]) -> Grade:
 
     caption = jsonGrade["caption"]
     id = jsonGrade["id"]
-    subject = jsonGrade["nazev"]
+    subjectName = jsonGrade["nazev"]
     weight = int(jsonGrade["vaha"])
     note = jsonGrade["poznamkakzobrazeni"]
     date = jsonGrade["datum"]
     gradeText = jsonGrade["MarkText"]
 
     cleanNote = note.replace(" <br>", "")
-
-    # Gets a short name for the subject
-    # TODO: reformat: move this somewhere else
-    shortSubject = SUBJECTS_REVERSED[subject]
 
     # Parses the date into list of [Year, Month, Day]
     # TODO: reformat: wth is this, use a datetime object not a list
@@ -68,4 +63,4 @@ def parseGradeJson(jsonGrade: dict[str, str]) -> Grade:
         else:
             gradeValue = int(gradeText)
 
-    return Grade(id, caption, shortSubject, weight, cleanNote, dateList, gradeText, gradeValue)
+    return Grade(id, caption, subjectName, weight, cleanNote, dateList, gradeText, gradeValue)
