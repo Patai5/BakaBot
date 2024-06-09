@@ -199,11 +199,11 @@ dxo.SetEvents({'EndCallback':OnGlobalEndCallback});
             $.validator.format("Chyba při komunikaci s core částí webové aplikace. Postupujte podle {0} nebo se obraťte na technickou podporu.", "<a target='_blank' class='warning-link' href='https://napoveda.bakalari.cz/wa_instal_core.htm'>návodu</a>") : 
             "Došlo k chybě při komunikaci, některé části webové aplikace nejsou dostupné. Kontaktujte správce webové aplikace na škole.";
     </script>
-    <form method="post" action="./rozvrh.aspx" id="formbaka" style="height: 100%">
+    <form method="post" action="./rozvrh.aspx?s=cal" id="formbaka" style="height: 100%">
 <div class="aspNetHidden">
 <input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
 <input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
-<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="ZIbnB79zs2spq0E2k6tLhcm5+kK7eZafZYPhsYigDFHxY9A4w0MqbW5MjZaX9K0vLaRbd+7Ibbh0e4VgeNnXobOzQmLx5SiSB2E9D+SdzR+ZVy7S9bwqLmipYEjNyEujn9Zpe9FRTa2kLr0tTqDrN0s79lC7pc+j2+3K1SbTk1s=" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="ZkisTVLjem44gWSw2QoZNCyHp6FZywwttObbZU5KuC7TBkkLIZy+W4VPM+WkrdJ7kf5drdU1yCQzMwvgfKXPRICL5IVip+szzqLKalCfvg2I9foIy6uUB7v96fP5CQ7UMw6R/W5aHrLc1LgP8fwmiF+t2uU/Wa2+eDfl0kJLEexjLSjZSm8e9BzXF2N29GpFDa8l/1qMnWbB42leB4HaWw==" />
 </div>
 
 <script type="text/javascript">
@@ -228,7 +228,7 @@ function __doPostBack(eventTarget, eventArgument) {
 <div class="aspNetHidden">
 
 	<input type="hidden" name="__VIEWSTATEGENERATOR" id="__VIEWSTATEGENERATOR" value="DDC68B84" />
-	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="dj3w9MEqFbyfI1o6eDP6IHQWgEagaDJXrTlP8jZfSUbH7W0sWziaMmCKvfxe3vLiGMNsXm4ZKmRAaTfVXvBS89dVO44aRo3nLMWpFQgrXm7wc0hnCXsyMbPIgOerW188" />
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="1LsgcyNlbWVbDhmhTNNaxIKhFw4mIaCXci3eXp21ByLB1jcsC/QATFqxhKXFP+2k/SDH9qvFC3SX1De0dLcWtGSLuq3dI0/4kE9j5TIkzVCjq0GAWJIS/h9rFoE6sZ9gZpFT0XHC/uYIO6+9f25/wg==" />
 </div>
         <div id="openMenuBtn" class="bk-menu-logo mobile-visible" onclick="openNav()">
     <img src="/next/images/login/login-logo.png" width="166" height="34" />
@@ -586,7 +586,7 @@ function __doPostBack(eventTarget, eventArgument) {
         </span>
 </span>
 <span class="bk-menu-user">
-    <span class="lusername">classroom username</span>
+    <span class="lusername">jmeno me</span>
     <br />
     <span class="lusertype">
 ž&#225;k    </span>
@@ -705,10 +705,10 @@ function __doPostBack(eventTarget, eventArgument) {
                     </div>
                 </div>
                 <div class="filter-wrapper bk-btn-radio pb-0">
-                    <a id="cphmain_linktento" class="myButton2" href="rozvrh.aspx">Tento týden</a>
+                    <a id="cphmain_linktento" class="myButton" href="rozvrh.aspx">Tento týden</a>
                     <a id="cphmain_linkpristi" class="myButton" href="rozvrh.aspx?s=next">Příští týden</a>
                     <a id="cphmain_linkpevny" class="myButton" href="rozvrh.aspx?s=perm">Stálý</a>
-                    <a id="cphmain_linkkalendar" class="myButton" href="rozvrh.aspx?s=cal">Kalendář</a>
+                    <a id="cphmain_linkkalendar" class="myButton2" href="rozvrh.aspx?s=cal">Kalendář</a>
                 </div>
                 <!-- Zobrazí se jen na menším rozlišení -->
                 <span class="filter-dropdown reports_dropdown _dropdown-onhover-target">
@@ -722,7 +722,96 @@ function __doPostBack(eventTarget, eventArgument) {
                 </span>
                 <!-------->
                 <div class="padding-0-5">
-                    
+                    <table id="cphmain_datum_LP" class="dxeLoadingPanel_NextBlueTheme dxlpLoadingPanel_NextBlueTheme" style="left:0px;top:0px;z-index:30000;display:none;">
+	<tr>
+		<td class="dx" style="padding-right:0px;"><img class="dxlp-loadingImage dxlp-imgPosLeft" src="/DXR.axd?r=1_88-CIbnk" alt="" style="vertical-align:middle;" /></td><td class="dx" style="padding-left:0px;"><span id="cphmain_datum_TL">Načítání&hellip;</span></td>
+	</tr>
+</table><table class="dxeButtonEditSys dxeButtonEdit_NextBlueTheme" id="cphmain_datum" style="border-collapse:collapse;">
+	<tr>
+		<td class="dxic" onmousedown="return ASPx.DDMC_MD(&#39;cphmain_datum&#39;, event)" style="width:100%;padding-left:2px;padding-right:2px;padding-top:2px;padding-bottom:1px;"><input class="dxeEditArea_NextBlueTheme dxeEditAreaSys" id="cphmain_datum_I" name="ctl00$cphmain$datum" onfocus="ASPx.EGotFocus(&#39;cphmain_datum&#39;)" onblur="ASPx.ELostFocus(&#39;cphmain_datum&#39;)" onchange="ASPx.ETextChanged(&#39;cphmain_datum&#39;)" value="11.05.2024" type="text" /></td><td id="cphmain_datum_B-1" class="dxeButton dxeButtonEditButton_NextBlueTheme" style="-webkit-user-select:none;"><img id="cphmain_datum_B-1Img" src="../App_Themes/NextBlueTheme/ico-32-kalendar.png" alt="v" style="height:25px;width:25px;" /></td>
+	</tr>
+</table><div id="cphmain_datum_DDD_PW-1" class="dxpcDropDown_NextBlueTheme dxpclW dxpc-ddSys dxdd-root" style="z-index:10000;display:none;visibility:hidden;">
+	<div class="dxpc-mainDiv dxdd-cal dxpc-shadow">
+		<div class="dxpc-contentWrapper">
+			<div class="dxpc-content">
+				<table style="display:none;">
+					<tr>
+						<td id="cphmain_datum_DDD_C_EC_D" class="dxeCalendarDay_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_DS" class="dxeCalendarSelected_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_DH" class="dxeCalendarHover_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_DA" class="dxeCalendarOtherMonth_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_DO" class="dxeCalendarOutOfRange_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_DDD" class="dxeCalendarDayDisabled_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_DW" class="dxeCalendarWeekend_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_DT" class="dxeCalendarToday_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_DD" class="dxeDisabled_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_FNI" class="dxeCalendarFastNavItem_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_FNIS" class="dxeCalendarFastNavItemSelected_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_FNIH" class="dxeCalendarFastNavItemHover_NextBlueTheme"></td><td id="cphmain_datum_DDD_C_EC_FNIA" class="dxeCalendarFastNavItemOtherPeriod_NextBlueTheme"></td>
+					</tr>
+				</table><table class="dxeCVC dxeCalendar_NextBlueTheme" id="cphmain_datum_DDD_C">
+					<tr>
+						<td style="vertical-align:Top;"><table style="width:100%;border-collapse:collapse;">
+							<tr>
+								<td class="dxeCalendarHeader_NextBlueTheme" style="border-top:0;"><table style="width:100%;border-collapse:collapse;">
+									<tr>
+										<td id="cphmain_datum_DDD_C_PTPC" class="dxe" style="display:none;"><img id="cphmain_datum_DDD_C_PTPCImg" class="dxEditors_edtCalendarFNPrevPeriod_NextBlueTheme" src="/DXR.axd?r=1_88-CIbnk" alt="Zpět" /></td><td id="cphmain_datum_DDD_C_PYC" class="dxe"><img id="cphmain_datum_DDD_C_PYCImg" class="dxEditors_edtCalendarPrevYear_NextBlueTheme" src="/DXR.axd?r=1_88-CIbnk" alt="Previous year" /></td><td class="dxeCHS" style="font:0;min-width:1px;"></td><td id="cphmain_datum_DDD_C_PMC" class="dxe"><img id="cphmain_datum_DDD_C_PMCImg" class="dxEditors_edtCalendarPrevMonth_NextBlueTheme" src="/DXR.axd?r=1_88-CIbnk" alt="Previous month" /></td><td id="cphmain_datum_DDD_C_TC" class="dxe" style="width:100%;cursor:default;"><span id="cphmain_datum_DDD_C_T" style="cursor:pointer;">květen 2024</span></td><td id="cphmain_datum_DDD_C_NMC" class="dxe"><img id="cphmain_datum_DDD_C_NMCImg" class="dxEditors_edtCalendarNextMonth_NextBlueTheme" src="/DXR.axd?r=1_88-CIbnk" alt="Příští měsíc" /></td><td class="dxeCHS" style="font:0;min-width:1px;"></td><td id="cphmain_datum_DDD_C_NYC" class="dxe"><img id="cphmain_datum_DDD_C_NYCImg" class="dxEditors_edtCalendarNextYear_NextBlueTheme" src="/DXR.axd?r=1_88-CIbnk" alt="Příští rok" /></td><td id="cphmain_datum_DDD_C_NTPC" class="dxe" style="display:none;"><img id="cphmain_datum_DDD_C_NTPCImg" class="dxEditors_edtCalendarFNNextPeriod_NextBlueTheme" src="/DXR.axd?r=1_88-CIbnk" alt="Dopředu" /></td>
+									</tr>
+								</table></td>
+							</tr><tr>
+								<td id="cphmain_datum_DDD_C_mc" class="dxMonthGridWithWeekNumbers" style="-webkit-user-select:none;"><table id="cphmain_datum_DDD_C_mt" style="width:100%;border-collapse:separate;">
+									<tr class="dx-ac">
+										<td></td><td class="dxeCalendarDayHeader_NextBlueTheme">po</td><td class="dxeCalendarDayHeader_NextBlueTheme">út</td><td class="dxeCalendarDayHeader_NextBlueTheme">st</td><td class="dxeCalendarDayHeader_NextBlueTheme">čt</td><td class="dxeCalendarDayHeader_NextBlueTheme">pá</td><td class="dxeCalendarDayHeader_NextBlueTheme">so</td><td class="dxeCalendarDayHeader_NextBlueTheme">ne</td>
+									</tr><tr>
+										<td class="dxeCalendarWeekNumber_NextBlueTheme">18</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme">29</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme">30</td><td class="dxeCalendarDay_NextBlueTheme">1</td><td class="dxeCalendarDay_NextBlueTheme">2</td><td class="dxeCalendarDay_NextBlueTheme">3</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme">4</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme">5</td>
+									</tr><tr>
+										<td class="dxeCalendarWeekNumber_NextBlueTheme">19</td><td class="dxeCalendarDay_NextBlueTheme">6</td><td class="dxeCalendarDay_NextBlueTheme">7</td><td class="dxeCalendarDay_NextBlueTheme">8</td><td class="dxeCalendarDay_NextBlueTheme">9</td><td class="dxeCalendarDay_NextBlueTheme">10</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme">11</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme">12</td>
+									</tr><tr>
+										<td class="dxeCalendarWeekNumber_NextBlueTheme">20</td><td class="dxeCalendarDay_NextBlueTheme">13</td><td class="dxeCalendarDay_NextBlueTheme">14</td><td class="dxeCalendarDay_NextBlueTheme">15</td><td class="dxeCalendarDay_NextBlueTheme">16</td><td class="dxeCalendarDay_NextBlueTheme">17</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme">18</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme">19</td>
+									</tr><tr>
+										<td class="dxeCalendarWeekNumber_NextBlueTheme">21</td><td class="dxeCalendarDay_NextBlueTheme">20</td><td class="dxeCalendarDay_NextBlueTheme">21</td><td class="dxeCalendarDay_NextBlueTheme">22</td><td class="dxeCalendarDay_NextBlueTheme">23</td><td class="dxeCalendarDay_NextBlueTheme">24</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme">25</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme">26</td>
+									</tr><tr>
+										<td class="dxeCalendarWeekNumber_NextBlueTheme">22</td><td class="dxeCalendarDay_NextBlueTheme">27</td><td class="dxeCalendarDay_NextBlueTheme">28</td><td class="dxeCalendarDay_NextBlueTheme">29</td><td class="dxeCalendarDay_NextBlueTheme">30</td><td class="dxeCalendarDay_NextBlueTheme">31</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme">1</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme">2</td>
+									</tr><tr>
+										<td class="dxeCalendarWeekNumber_NextBlueTheme">23</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme">3</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme">4</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme">5</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme">6</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme">7</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme dxeCalendarToday_NextBlueTheme">8</td><td class="dxeCalendarDay_NextBlueTheme dxeCalendarWeekend_NextBlueTheme dxeCalendarOtherMonth_NextBlueTheme">9</td>
+									</tr>
+								</table></td>
+							</tr><tr>
+								<td id="cphmain_datum_DDD_C_yc" class="dxFastNavGrid" style="display:none;"><table id="cphmain_datum_DDD_C_yt" class="dxeCalendarFastNav_NextBlueTheme" style="height:100%;width:100%;border-collapse:separate;">
+									<tr>
+										<td class="dxeCalendarFastNavItemArea_NextBlueTheme" style="height:100%;width:100%;"><table id="cphmain_datum_DDD_C_yt_n" style="height:100%;width:100%;border-collapse:separate;">
+											<tr>
+												<td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Led</td><td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Úno</td><td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Bře</td><td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Dub</td>
+											</tr><tr>
+												<td class="dxeCalendarFastNavItem_NextBlueTheme">Kvě</td><td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Čvn</td><td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Čvc</td><td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Srp</td>
+											</tr><tr>
+												<td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Zář</td><td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Říj</td><td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Lis</td><td class="dxeCalendarFastNavItem_NextBlueTheme dxeCalendarFastNavItemOtherPeriod_NextBlueTheme">Pro</td>
+											</tr>
+										</table></td>
+									</tr>
+								</table></td>
+							</tr>
+						</table></td>
+					</tr><tr>
+						<td id="cphmain_datum_DDD_C_F" class="dxeCalendarFooter_NextBlueTheme"><button id="cphmain_datum_DDD_C_BT" class="dxeCalendarButton_NextBlueTheme" type="button">Dnes</button><button id="cphmain_datum_DDD_C_BC" class="dxeCalendarButton_NextBlueTheme" type="button">Pr&#225;zdn&#253;</button></td>
+					</tr>
+				</table><script id="dxss_1278068226">
+<!--
+ASPx.AddHoverItems('cphmain_datum_DDD_C',[[['dxeCalendarButtonHover_NextBlueTheme'],[''],['BT','BC','BO','BCN','FNP_BO','FNP_BC']]]);
+ASPx.AddPressedItems('cphmain_datum_DDD_C',[[['dxeCalendarButtonPressed_NextBlueTheme'],[''],['BT','BC','BO','BCN','FNP_BO','FNP_BC']]]);
+ASPx.AddDisabledItems('cphmain_datum_DDD_C',[[['dxeDisabled_NextBlueTheme'],[''],['']],[['dxeDisabled_NextBlueTheme dxeButtonDisabled_NextBlueTheme'],[''],['BT','BC','BO','BCN','FNP_BO','FNP_BC']],[[''],[''],['PYC','PMC','NMC','NYC'],,[[{'spriteCssClass':'dxEditors_edtCalendarPrevYearDisabled_NextBlueTheme'}],[{'spriteCssClass':'dxEditors_edtCalendarPrevMonthDisabled_NextBlueTheme'}],[{'spriteCssClass':'dxEditors_edtCalendarNextMonthDisabled_NextBlueTheme'}],[{'spriteCssClass':'dxEditors_edtCalendarNextYearDisabled_NextBlueTheme'}]],['Img']]]);
+ASPx.createControl(ASPxClientCalendar,'cphmain_datum_DDD_C','',{'uniqueID':'ctl00$cphmain$datum$DDD$C','scStates':2,'scPostfix':'NextBlueTheme','serverCurrentDate':new Date(2024,5,8,0,0,0,0),'visibleDate':new Date(2024,4,18,0,0,0,0),'firstDayOfWeek':1,'fastNavRollbackTexts':['Back To Days', 'Back To Months', 'Back To Years'],'isDateEditCalendar':true},null,null,{'decorationStyles':[{'key':'F','className':'dxeFocused_NextBlueTheme','cssText':''}],'selection':[new Date(2024,4,11,0,0,0,0)]});
+
+//-->
+</script>
+			</div>
+		</div>
+	</div>
+</div><script id="dxss_1611223276">
+<!--
+ASPx.AddHoverItems('cphmain_datum_DDD',[[['dxpc-closeBtnHover'],[''],['HCB-1']]]);
+ASPx.createControl(ASPxClientPopupControl,'cphmain_datum_DDD','',{'uniqueID':'ctl00$cphmain$datum$DDD','adjustInnerControlsSizeOnShow':false,'popupAnimationType':'slide','closeAction':'CloseButton','popupHorizontalAlign':'LeftSides','popupVerticalAlign':'Below'},{'Shown':function (s, e) { ASPx.DDBPCShown('cphmain_datum', e); }});
+
+//-->
+</script><script id="dxss_237446254">
+<!--
+ASPx.AddHoverItems('cphmain_datum',[[['dxeButtonEditButtonHover_NextBlueTheme'],[''],['B-1']]]);
+ASPx.RemoveHoverItems('cphmain_datum',[[['B-100']]]);
+ASPx.AddPressedItems('cphmain_datum',[[['dxeButtonEditButtonPressed_NextBlueTheme'],[''],['B-1']]]);
+ASPx.RemovePressedItems('cphmain_datum',[[['B-100']]]);
+ASPx.createControl(ASPxClientDateEdit,'cphmain_datum','',{'autoPostBack':true,'callBack':function(arg) { WebForm_DoCallback('ctl00$cphmain$datum',arg,ASPx.Callback,'cphmain_datum',ASPx.CallbackError,true); },'uniqueID':'ctl00$cphmain$datum','stateObject':{'rawValue':'1715385600000','useMinDateInsteadOfNull':false},'autoCompleteAttribute':{'name':'autocomplete','value':'off'},'outOfRangeWarningClassName':'dxeOutOfRWarn_NextBlueTheme dxeOutOfRWarnRight_NextBlueTheme','outOfRangeWarningMessages':['Datum musí být v rozsahu od {0}...{1}', 'Datum musí být větší než nebo rovno {0}', 'Datum musí být menší než nebo rovno {0}'],'date':new Date(2024,4,11,0,0,0,0),'dateFormatter':ASPx.DateFormatter.Create('dd.MM.yyyy')},null,null,{'decorationStyles':[{'key':'F','className':'dxeFocused_NextBlueTheme','cssText':''}]});
+
+//-->
+</script>
                 </div>
                 <div class="d-inline-flex">
                     <table class="dxeBase_NextBlueTheme margin-top-0 dxeTAR" id="cphmain_showTeachers" style="height:0px;">
@@ -961,7 +1050,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                         <div class="day-name odd-name normal" style="height:87px;">
                                             <div>
                                                 po<br />
-                                                <span>3.6.</span>
+                                                <span>6.5.</span>
                                             </div>
                                         </div>
                                         
@@ -999,7 +1088,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  border-horni odd normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  pink" style="height:87px;" data-detail='{"type":"atom","subjecttext":"Chemie | po 3.6. | 3 (10:00 - 10:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Kateřina Hubková","room":"104","group":"","theme":"Heterocyklické sloučeniny","notice":"","changeinfo":"Zrušeno (Bi, Pecová Barbora)","homeworks":[],"absencetext":"","identcode":"12024060305ZXS99BUZYJN","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Biologie | po 6.5. | 3 (10:00 - 10:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Pecová","room":"104","group":"","theme":"Dědičnost kvantitativních znaků","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050605ZXS932UOVMM","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -1014,8 +1103,40 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                                 
                                                                             </div>
                                                                         </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">Ch</div>
-                                                                        <div class="bottom">Hub</div>
+                                                                        <div class="middle zapsano" style="padding-top: 33px;">Bi</div>
+                                                                        <div class="bottom">Pec</div>
+                                                                        
+                                                                        <div class="absence _NoAbsent"></div>
+                                                                    </div>
+                                                                </div>
+                                                            
+                                                    </div>
+                                                </span>
+                                                
+                                                <!-- fixme: add info about lesson removal -->
+                                                
+                                                
+                                            
+                                                <span>
+                                                    <div class='day-item  border-horni  normal' style='height:87px;'>
+                                                        
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Základy společenských věd | po 6.5. | 4 (10:55 - 11:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Lucie Coufalová","room":"210","group":"","theme":"Výrobní faktory","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050606ZXS9VFUYYOG","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                    <div>
+                                                                        <div class="top clearfix">
+                                                                            <div class="left roll-vertical">
+                                                                                <div></div>
+                                                                            </div>
+                                                                            <div class="right">
+                                                                                <div class="first">210</div>
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="middle zapsano" style="padding-top: 33px;">Zsv</div>
+                                                                        <div class="bottom">Cfl</div>
                                                                         
                                                                         <div class="absence _NoAbsent"></div>
                                                                     </div>
@@ -1032,20 +1153,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 
                                                 <!-- fixme: add info about lesson removal -->
                                                 <span>
-                                                    <div class="day-item day-item-hover tooltip-bubble  border-horni pink" style="height:87px;" data-detail='{"type":"removed","subjecttext":"po 3.6. | 4 (10:55 - 11:40)","absentinfo":"","removedinfo":"Zrušeno (Zsv, Coufalová Lucie)"}'>
-                                                        <div style="height:87px;">
-                                                            <div class="top clearfix"></div>
-                                                            <div class="middle "></div>
-                                                        </div>
-                                                    </div>
-                                                </span>
-                                                
-                                            
-                                                
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                <span>
-                                                    <div class="day-item day-item-hover tooltip-bubble  border-horni pink" style="height:87px;" data-detail='{"type":"removed","subjecttext":"po 3.6. | 5a (11:50 - 12:35)","absentinfo":"","removedinfo":"Přesun na 5.6., 7. hod (M, Škodová Lada)"}'>
+                                                    <div class="day-item day-item-hover tooltip-bubble  border-horni pink" style="height:87px;" data-detail='{"type":"removed","subjecttext":"po 6.5. | 5a (11:50 - 12:35)","absentinfo":"","removedinfo":"Zrušeno (M, Škodová Lada)"}'>
                                                         <div style="height:87px;">
                                                             <div class="top clearfix"></div>
                                                             <div class="middle "></div>
@@ -1077,14 +1185,14 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  border-horni  normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk anglický | po 3.6. | 6b (13:05 - 13:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Marcela Tesařová","room":"127","group":"1","theme":"How to... prezentace","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060310ZXRM0XUXYOB","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  pink" style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk anglický | po 6.5. | 6b (13:05 - 13:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Marcela Tesařová","room":"211","group":"1","theme":"Presentations How to...?","notice":"","changeinfo":"Změna místnosti: 211 (127)","homeworks":[],"absencetext":"","identcode":"12024050610ZXRM0XUXYOB","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
                                                                                 <div>1</div>
                                                                             </div>
                                                                             <div class="right">
-                                                                                <div class="first">127</div>
+                                                                                <div class="first">211</div>
                                                                                 
                                                                                 
                                                                                 
@@ -1109,7 +1217,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  border-horni odd normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Fyzika | po 3.6. | 7 (14:00 - 14:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Luděk Zeinert","room":"102","group":"","theme":"Vlnové vlastnosti částic","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060311ZXS9G0ULYL5","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Fyzika | po 6.5. | 7 (14:00 - 14:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Luděk Zeinert","room":"102","group":"","theme":"Stavba jádra","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050611ZXS9G0ULYL5","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -1138,68 +1246,30 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 
                                                 
                                             
-                                                <span>
-                                                    <div class='day-item  border-horni  normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Základy programování | po 3.6. | 8 (14:50 - 15:35)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Ing. Lucie Strmisková","room":"116","group":"Pr1","theme":"Výukové plakáty","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060312ZX302WUOYLY","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div>Pr1</div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">116</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">SZPr</div>
-                                                                        <div class="bottom">Str</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
+                                                
                                                 
                                                 <!-- fixme: add info about lesson removal -->
-                                                
+                                                <span>
+                                                    <div class="day-item day-item-hover tooltip-bubble  border-horni pink" style="height:87px;" data-detail='{"type":"removed","subjecttext":"po 6.5. | 8 (14:50 - 15:35)","absentinfo":"","removedinfo":"Zrušeno (SZPr, Strmisková Lucie)"}'>
+                                                        <div style="height:87px;">
+                                                            <div class="top clearfix"></div>
+                                                            <div class="middle "></div>
+                                                        </div>
+                                                    </div>
+                                                </span>
                                                 
                                             
-                                                <span>
-                                                    <div class='day-item  border-horni odd normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Základy programování | po 3.6. | 9 (15:40 - 16:25)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Ing. Lucie Strmisková","room":"116","group":"Pr1","theme":"Výukové plakáty","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060313ZX302WUOYLY","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div>Pr1</div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">116</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">SZPr</div>
-                                                                        <div class="bottom">Str</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
+                                                
                                                 
                                                 <!-- fixme: add info about lesson removal -->
-                                                
+                                                <span>
+                                                    <div class="day-item day-item-hover tooltip-bubble  border-horni pink" style="height:87px;" data-detail='{"type":"removed","subjecttext":"po 6.5. | 9 (15:40 - 16:25)","absentinfo":"","removedinfo":"Zrušeno (SZPr, Strmisková Lucie)"}'>
+                                                        <div style="height:87px;">
+                                                            <div class="top clearfix"></div>
+                                                            <div class="middle "></div>
+                                                        </div>
+                                                    </div>
+                                                </span>
                                                 
                                             
                                                 
@@ -1222,7 +1292,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                         <div class="day-name odd-name normal" style="height:87px;">
                                             <div>
                                                 út<br />
-                                                <span>4.6.</span>
+                                                <span>7.5.</span>
                                             </div>
                                         </div>
                                         
@@ -1240,14 +1310,14 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  odd normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Tělesná výchova | út 4.6. | 1 (8:00 - 8:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Martin Suchánek","room":"22Tv","group":"Chl","theme":"Příprava na OH","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060403ZXSA5HUWYO1","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Tělesná výchova | út 7.5. | 1 (8:00 - 8:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Martin Suchánek","room":"24Tv","group":"Chl","theme":"Stretching","notice":"","changeinfo":"","homeworks":[],"absencetext":"omluvená absence","identcode":"12024050703ZXSA5HUWYO1","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
                                                                                 <div>Chl</div>
                                                                             </div>
                                                                             <div class="right">
-                                                                                <div class="first">22Tv</div>
+                                                                                <div class="first">24Tv</div>
                                                                                 
                                                                                 
                                                                                 
@@ -1258,7 +1328,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                         <div class="middle zapsano" style="padding-top: 33px;">Tv</div>
                                                                         <div class="bottom">Sch</div>
                                                                         
-                                                                        <div class="absence _NoAbsent"></div>
+                                                                        <div class="absence _AbsentOk"></div>
                                                                     </div>
                                                                 </div>
                                                             
@@ -1272,7 +1342,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item   normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Český jazyk a literatura | út 4.6. | 2 (8:55 - 9:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"Imaginativní próza- V. Vančura","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060404ZXS930UIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Český jazyk a literatura | út 7.5. | 2 (8:55 - 9:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"Četba-K.Čapek, K.Poláček, E.Bass","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050704ZXS930UIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -1304,14 +1374,14 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  odd normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  pink" style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk francouzský | út 4.6. | 3 (10:00 - 10:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Šimůnková","room":"213","group":"Fj","theme":"Révision","notice":"","changeinfo":"Výměna na 4.6., 5b. hod (D, Outlá Zuzana)","homeworks":[],"absencetext":"","identcode":"12024060405ZXRKFOUUYNO","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Dějepis | út 7.5. | 3 (10:00 - 10:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"Prezentace- Jugoslávie, dekolonizace","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050705ZXS9SRUIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
-                                                                                <div>Fj</div>
+                                                                                <div></div>
                                                                             </div>
                                                                             <div class="right">
-                                                                                <div class="first">213</div>
+                                                                                <div class="first">203</div>
                                                                                 
                                                                                 
                                                                                 
@@ -1319,8 +1389,8 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                                 
                                                                             </div>
                                                                         </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">Fj</div>
-                                                                        <div class="bottom">Šmů</div>
+                                                                        <div class="middle zapsano" style="padding-top: 33px;">D</div>
+                                                                        <div class="bottom">Out</div>
                                                                         
                                                                         <div class="absence _NoAbsent"></div>
                                                                     </div>
@@ -1336,7 +1406,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item   normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Matematika | út 4.6. | 4 (10:55 - 11:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Ing. Lada Škodová","room":"206","group":"","theme":"Středová a obecná rovnice kružnice","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060406ZXS9DTUZYIG","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Matematika | út 7.5. | 4 (10:55 - 11:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Ing. Lada Škodová","room":"206","group":"","theme":"Vzájemná poloha přímek","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050706ZXS9DTUZYIG","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -1378,14 +1448,14 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item   normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  pink" style="height:87px;" data-detail='{"type":"atom","subjecttext":"Dějepis | út 4.6. | 5b (12:10 - 12:55)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"Obhajoby roč. práce","notice":"","changeinfo":"Výměna na 4.6., 3. hod (Fj, Šimůnková Barbora)","homeworks":[],"absencetext":"","identcode":"12024060408ZXS9SRUIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk francouzský | út 7.5. | 5b (12:10 - 12:55)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Šimůnková","room":"210","group":"Fj","theme":"Dictée, časové předložky","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050708ZXRKFOUUYNO","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
-                                                                                <div></div>
+                                                                                <div>Fj</div>
                                                                             </div>
                                                                             <div class="right">
-                                                                                <div class="first">203</div>
+                                                                                <div class="first">210</div>
                                                                                 
                                                                                 
                                                                                 
@@ -1393,8 +1463,8 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                                 
                                                                             </div>
                                                                         </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">D</div>
-                                                                        <div class="bottom">Out</div>
+                                                                        <div class="middle zapsano" style="padding-top: 33px;">Fj</div>
+                                                                        <div class="bottom">Šmů</div>
                                                                         
                                                                         <div class="absence _NoAbsent"></div>
                                                                     </div>
@@ -1420,14 +1490,14 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item   normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  pink" style="height:87px;" data-detail='{"type":"atom","subjecttext":"Dějepis | út 4.6. | 6b (13:05 - 13:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"Obhajoby roč. prací","notice":"","changeinfo":"Zrušeno (Bi, Pecová Barbora)","homeworks":[],"absencetext":"","identcode":"12024060410ZXS9SRUIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Biologie | út 7.5. | 6b (13:05 - 13:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Pecová","room":"106","group":"","theme":"Chromozómové určení pohlaví, vazba genů","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050710ZXS932UOVMM","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
                                                                                 <div></div>
                                                                             </div>
                                                                             <div class="right">
-                                                                                <div class="first">203</div>
+                                                                                <div class="first">106</div>
                                                                                 
                                                                                 
                                                                                 
@@ -1435,8 +1505,8 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                                 
                                                                             </div>
                                                                         </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">D</div>
-                                                                        <div class="bottom">Out</div>
+                                                                        <div class="middle zapsano" style="padding-top: 33px;">Bi</div>
+                                                                        <div class="bottom">Pec</div>
                                                                         
                                                                         <div class="absence _NoAbsent"></div>
                                                                     </div>
@@ -1499,7 +1569,24 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                         <div class="day-name odd-name normal" style="height:87px;">
                                             <div>
                                                 st<br />
-                                                <span>5.6.</span>
+                                                <span>8.5.</span>
+                                            </div>
+                                        </div>
+                                        <div class="day-item-volno border-levy border-horni border-pravy">
+                                            <div class="empty dayoff">Den vítězství </div>
+                                        </div>
+                                        
+                                    </div>
+                                </div>
+                            </div>
+                        
+                            <div class="day-row normal" style="height:87px;">
+                                <div class="odd-day-row">
+                                    <div class="clearfix">
+                                        <div class="day-name odd-name normal" style="height:87px;">
+                                            <div>
+                                                čt<br />
+                                                <span>9.5.</span>
                                             </div>
                                         </div>
                                         
@@ -1507,14 +1594,14 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  border-levy  normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  pink" style="height:87px;" data-detail='{"type":"atom","subjecttext":"Seminář z matematiky | st 5.6. | 0 (7:05 - 7:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. David Hanzlíček","room":"206","group":"Sm","theme":"Metrické úlohy v prostoru","notice":"","changeinfo":"Přesun z 7.6., 0: SM, Hanzlíček David, 206","homeworks":[],"absencetext":"","identcode":"12024060502ZX2X51UZYIC","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Laboratorní práce z biologie | čt 9.5. | 0 (7:05 - 7:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Pecová","room":"107","group":"1","theme":"Kůže","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050902ZXRMOGUOVMM","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
-                                                                                <div>Sm</div>
+                                                                                <div>1</div>
                                                                             </div>
                                                                             <div class="right">
-                                                                                <div class="first">206</div>
+                                                                                <div class="first">107</div>
                                                                                 
                                                                                 
                                                                                 
@@ -1522,8 +1609,8 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                                 
                                                                             </div>
                                                                         </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">SM</div>
-                                                                        <div class="bottom">Haz</div>
+                                                                        <div class="middle zapsano" style="padding-top: 33px;">LpBi</div>
+                                                                        <div class="bottom">Pec</div>
                                                                         
                                                                         <div class="absence _NoAbsent"></div>
                                                                     </div>
@@ -1539,7 +1626,39 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  odd normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Český jazyk a literatura | st 5.6. | 1 (8:00 - 8:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"Práce s textem","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060503ZXS930UIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Laboratorní práce z biologie | čt 9.5. | 1 (8:00 - 8:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Pecová","room":"107","group":"1","theme":"Kůže","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050903ZXRMOGUOVMM","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                    <div>
+                                                                        <div class="top clearfix">
+                                                                            <div class="left roll-vertical">
+                                                                                <div>1</div>
+                                                                            </div>
+                                                                            <div class="right">
+                                                                                <div class="first">107</div>
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="middle zapsano" style="padding-top: 33px;">LpBi</div>
+                                                                        <div class="bottom">Pec</div>
+                                                                        
+                                                                        <div class="absence _NoAbsent"></div>
+                                                                    </div>
+                                                                </div>
+                                                            
+                                                    </div>
+                                                </span>
+                                                
+                                                <!-- fixme: add info about lesson removal -->
+                                                
+                                                
+                                            
+                                                <span>
+                                                    <div class='day-item   normal' style='height:87px;'>
+                                                        
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Český jazyk a literatura | čt 9.5. | 2 (8:55 - 9:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"rozbor textu R.U.R.","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050904ZXS930UIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -1569,362 +1688,9 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 
                                             
                                                 <span>
-                                                    <div class='day-item   normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk anglický | st 5.6. | 2 (8:55 - 9:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Marcela Tesařová","room":"126","group":"1","theme":"Prezebtace How to...","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060504ZXRM0XUXYOB","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div>1</div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">126</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">Aj</div>
-                                                                        <div class="bottom">Tsř</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                
-                                            
-                                                <span>
                                                     <div class='day-item  odd normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Informatika a výpočetní technika | st 5.6. | 3 (10:00 - 10:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Ing. Lada Škodová","room":"116","group":"1","theme":"Algoritmus - Podmíněný příkaz","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060505ZXRMU2UZYIG","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div>1</div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">116</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">Inf</div>
-                                                                        <div class="bottom">Ško</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                
-                                            
-                                                <span>
-                                                    <div class='day-item   normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Fyzika | st 5.6. | 4 (10:55 - 11:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Luděk Zeinert","room":"102","group":"","theme":"Kvantová energie atomů","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060506ZXS9G0ULYL5","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div></div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">102</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">Fy</div>
-                                                                        <div class="bottom">Zei</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                
-                                            
-                                                
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                <span>
-                                                    <div class='day-item   normal' style="height:87px;">
-                                                        <div class="empty" style="height:87px;"></div>
-                                                    </div>
-                                                </span>
-                                            
-                                                <span>
-                                                    <div class='day-item   normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Matematika | st 5.6. | 5b (12:10 - 12:55)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Ing. Lada Škodová","room":"203","group":"","theme":"Kružnice - příklady","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060508ZXS9DTUZYIG","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div></div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">203</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">M</div>
-                                                                        <div class="bottom">Ško</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                
-                                            
-                                                
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                <span>
-                                                    <div class='day-item   normal' style="height:87px;">
-                                                        <div class="empty" style="height:87px;"></div>
-                                                    </div>
-                                                </span>
-                                            
-                                                <span>
-                                                    <div class='day-item   normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk francouzský | st 5.6. | 6b (13:05 - 13:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Šimůnková","room":"210","group":"Fj","theme":"Test - lekce 5","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060510ZXRKFOUUYNO","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div>Fj</div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">210</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">Fj</div>
-                                                                        <div class="bottom">Šmů</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                
-                                            
-                                                <span>
-                                                    <div class='day-item  odd normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  pink" style="height:87px;" data-detail='{"type":"atom","subjecttext":"Matematika | st 5.6. | 7 (14:00 - 14:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Ing. Lada Škodová","room":"203","group":"","theme":"Kružnice a přímka","notice":"","changeinfo":"Přesun na 3.6., 3. hod (Ch, Hubková Kateřina)","homeworks":[],"absencetext":"","identcode":"12024060511ZXS9DTUZYIG","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div></div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">203</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">M</div>
-                                                                        <div class="bottom">Ško</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                
-                                            
-                                                
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                <span>
-                                                    <div class='day-item   normal' style="height:87px;">
-                                                        <div class="empty" style="height:87px;"></div>
-                                                    </div>
-                                                </span>
-                                            
-                                                
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                <span>
-                                                    <div class='day-item   normal' style="height:87px;">
-                                                        <div class="empty" style="height:87px;"></div>
-                                                    </div>
-                                                </span>
-                                            
-                                                
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                <span>
-                                                    <div class='day-item  border-pravy  normal' style="height:87px;">
-                                                        <div class="empty" style="height:87px;"></div>
-                                                    </div>
-                                                </span>
-                                            
-                                    </div>
-                                </div>
-                            </div>
-                        
-                            <div class="day-row normal" style="height:87px;">
-                                <div class="odd-day-row">
-                                    <div class="clearfix">
-                                        <div class="day-name odd-name normal" style="height:87px;">
-                                            <div>
-                                                čt<br />
-                                                <span>6.6.</span>
-                                            </div>
-                                        </div>
-                                        
-                                        
-                                                <span>
-                                                    <div class='day-item  border-levy  normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Laboratorní práce z fyziky | čt 6.6. | 0 (7:05 - 7:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Luděk Zeinert","room":"103","group":"1","theme":"Radioaktivita","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060602ZXRM0YULYL5","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div>1</div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">103</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">LpFy</div>
-                                                                        <div class="bottom">Zei</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                
-                                            
-                                                <span>
-                                                    <div class='day-item  odd normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Laboratorní práce z fyziky | čt 6.6. | 1 (8:00 - 8:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Luděk Zeinert","room":"103","group":"1","theme":"Radioaktivita","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060603ZXRM0YULYL5","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div>1</div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">103</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">LpFy</div>
-                                                                        <div class="bottom">Zei</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                
-                                            
-                                                <span>
-                                                    <div class='day-item   normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  pink" style="height:87px;" data-detail='{"type":"atom","subjecttext":"Zeměpis | čt 6.6. | 2 (8:55 - 9:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. David Hanzlíček","room":"206","group":"","theme":"Česko - hospodářství","notice":"","changeinfo":"Výměna na 6.6., 7. hod (Čj, Outlá Zuzana)","homeworks":[],"absencetext":"","identcode":"12024060604ZXS9LGUZYIC","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div></div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">206</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">Z</div>
-                                                                        <div class="bottom">Haz</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
-                                                
-                                                <!-- fixme: add info about lesson removal -->
-                                                
-                                                
-                                            
-                                                <span>
-                                                    <div class='day-item  odd normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Biologie | čt 6.6. | 3 (10:00 - 10:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Pecová","room":"106","group":"","theme":"Genetické choroby","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060605ZXS932UOVMM","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Biologie | čt 9.5. | 3 (10:00 - 10:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Pecová","room":"106","group":"","theme":"Gonozomální dědičnost","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050905ZXS932UOVMM","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -1956,7 +1722,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item   normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Dějepis | čt 6.6. | 4 (10:55 - 11:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"Obhajoby roč. prací","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060606ZXS9SRUIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Dějepis | čt 9.5. | 4 (10:55 - 11:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"Dekolonizace","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050906ZXS9SRUIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -1988,7 +1754,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  odd normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk francouzský | čt 6.6. | 5a (11:50 - 12:35)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Šimůnková","room":"210","group":"Fj","theme":"Futur simple","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060607ZXRKFOUUYNO","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk francouzský | čt 9.5. | 5a (11:50 - 12:35)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Šimůnková","room":"210","group":"Fj","theme":"Časové předložky","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050907ZXRKFOUUYNO","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -2040,7 +1806,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item   normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Základy společenských věd | čt 6.6. | 6b (13:05 - 13:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Lucie Coufalová","room":"210","group":"","theme":"","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060610ZXS9VFUYYOG","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Základy společenských věd | čt 9.5. | 6b (13:05 - 13:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Lucie Coufalová","room":"210","group":"","theme":"Podnikání","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050910ZXS9VFUYYOG","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -2055,7 +1821,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                                 
                                                                             </div>
                                                                         </div>
-                                                                        <div class="middle " style="padding-top: 33px;">Zsv</div>
+                                                                        <div class="middle zapsano" style="padding-top: 33px;">Zsv</div>
                                                                         <div class="bottom">Cfl</div>
                                                                         
                                                                         <div class="absence _NoAbsent"></div>
@@ -2072,14 +1838,14 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  odd normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  pink" style="height:87px;" data-detail='{"type":"atom","subjecttext":"Český jazyk a literatura | čt 6.6. | 7 (14:00 - 14:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"Psychologická próza","notice":"","changeinfo":"Výměna na 6.6., 2. hod (Z, Hanzlíček David)","homeworks":[],"absencetext":"absence","identcode":"12024060611ZXS930UIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Zeměpis | čt 9.5. | 7 (14:00 - 14:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. David Hanzlíček","room":"206","group":"","theme":"Česko - obyvatelstvo","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024050911ZXS9LGUZYIC","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
                                                                                 <div></div>
                                                                             </div>
                                                                             <div class="right">
-                                                                                <div class="first">203</div>
+                                                                                <div class="first">206</div>
                                                                                 
                                                                                 
                                                                                 
@@ -2087,10 +1853,10 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                                 
                                                                             </div>
                                                                         </div>
-                                                                        <div class="middle zapsano" style="padding-top: 33px;">Čj</div>
-                                                                        <div class="bottom">Out</div>
+                                                                        <div class="middle zapsano" style="padding-top: 33px;">Z</div>
+                                                                        <div class="bottom">Haz</div>
                                                                         
-                                                                        <div class="absence _Absent"></div>
+                                                                        <div class="absence _NoAbsent"></div>
                                                                     </div>
                                                                 </div>
                                                             
@@ -2141,28 +1907,15 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                         <div class="day-name odd-name normal" style="height:87px;">
                                             <div>
                                                 pá<br />
-                                                <span>7.6.</span>
+                                                <span>10.5.</span>
                                             </div>
                                         </div>
                                         
                                         
-                                                
-                                                
-                                                <!-- fixme: add info about lesson removal -->
                                                 <span>
-                                                    <div class="day-item day-item-hover tooltip-bubble  border-levy border-spodni pink" style="height:87px;" data-detail='{"type":"removed","subjecttext":"pá 7.6. | 0 (7:05 - 7:50)","absentinfo":"","removedinfo":"Přesun na 5.6., 0. hod (SM, Hanzlíček David)"}'>
-                                                        <div style="height:87px;">
-                                                            <div class="top clearfix"></div>
-                                                            <div class="middle "></div>
-                                                        </div>
-                                                    </div>
-                                                </span>
-                                                
-                                            
-                                                <span>
-                                                    <div class='day-item  border-spodni odd normal' style='height:87px;'>
+                                                    <div class='day-item  border-levy border-spodni  normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Seminář z matematiky | pá 7.6. | 1 (8:00 - 8:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. David Hanzlíček","room":"206","group":"Sm","theme":"Metrické úlohy v prostoru","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060703ZX2X51UZYIC","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Seminář z matematiky | pá 10.5. | 0 (7:05 - 7:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. David Hanzlíček","room":"206","group":"Sm","theme":"Polohové a metrické úlohy v prostoru","notice":"","changeinfo":"","homeworks":[],"absencetext":"omluvená absence","identcode":"12024051002ZX2X51UZYIC","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -2180,7 +1933,39 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                         <div class="middle zapsano" style="padding-top: 33px;">SM</div>
                                                                         <div class="bottom">Haz</div>
                                                                         
-                                                                        <div class="absence _NoAbsent"></div>
+                                                                        <div class="absence _AbsentOk"></div>
+                                                                    </div>
+                                                                </div>
+                                                            
+                                                    </div>
+                                                </span>
+                                                
+                                                <!-- fixme: add info about lesson removal -->
+                                                
+                                                
+                                            
+                                                <span>
+                                                    <div class='day-item  border-spodni odd normal' style='height:87px;'>
+                                                        
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Seminář z matematiky | pá 10.5. | 1 (8:00 - 8:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. David Hanzlíček","room":"206","group":"Sm","theme":"Polohové a metrické úlohy v prostoru","notice":"","changeinfo":"","homeworks":[],"absencetext":"omluvená absence","identcode":"12024051003ZX2X51UZYIC","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                    <div>
+                                                                        <div class="top clearfix">
+                                                                            <div class="left roll-vertical">
+                                                                                <div>Sm</div>
+                                                                            </div>
+                                                                            <div class="right">
+                                                                                <div class="first">206</div>
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                            </div>
+                                                                        </div>
+                                                                        <div class="middle zapsano" style="padding-top: 33px;">SM</div>
+                                                                        <div class="bottom">Haz</div>
+                                                                        
+                                                                        <div class="absence _AbsentOk"></div>
                                                                     </div>
                                                                 </div>
                                                             
@@ -2194,7 +1979,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  border-spodni  normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk francouzský | pá 7.6. | 2 (8:55 - 9:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Šimůnková","room":"211","group":"Fj","theme":"Futur simple","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060704ZXRKFOUUYNO","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk francouzský | pá 10.5. | 2 (8:55 - 9:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Barbora Šimůnková","room":"211","group":"Fj","theme":"Accident - reportage","notice":"","changeinfo":"","homeworks":[],"absencetext":"omluvená absence","identcode":"12024051004ZXRKFOUUYNO","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -2212,7 +1997,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                         <div class="middle zapsano" style="padding-top: 33px;">Fj</div>
                                                                         <div class="bottom">Šmů</div>
                                                                         
-                                                                        <div class="absence _NoAbsent"></div>
+                                                                        <div class="absence _AbsentOk"></div>
                                                                     </div>
                                                                 </div>
                                                             
@@ -2226,7 +2011,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  border-spodni odd normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Chemie | pá 7.6. | 3 (10:00 - 10:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Kateřina Hubková","room":"104","group":"","theme":"Heterocyklické sloučeniny","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060705ZXS99BUZYJN","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Chemie | pá 10.5. | 3 (10:00 - 10:45)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Kateřina Hubková","room":"104","group":"","theme":"Polymery","notice":"","changeinfo":"","homeworks":[],"absencetext":"omluvená absence","identcode":"12024051005ZXS99BUZYJN","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -2244,7 +2029,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                         <div class="middle zapsano" style="padding-top: 33px;">Ch</div>
                                                                         <div class="bottom">Hub</div>
                                                                         
-                                                                        <div class="absence _NoAbsent"></div>
+                                                                        <div class="absence _AbsentOk"></div>
                                                                     </div>
                                                                 </div>
                                                             
@@ -2258,7 +2043,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  border-spodni  normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Dějepis | pá 7.6. | 4 (10:55 - 11:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"Obhajoby roč. prací","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060706ZXS9SRUIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Dějepis | pá 10.5. | 4 (10:55 - 11:40)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Zuzana Outlá","room":"203","group":"","theme":"USA-2.pol.20.stol.","notice":"","changeinfo":"","homeworks":[],"absencetext":"omluvená absence","identcode":"12024051006ZXS9SRUIC4R","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
@@ -2276,7 +2061,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                         <div class="middle zapsano" style="padding-top: 33px;">D</div>
                                                                         <div class="bottom">Out</div>
                                                                         
-                                                                        <div class="absence _NoAbsent"></div>
+                                                                        <div class="absence _AbsentOk"></div>
                                                                     </div>
                                                                 </div>
                                                             
@@ -2290,14 +2075,14 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                 <span>
                                                     <div class='day-item  border-spodni odd normal' style='height:87px;'>
                                                         
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Tělesná výchova | pá 7.6. | 5a (11:50 - 12:35)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Martin Suchánek","room":"22Tv","group":"Chl","theme":"Football","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060707ZXSA5HUWYO1","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
+                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Tělesná výchova | pá 10.5. | 5a (11:50 - 12:35)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Martin Suchánek","room":"24Tv","group":"Chl","theme":"Football taktika","notice":"","changeinfo":"","homeworks":[],"absencetext":"omluvená absence","identcode":"12024051007ZXSA5HUWYO1","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
                                                                     <div>
                                                                         <div class="top clearfix">
                                                                             <div class="left roll-vertical">
                                                                                 <div>Chl</div>
                                                                             </div>
                                                                             <div class="right">
-                                                                                <div class="first">22Tv</div>
+                                                                                <div class="first">24Tv</div>
                                                                                 
                                                                                 
                                                                                 
@@ -2308,7 +2093,7 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                                         <div class="middle zapsano" style="padding-top: 33px;">Tv</div>
                                                                         <div class="bottom">Sch</div>
                                                                         
-                                                                        <div class="absence _NoAbsent"></div>
+                                                                        <div class="absence _AbsentOk"></div>
                                                                     </div>
                                                                 </div>
                                                             
@@ -2339,36 +2124,17 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
                                                     </div>
                                                 </span>
                                             
-                                                <span>
-                                                    <div class='day-item  border-spodni  normal' style='height:87px;'>
-                                                        
-                                                                <div class="day-item-hover tooltip-bubble  " style="height:87px;" data-detail='{"type":"atom","subjecttext":"Jazyk anglický | pá 7.6. | 6b (13:05 - 13:50)","assistance":"","assistancePrev":"","withAssistance":false,"assistancesCount":0,"teacher":"Mgr. Marcela Tesařová","room":"129","group":"1","theme":"","notice":"","changeinfo":"","homeworks":[],"absencetext":"","identcode":"12024060710ZXRM0XUXYOB","HasPlannedClassification":false,"IsLastRoomLesson":false}'>
-                                                                    <div>
-                                                                        <div class="top clearfix">
-                                                                            <div class="left roll-vertical">
-                                                                                <div>1</div>
-                                                                            </div>
-                                                                            <div class="right">
-                                                                                <div class="first">129</div>
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                                
-                                                                            </div>
-                                                                        </div>
-                                                                        <div class="middle " style="padding-top: 33px;">Aj</div>
-                                                                        <div class="bottom">Tsř</div>
-                                                                        
-                                                                        <div class="absence _NoAbsent"></div>
-                                                                    </div>
-                                                                </div>
-                                                            
-                                                    </div>
-                                                </span>
+                                                
                                                 
                                                 <!-- fixme: add info about lesson removal -->
-                                                
+                                                <span>
+                                                    <div class="day-item day-item-hover tooltip-bubble  border-spodni pink" style="height:87px;" data-detail='{"type":"removed","subjecttext":"pá 10.5. | 6b (13:05 - 13:50)","absentinfo":"","removedinfo":"Zrušeno (Aj, Tesařová Marcela)"}'>
+                                                        <div style="height:87px;">
+                                                            <div class="top clearfix"></div>
+                                                            <div class="middle "></div>
+                                                        </div>
+                                                    </div>
+                                                </span>
                                                 
                                             
                                                 
@@ -2462,10 +2228,10 @@ ASPx.createControl(ASPxClientCheckBox,'cphmain_showRooms','',{'autoPostBack':tru
 	</tr>
 </table><div id="pcConfirmDialog_LD" class="dxpcLoadingDiv_NextBlueTheme dxlpLoadingDiv_NextBlueTheme dx-ft" style="left:0px;top:0px;z-index:29999;display:none;position:absolute;">
 
-</div><script id="dxss_614161103">
+</div><script id="dxss_1211865946">
 <!--
 ASPx.AddHoverItems('pcConfirmDialog',[[['dxpc-closeBtnHover'],[''],['HCB-1']]]);
-ASPx.createControl(ASPxClientPopupControl,'pcConfirmDialog','',{'callBack':function(arg) { WebForm_DoCallback('ctl00$pcConfirmDialog',arg,ASPx.Callback,'pcConfirmDialog',ASPx.CallbackError,true); },'uniqueID':'ctl00$pcConfirmDialog','popupAnimationType':'fade','popupHorizontalAlign':'WindowCenter','popupVerticalAlign':'WindowCenter','isPopupPositionCorrectionOn':false,'modal':true});
+ASPx.createControl(ASPxClientPopupControl,'pcConfirmDialog','',{'callBack':function(arg) { WebForm_DoCallback('ctl00$pcConfirmDialog',arg,ASPx.Callback,'pcConfirmDialog',ASPx.CallbackError,true); },'uniqueID':'ctl00$pcConfirmDialog','popupAnimationType':'fade','popupHorizontalAlign':'WindowCenter','popupVerticalAlign':'WindowCenter','modal':true});
 
 //-->
 </script>
@@ -2478,7 +2244,7 @@ ASPx.createControl(ASPxClientPopupControl,'pcConfirmDialog','',{'callBack':funct
 
 <bk-session-popup
     app-root="/"
-    session-remaining-time="361.999677"
+    session-remaining-time="829.9990062"
     warning-title-text="Jste tu ještě?"
     warning-dialog-text="Jste tu ještě? Pokud n&#225;m do {0} neodpov&#237;te, raději V&#225;s z bezpečnostn&#237;ch důvodů odhl&#225;s&#237;me."
     warning-time-text="3 minut"
