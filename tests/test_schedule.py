@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from core.schedule.lesson import Lesson
 from core.schedule.parse_schedule import parseSchedule
 from core.schedule.schedule import Schedule
+from core.subjects.subject import Subject
 
 
 class TestSchedules:
@@ -11,7 +12,8 @@ class TestSchedules:
 
     only4thLessons = Schedule([], False)
     for day in only4thLessons.days:
-        day.lessons[3] = Lesson(3, f"Subject{day.weekDay}", f"Room{day.weekDay}", f"Mr.{day.weekDay}")
+        subject = Subject(f"SubjectLong{day.weekDay}", f"SubjectShort{day.weekDay}")
+        day.lessons[3] = Lesson(3, subject, f"Room{day.weekDay}", f"Mr.{day.weekDay}")
 
     schedules = [emptySchedule, only4thLessons]
     for schedule in schedules:
@@ -71,7 +73,7 @@ def test_one_time_lesson_extraction():
     lesson = one_time_lesson_schedule.days[0].lessons[4]
     assert lesson.hour == 4
     assert lesson.empty == False
-    assert lesson.subject == "Před"
+    assert lesson.subject == Subject("Před", None)
     assert lesson.classroom == None
     assert lesson.teacher == None
     assert lesson.changeInfo == None
@@ -105,7 +107,7 @@ def test_regular_lesson():
     lesson = normal_schedule.days[4].lessons[8]
     assert lesson.hour == 8
     assert lesson.empty == False
-    assert lesson.subject == "Jazyk anglický"
+    assert lesson.subject == Subject("Jazyk anglický", "Aj")
     assert lesson.classroom == "129"
     assert lesson.teacher == "Mgr. Marcela Tesařová"
     assert lesson.changeInfo == None
@@ -129,7 +131,7 @@ def test_changed_lesson():
     lesson = normal_schedule.days[0].lessons[3]
     assert lesson.hour == 3
     assert lesson.empty == False
-    assert lesson.subject == "Chemie"
+    assert lesson.subject == Subject("Chemie", "Ch")
     assert lesson.classroom == "104"
     assert lesson.teacher == "Mgr. Kateřina Hubková"
     assert lesson.changeInfo == "Zrušeno (Bi, Pecová Barbora)"
