@@ -8,10 +8,8 @@ from pytest_mock import MockerFixture
 def test_initialize(mocker: MockerFixture):
     """Should initialize from the database"""
 
-    spy = mocker.spy(SubjectsCache, "_dbLoad")
-    spy.attach_mock(mocker.Mock(), "_dbLoad")
+    spy = mocker.patch.object(SubjectsCache, "_dbLoad")
     SubjectsCache.initialize()
-
     spy.assert_called_once()
 
 
@@ -43,8 +41,7 @@ class Test_HandleUpdateSubjects:
 
         SubjectsCache.subjects = [Subject("subject1", None)]
 
-        spy = mocker.spy(SubjectsCache, "_dbSave")
-        spy.attach_mock(mocker.Mock(), "_dbSave")
+        spy = mocker.patch.object(SubjectsCache, "_dbSave")
         changed = SubjectsCache.handleUpdateSubjects([Subject("subject1", None)])
 
         assert changed == False
@@ -56,8 +53,7 @@ class Test_HandleUpdateSubjects:
 
         SubjectsCache.subjects = [Subject("subject1", None)]
 
-        spy = mocker.spy(SubjectsCache, "_dbSave")
-        spy.attach_mock(mocker.Mock(), "_dbSave")
+        spy = mocker.patch.object(SubjectsCache, "_dbSave")
         changed = SubjectsCache.handleUpdateSubjects([Subject("subject2", None)])
 
         assert changed == True
@@ -72,8 +68,7 @@ class Test_HandleUpdateSubjects:
 
         SubjectsCache.subjects = [Subject("subject1", None)]
 
-        spy = mocker.spy(SubjectsCache, "_dbSave")
-        spy.attach_mock(mocker.Mock(), "_dbSave")
+        spy = mocker.patch.object(SubjectsCache, "_dbSave")
         changed = SubjectsCache.handleUpdateSubjects([Subject("subject1", "short1")])
 
         assert changed == True
@@ -85,8 +80,7 @@ class Test_HandleUpdateSubjects:
 
         SubjectsCache.subjects = [Subject("subject1", None), Subject("subject2", None)]
 
-        spy = mocker.spy(SubjectsCache, "_dbSave")
-        spy.attach_mock(mocker.Mock(), "_dbSave")
+        spy = mocker.patch.object(SubjectsCache, "_dbSave")
         changed = SubjectsCache.handleUpdateSubjects(
             [
                 Subject("subject1", None),
