@@ -4,8 +4,7 @@ import disnake
 from core.subjects.subject import Subject
 from core.subjects.utils import deduplicateSubjects
 from disnake.ext.commands import InteractionBot
-
-from bakabot.utils.utils import read_db, write_db
+from utils.utils import read_db, write_db
 
 
 class SubjectsCache:
@@ -65,7 +64,7 @@ class SubjectsCache:
     def updateCommandsWithSubjects(cls, client: InteractionBot):
         """Updates the commands with the subjects"""
 
-        from bakabot.bot_commands.bot_commands import General
+        from bot_commands.bot_commands import General
 
         subjectChoices = cls.getSlashCommandSubjectChoices()
 
