@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
 import disnake
+from disnake.ext.commands import InteractionBot
 from utils.utils import get_sec, getTextChannel, read_db, write_db
 
 # TODO: Reformat this file
@@ -58,7 +59,7 @@ class MessageTimers:
     async def delete_message(
         message: MessageUnionType,
         database: str,
-        client: disnake.Client,
+        client: InteractionBot,
         delay: int = 0,
     ):
         """Deletes the specified message from the chat after some delay"""
@@ -133,7 +134,7 @@ class MessageTimers:
         message: MessageUnionType,
         database: str,
         reaction: "EmojiInputType",
-        client: disnake.Client,
+        client: InteractionBot,
         delay: int = 0,
     ):
         """Deletes the specified reaction from the message after some delay"""
@@ -203,7 +204,7 @@ class MessageTimers:
                         return
 
     @staticmethod
-    async def query_messages(database: str, client: disnake.Client) -> list[disnake.Message]:
+    async def query_messages(database: str, client: InteractionBot) -> list[disnake.Message]:
         """Queries the messages from a specified database"""
 
         messagesTimers: list[MessageTimer] | None = read_db(database)
@@ -232,7 +233,7 @@ class MessageTimers:
         return foundMessages
 
     @staticmethod
-    async def query_messages_reactions(database: str, client: disnake.Client) -> list[disnake.Message]:
+    async def query_messages_reactions(database: str, client: InteractionBot) -> list[disnake.Message]:
         """Queries the reactions from a specified database into the current running client"""
 
         reactionTimers: list[ReactionTimer] | None = read_db(database)
@@ -269,7 +270,7 @@ class MessageTimers:
         return foundMessages
 
     @staticmethod
-    async def message_cache(client: disnake.Client, message: MessageUnionType):
+    async def message_cache(client: InteractionBot, message: MessageUnionType):
         """Adds the message into the clients custom cached messages"""
         if isinstance(message, LinkedMessage):
             try:

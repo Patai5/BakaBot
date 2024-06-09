@@ -6,6 +6,7 @@ import datetime
 import core.predictor as Predictor
 import disnake
 from core.grades.grades import Grades
+from disnake.ext.commands import InteractionBot
 from message_timers import MessageTimer, MessageTimers
 from utils.utils import read_db
 
@@ -16,7 +17,7 @@ class Reactions:
         message: disnake.Message,
         user: disnake.Member,
         emoji: disnake.PartialEmoji,
-        client: disnake.Client,
+        client: InteractionBot,
     ):
         self.message = message
         self.user = user
@@ -28,7 +29,7 @@ class Reactions:
         queryMessagesDatabase = "predictorMessages"
 
         @classmethod
-        async def query(cls, client: disnake.Client):
+        async def query(cls, client: InteractionBot):
             # Deletes some removed messages from the database while the bot was off
             messages = await MessageTimers.query_messages(cls.queryMessagesDatabase, client)
             if messages:
@@ -73,7 +74,7 @@ class Reactions:
         queryMessagesDatabase = "gradesMessages"
 
         @classmethod
-        async def query(cls, client: disnake.Client):
+        async def query(cls, client: InteractionBot):
             # Deletes some removed messages from the database while the bot was off
             messages = await MessageTimers.query_messages_reactions(cls.queryMessagesDatabase, client)
             if messages:
@@ -118,7 +119,7 @@ class Reactions:
                                 return
 
     @staticmethod
-    async def query(client: disnake.Client):
+    async def query(client: InteractionBot):
         for reaction in Reactions.REACTIONS:
             if reaction.queryMessagesDatabase:
                 asyncio.ensure_future(reaction.query(client))

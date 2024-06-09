@@ -4,6 +4,7 @@ from typing import Tuple
 import disnake
 from core.schedule.day import Day
 from core.schedule.schedule import Schedule
+from disnake.ext.commands import InteractionBot
 from utils.utils import from_sec_to_time, get_weekday_sec, getTextChannel, rand_rgb, read_db, write_db
 
 
@@ -67,7 +68,7 @@ class Reminder:
                         return lesson
 
     @staticmethod
-    async def reminder(client: disnake.Client, when: int):
+    async def reminder(client: InteractionBot, when: int):
         """Sends a reminder of the lesson to the discord channel"""
         await asyncio.sleep(when)
 
@@ -120,7 +121,7 @@ class Reminder:
         await asyncio.sleep(1)
 
     @staticmethod
-    async def remind_whole_day_schedule(day: Day, client: disnake.Client):
+    async def remind_whole_day_schedule(day: Day, client: InteractionBot):
         """Sends the whole day schedule"""
         # Creates the embed with today's schedule
         embed = disnake.Embed(color=disnake.Color.from_rgb(*rand_rgb()))
@@ -139,7 +140,7 @@ class Reminder:
         await getTextChannel(channelId, client).send(file=scheduleImg, embed=embed)
 
     @staticmethod
-    async def start_reminding(client: disnake.Client):
+    async def start_reminding(client: InteractionBot):
         """Starts an infinite loop for checking changes in the grades"""
         while True:
             when = Reminder.get_remind_time(Schedule.db_schedule(), get_weekday_sec())
