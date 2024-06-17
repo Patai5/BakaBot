@@ -60,13 +60,8 @@ class Lesson:
     ) -> Table.Cell:
         """Builds a `Table.Cell` object of the lesson."""
 
-        if self.subject is None:
-            raise ValueError("Cannot render an empty lesson")
-
-        lessonCell = Table.Cell([])
-
-        lessonNameText = self.subject.shortName if shortName else self.subject.fullName
-        lessonCell.items.append(Table.Cell.Item(lessonNameText))
+        lessonNameText = self.subject and (shortName and self.subject.shortName or self.subject.fullName)
+        lessonCell = Table.Cell([Table.Cell.Item(lessonNameText)])
 
         if showClassroom:
             lessonCell.items.append(Table.Cell.Item(self.classroom))
