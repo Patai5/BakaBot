@@ -129,7 +129,7 @@ class Reminder:
 
         # The schedule image
         fileName = "todaysSchedule.png"
-        scheduleImg = await day.render(False, True, file_name=fileName)
+        scheduleImg = await day.render(True, False, True, file_name=fileName)
         embed.set_image(url=f"attachment://{fileName}")
 
         # Sends the message
