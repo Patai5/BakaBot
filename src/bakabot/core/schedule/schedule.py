@@ -17,8 +17,10 @@ from utils.utils import getTextChannel, log_html, login, os_environ, rand_rgb, r
 
 
 class Schedule:
-    def __init__(self, days: list[Day], nextWeek: bool = False):
+    def __init__(self, days: list[Day], lessonTimes: list[int], nextWeek: bool = False):
         self.days = days
+        """List of the starting hours for the lessons"""
+        self.lessonTimes = lessonTimes
         self.nextWeek = nextWeek
 
         self.insert_missing_days()

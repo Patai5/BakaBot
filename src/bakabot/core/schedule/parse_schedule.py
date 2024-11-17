@@ -22,7 +22,9 @@ def parseSchedule(body: BeautifulSoup, nextWeek: bool) -> Schedule | None:
     if encounteredTwoWeeksBug:
         return None
 
-    return Schedule(parseDays(daysEls), nextWeek)
+    lessonTimes = parseLessonTimes(body)
+
+    return Schedule(parseDays(daysEls), lessonTimes, nextWeek)
 
 
 def parseDays(daysEls: list[Tag]) -> list[Day]:
@@ -105,3 +107,28 @@ def isTwoWeeksBug(daysEls: list[Tag]) -> bool:
     """Checks if the schedule is two weeks long, this is a rare bug that happens sometimes on bakalari"""
 
     return len(daysEls) > SCHOOL_DAYS_IN_WEEK
+
+
+def parseLessonTimes(body: BeautifulSoup) -> list[int]:
+    """Parses and returns the lesson times from the given body"""
+
+    lessonStartTimeEls = body.select("#hours > .item > .hour > .from")
+    lessonTimesTexts = [el.text for el in lessonStartTimeEls]
+
+    return [parseLessonTime(lessonTimeText) for lessonTimeText in lessonTimesTexts]
+
+
+def parseLessonTime(lessonTimeText: str) -> int:
+    """
+    Parses and returns the lesson time from the given lesson time text
+    - Example: `8:00` -> `28800` (seconds from midnight)
+    """
+
+    lessonTimeGroups = re.findall(r"(\d+)", lessonTimeText)
+    if len(lessonTimeGroups) != 2:
+        raise ValueError("Couldn't parse lesson time")
+
+    timeHours = int(lessonTimeGroups[0]) * 60 * 60
+    timeMinutes = int(lessonTimeGroups[1]) * 60
+
+    return timeHours + timeMinutes
