@@ -5,7 +5,7 @@ import disnake
 from bot_commands.bot_commands import setupBotInteractions
 from bot_commands.reactions import Reactions
 from core.grades.grades import Grades
-from core.reminder import Reminder
+from core.reminder import startReminder
 from core.schedule.schedule import ChangeDetector
 from core.subjects.subjects_cache import SubjectsCache
 from disnake.ext import commands
@@ -66,7 +66,7 @@ async def start_feature_couroutines(client: InteractionBot):
         Reactions.query(client),
         ChangeDetector.start_detecting_changes(60, client),
         Grades.start_detecting_changes(60, client),
-        Reminder.start_reminding(client),
+        startReminder(client),
     )
 
 
