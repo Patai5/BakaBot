@@ -8,9 +8,24 @@ from core.subjects.subject import Subject
 
 
 class TestSchedules:
-    emptySchedule = Schedule([], False)
+    defaultLessonTimes = [
+        25500,
+        28800,
+        32100,
+        36000,
+        39300,
+        42600,
+        43800,
+        45900,
+        47100,
+        50400,
+        53400,
+        56400,
+        59400,
+    ]
+    emptySchedule = Schedule([], defaultLessonTimes, False)
 
-    only4thLessons = Schedule([], False)
+    only4thLessons = Schedule([], defaultLessonTimes, False)
     for day in only4thLessons.days:
         subject = Subject(f"SubjectLong{day.weekDay}", f"SubjectShort{day.weekDay}")
         day.lessons[3] = Lesson(3, subject, f"Room{day.weekDay}", f"Mr.{day.weekDay}")
@@ -147,3 +162,14 @@ def test_removed_lesson():
     assert lesson.classroom == None
     assert lesson.teacher == None
     assert lesson.changeInfo == "Zrušeno (Zsv, Coufalová Lucie)"
+
+
+def test_lesson_times():
+    """Should extract lesson times correctly"""
+
+    lessonTimes = normal_schedule.lessonTimes
+    assert len(lessonTimes) == 13
+
+    assert lessonTimes[0] == 25500
+    assert lessonTimes[1] == 28800
+    assert lessonTimes[12] == 59400

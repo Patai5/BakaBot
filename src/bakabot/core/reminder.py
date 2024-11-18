@@ -1,147 +1,159 @@
 import asyncio
-from typing import Tuple
 
 import disnake
+from attr import dataclass
 from core.schedule.day import Day
+from core.schedule.lesson import Lesson
 from core.schedule.schedule import Schedule
 from disnake.ext.commands import InteractionBot
-from utils.utils import from_sec_to_time, get_weekday_sec, getTextChannel, rand_rgb, read_db, write_db
+from utils.utils import from_sec_to_time, get_sec, get_week_day, getTextChannel, rand_rgb, read_db, write_db
+
+REMIND_BEFORE_CLASS_TIME_SEC = 10 * 60  # 10 minutes
+"""The time before the class to remind the user (in seconds before the class)"""
+REMIND_WHOLE_DAY_SCHEDULE_TIME = 6 * 60 * 60  # 6 AM
+"""The time to remind the user about the whole day schedule (in seconds since midnight)"""
+
+LESSON_LENGTH = 45 * 60  # 45 minutes
+FULL_DAY_SECS = 24 * 60 * 60  # 24 hours
 
 
-class Reminder:
-    # Constants for lesson times and remind times
-    REMIND = [21600, 26100, 29400, 32700, 36600, 39900, 43200, 44400, 47700, 51000, 54000, 57000, 60000]
-    LESSON_TIMES = [
-        [25500, 28200],
-        [28800, 31500],
-        [32100, 34800],
-        [36000, 38700],
-        [39300, 42000],
-        [42600, 45300],
-        [43800, 48600],
-        [47100, 49800],
-        [50400, 53100],
-        [53400, 56100],
-        [56400, 59100],
-        [59400, 62100],
-    ]
-    FULL_DAY = 86400
+@dataclass
+class RemindTime:
+    timeSec: int
+    remindWholeDaySchedule: bool
 
-    @staticmethod
-    def get_remind_time(schedule: Schedule, weekDaySec: Tuple[int, int]) -> int:
-        """Gets the needed wait time for the nearest lesson and returns it"""
-        weekDay, currentTimeSec = weekDaySec
-        # Saturday
-        if weekDay == 5:
-            return Reminder.FULL_DAY * 2 + Reminder.REMIND[0] - currentTimeSec
-        # Sunday
-        if weekDay == 6:
-            return Reminder.FULL_DAY + Reminder.REMIND[0] - currentTimeSec
 
-        # Gets the next lesson for the day (if there is one)
-        nextLesson = Reminder.next_reminder_lesson(schedule.days[weekDay], currentTimeSec)
-        # Friday after no more lessons
-        if weekDay == 4 and nextLesson is None:
-            return Reminder.FULL_DAY * 3 + Reminder.REMIND[0] - currentTimeSec
+async def startReminder(client: InteractionBot):
+    """Starts an infinite loop for sending the lesson reminders"""
+    while True:
+        nextRemindTime = getWaitUntilNextRemindTime(Schedule.db_schedule(), get_sec())
+        await asyncio.sleep(nextRemindTime.timeSec)
 
-        # School day with some upcoming lessons
-        if nextLesson:
-            # Gets the needed time for the next lesson
-            for remindTime in Reminder.REMIND:
-                if remindTime > currentTimeSec:
-                    return remindTime - currentTimeSec
-        # School day with no upcoming lessons (waits for the next day)
-        return Reminder.FULL_DAY - currentTimeSec + Reminder.REMIND[0]
-
-    @staticmethod
-    def next_reminder_lesson(day: Day, currentTimeSec: int, current: bool | None = None):
-        """Gets the next nearest lesson for reminder"""
-        for lesson in day.lessons:
-            # Current in case the time is dirrectly on the lessons yet you still want it
-            if current:
-                if Reminder.REMIND[lesson.hour] > currentTimeSec - 10:
-                    if not lesson.empty:
-                        return lesson
-            else:
-                if Reminder.REMIND[lesson.hour] > currentTimeSec:
-                    if not lesson.empty:
-                        return lesson
-
-    @staticmethod
-    async def reminder(client: InteractionBot, when: int):
-        """Sends a reminder of the lesson to the discord channel"""
-        await asyncio.sleep(when)
-
-        weekDay, currentTimeSec = get_weekday_sec()
-        scheduleDay = Schedule.db_schedule().days[weekDay]
-
-        channelId = read_db("channelReminder")
-        if channelId is None:
-            raise ValueError("No reminder channel set")
-
-        lesson = Reminder.next_reminder_lesson(scheduleDay, currentTimeSec, current=True)
-        if lesson:
-            # Sends the full day schedule at 6:00am
-            if Reminder.REMIND[0] - 60 < currentTimeSec < Reminder.REMIND[0] + 60:
-                await Reminder.remind_whole_day_schedule(scheduleDay, client)
-
-            # Checking if the lesson isn't the same as the previously reminded one
-            lastLesson = read_db("lastLesson")
-            if (
-                lastLesson is None
-                or lesson.hour != lastLesson.hour
-                or lesson.subject != lastLesson.subject
-                or lesson.classroom != lastLesson.classroom
-            ):
-                # Creates the embed with the reminder info
-                embed = disnake.Embed(color=disnake.Color.from_rgb(*rand_rgb()))
-
-                # Title with the start and end times of the lesson
-                lessonStartTime = from_sec_to_time(Reminder.LESSON_TIMES[lesson.hour][0])
-                lessonEndTime = from_sec_to_time(Reminder.LESSON_TIMES[lesson.hour][1])
-                embed.title = lessonStartTime + " - " + lessonEndTime
-
-                # The lesson image
-                fileName = "nextLesson.png"
-
-                reminderLessonShortName: bool | None = read_db("reminderShort")
-                if reminderLessonShortName is None:
-                    raise ValueError("DB value for 'reminderShort' is None")
-
-                lessonImg = await lesson.render(reminderLessonShortName, True, file_name=fileName)
-                embed.set_image(url=f"attachment://{fileName}")
-
-                # Sends the message
-
-                await getTextChannel(channelId, client).send(file=lessonImg, embed=embed)
-
-                # Saves the current lesson into the lastLesson database
-                write_db("lastLesson", lesson)
-        # Prevents sending multiple reminders
+        await remind(Schedule.db_schedule(), nextRemindTime, get_week_day(), client)
         await asyncio.sleep(1)
 
-    @staticmethod
-    async def remind_whole_day_schedule(day: Day, client: InteractionBot):
-        """Sends the whole day schedule"""
-        # Creates the embed with today's schedule
-        embed = disnake.Embed(color=disnake.Color.from_rgb(*rand_rgb()))
-        embed.title = "Dnešní rozvrh"
 
-        # The schedule image
-        fileName = "todaysSchedule.png"
-        scheduleImg = await day.render(True, False, True, file_name=fileName)
-        embed.set_image(url=f"attachment://{fileName}")
+def getWaitUntilNextRemindTime(schedule: Schedule, currentTimeSec: int) -> RemindTime:
+    """Gets the time to wait until the next remind time."""
+    nextRemindTime = getNextRemindTime(schedule, currentTimeSec)
+    waitUntilNextRemindTime = nextRemindTime.timeSec - currentTimeSec
 
-        # Sends the message
-        channelId = read_db("channelReminder")
-        if channelId is None:
-            raise ValueError("No reminder channel set")
+    return RemindTime(waitUntilNextRemindTime, nextRemindTime.remindWholeDaySchedule)
 
-        await getTextChannel(channelId, client).send(file=scheduleImg, embed=embed)
 
-    @staticmethod
-    async def start_reminding(client: InteractionBot):
-        """Starts an infinite loop for checking changes in the grades"""
-        while True:
-            when = Reminder.get_remind_time(Schedule.db_schedule(), get_weekday_sec())
-            await Reminder.reminder(client, when)
+def getNextRemindTime(schedule: Schedule, currentTimeSec: int) -> RemindTime:
+    """
+    Gets the next remind time for the schedule in seconds.
+    - If we are already past the whole day, get the time for the next day whole day schedule
+    """
+    remindWholeDaySchedule = currentTimeSec <= REMIND_WHOLE_DAY_SCHEDULE_TIME
+    if remindWholeDaySchedule:
+        return RemindTime(REMIND_WHOLE_DAY_SCHEDULE_TIME, remindWholeDaySchedule=True)
+
+    for lessonTime in schedule.lessonTimes:
+        remindBeforeLesson = lessonTime - REMIND_BEFORE_CLASS_TIME_SEC
+        isLessonTimeSuitable = remindBeforeLesson > currentTimeSec
+        if isLessonTimeSuitable:
+            return RemindTime(remindBeforeLesson, remindWholeDaySchedule=False)
+
+    return RemindTime(FULL_DAY_SECS + REMIND_WHOLE_DAY_SCHEDULE_TIME, remindWholeDaySchedule=True)
+
+
+async def remind(schedule: Schedule, remindTime: RemindTime, weekDay: int, client: InteractionBot):
+    """
+    Reminds the user about the next lesson or also the whole day schedule.
+    - If it's the right time, remind about the whole day schedule + the next lesson
+    """
+    isWeekend = weekDay in (5, 6)
+    if isWeekend:
+        return
+
+    scheduleDay = schedule.days[weekDay]
+
+    if remindTime.remindWholeDaySchedule:
+        if not scheduleDay.empty:
+            await remindWholeDaySchedule(scheduleDay, client)
+
+    lesson = getLessonToRemind(scheduleDay, schedule.lessonTimes, remindTime.timeSec)
+    if lesson:
+        await remindLesson(lesson, schedule.lessonTimes[lesson.hour], client)
+
+
+def getLessonToRemind(day: Day, lessonTimes: list[int], currentTimeSec: int) -> Lesson | None:
+    """
+    Gets the lesson to remind about. If there is no suitable lesson, return None.
+    - Suitable lesson has to be reminded before the class starts and has not been reminded yet
+    - Skips over empty lessons by reminding the next lesson already
+    """
+    remindedLesson = read_db("lastLesson")
+
+    for lesson in day.lessons:
+        isLessonEmpty = lesson.empty
+        if isLessonEmpty:
+            continue
+
+        isLessonTimeSuitable = lessonTimes[lesson.hour] >= currentTimeSec - REMIND_BEFORE_CLASS_TIME_SEC
+        if not isLessonTimeSuitable:
+            continue
+
+        hasLessonBeenReminded = (
+            remindedLesson is not None
+            and lesson.hour == remindedLesson.hour
+            and lesson.subject == remindedLesson.subject
+            and lesson.classroom == remindedLesson.classroom
+        )
+        if not hasLessonBeenReminded:
+            return lesson
+
+    return None
+
+
+async def remindWholeDaySchedule(day: Day, client: InteractionBot):
+    """Sends the whole day schedule"""
+    # Creates the embed with today's schedule
+    embed = disnake.Embed(color=disnake.Color.from_rgb(*rand_rgb()))
+    embed.title = "Dnešní rozvrh"
+
+    # The schedule image
+    fileName = "todaysSchedule.png"
+    scheduleImg = await day.render(True, False, True, file_name=fileName)
+    embed.set_image(url=f"attachment://{fileName}")
+
+    # Sends the message
+    channelId = read_db("channelReminder")
+    if channelId is None:
+        raise ValueError("No reminder channel set")
+
+    await getTextChannel(channelId, client).send(file=scheduleImg, embed=embed)
+
+
+async def remindLesson(lesson: Lesson, lessonStartTimeSec: int, client: InteractionBot):
+    """Sends a reminder of the lesson to the discord channel"""
+
+    # Creates the embed with the reminder info
+    embed = disnake.Embed(color=disnake.Color.from_rgb(*rand_rgb()))
+
+    # Title with the start and end times of the lesson
+    lessonStartTime = from_sec_to_time(lessonStartTimeSec)
+    lessonEndTime = from_sec_to_time(lessonStartTimeSec + LESSON_LENGTH)
+    embed.title = lessonStartTime + " - " + lessonEndTime
+
+    # The lesson image
+    fileName = "nextLesson.png"
+
+    reminderLessonShortName: bool | None = read_db("reminderShort")
+    if reminderLessonShortName is None:
+        raise ValueError("DB value for 'reminderShort' is None")
+
+    lessonImg = await lesson.render(reminderLessonShortName, True, file_name=fileName)
+    embed.set_image(url=f"attachment://{fileName}")
+
+    # Sends the message
+    channelId = read_db("channelReminder")
+    if channelId is None:
+        raise ValueError("No reminder channel set")
+
+    await getTextChannel(channelId, client).send(file=lessonImg, embed=embed)
+
+    # Saves the current lesson into the lastLesson database
+    write_db("lastLesson", lesson)

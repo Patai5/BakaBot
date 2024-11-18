@@ -1,73 +1,32 @@
-from typing import Tuple
-
-import pytest
-from core.reminder import Reminder
-from core.schedule.day import Day
-from core.schedule.lesson import Lesson
-from core.schedule.schedule import Schedule
+from core.reminder import REMIND_BEFORE_CLASS_TIME_SEC, REMIND_WHOLE_DAY_SCHEDULE_TIME, getWaitUntilNextRemindTime
 from test_schedule import TestSchedules
 
-almostFullDayS = 60**2 * 23
+
+def test_remind_whole_day():
+    """Should remind about the whole day schedule before any classes"""
+    schedule = TestSchedules.emptySchedule
+    currentTimeSec = 50
+
+    remindTime = getWaitUntilNextRemindTime(schedule, currentTimeSec)
+    assert remindTime.timeSec == REMIND_WHOLE_DAY_SCHEDULE_TIME - currentTimeSec
+    assert remindTime.remindWholeDaySchedule is True
 
 
-@pytest.mark.parametrize(
-    "day, time, current, expected",
-    [
-        (TestSchedules.emptySchedule.days[0], 0, False, None),
-        (TestSchedules.emptySchedule.days[0], Reminder.REMIND[4], True, None),
-        (TestSchedules.emptySchedule.days[0], almostFullDayS, False, None),
-        (TestSchedules.only4thLessons.days[0], 0, False, TestSchedules.only4thLessons.days[0].lessons[3]),
-        (
-            TestSchedules.only4thLessons.days[0],
-            Reminder.REMIND[2],
-            False,
-            TestSchedules.only4thLessons.days[0].lessons[3],
-        ),
-        (TestSchedules.only4thLessons.days[0], Reminder.REMIND[3], False, None),
-        (
-            TestSchedules.only4thLessons.days[0],
-            Reminder.REMIND[3],
-            True,
-            TestSchedules.only4thLessons.days[0].lessons[3],
-        ),
-    ],
-)
-def test_multi_reminders(day: Day, time: int, current: bool, expected: Lesson | None):
-    assert Reminder.next_reminder_lesson(day, time, current) == expected
+def test_remind_first_class():
+    """Should remind about the first class"""
+    schedule = TestSchedules.only4thLessons
+    currentTimeSec = REMIND_WHOLE_DAY_SCHEDULE_TIME + 1
+
+    remindTime = getWaitUntilNextRemindTime(schedule, currentTimeSec)
+    assert remindTime.timeSec == TestSchedules.defaultLessonTimes[0] - REMIND_BEFORE_CLASS_TIME_SEC - currentTimeSec
+    assert remindTime.remindWholeDaySchedule is False
 
 
-@pytest.mark.parametrize(
-    "schedule, weekDaySec, expected",
-    [
-        (TestSchedules.only4thLessons, (0, 0), Reminder.REMIND[0]),
-        (TestSchedules.only4thLessons, (0, 10000), Reminder.REMIND[0] - 10000),
-        (TestSchedules.only4thLessons, (0, Reminder.REMIND[0] - 1), 1),
-        (TestSchedules.only4thLessons, (0, Reminder.REMIND[0]), Reminder.REMIND[1] - Reminder.REMIND[0]),
-        (
-            TestSchedules.only4thLessons,
-            (0, Reminder.REMIND[3]),
-            Reminder.FULL_DAY + Reminder.REMIND[0] - Reminder.REMIND[3],
-        ),
-        (TestSchedules.only4thLessons, (0, almostFullDayS), Reminder.FULL_DAY + Reminder.REMIND[0] - almostFullDayS),
-        (TestSchedules.only4thLessons, (4, 0), Reminder.REMIND[0]),
-        (
-            TestSchedules.only4thLessons,
-            (4, Reminder.REMIND[1]),
-            Reminder.REMIND[2] - Reminder.REMIND[1],
-        ),
-        (
-            TestSchedules.only4thLessons,
-            (4, Reminder.REMIND[4]),
-            Reminder.FULL_DAY * 3 + Reminder.REMIND[0] - Reminder.REMIND[4],
-        ),
-        (
-            TestSchedules.only4thLessons,
-            (4, almostFullDayS),
-            Reminder.FULL_DAY * 3 + Reminder.REMIND[0] - almostFullDayS,
-        ),
-        (TestSchedules.only4thLessons, (5, 0), Reminder.FULL_DAY * 2 + Reminder.REMIND[0]),
-        (TestSchedules.only4thLessons, (6, 0), Reminder.FULL_DAY + Reminder.REMIND[0]),
-    ],
-)
-def test_multi_get_remind_times(schedule: Schedule, weekDaySec: Tuple[int, int], expected: int):
-    assert Reminder.get_remind_time(schedule, weekDaySec) == expected
+def test_should_go_over_to_next_day():
+    """Should go over to the next day if there are no more lessons"""
+    schedule = TestSchedules.only4thLessons
+    currentTimeSec = TestSchedules.defaultLessonTimes[-1] + 1
+
+    remindTime = getWaitUntilNextRemindTime(schedule, currentTimeSec)
+    assert remindTime.timeSec == REMIND_WHOLE_DAY_SCHEDULE_TIME + 86400 - currentTimeSec
+    assert remindTime.remindWholeDaySchedule is True
