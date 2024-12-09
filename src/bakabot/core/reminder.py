@@ -8,8 +8,8 @@ from core.schedule.schedule import Schedule
 from disnake.ext.commands import InteractionBot
 from utils.utils import from_sec_to_time, get_sec, get_week_day, getTextChannel, rand_rgb, read_db, write_db
 
-REMIND_BEFORE_CLASS_TIME_SEC = 10 * 60  # 10 minutes
-"""The time before the class to remind the user (in seconds before the class)"""
+REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC = 10 * 60  # 10 minutes
+"""The time after the previous class has started to remind about the next class (in seconds)"""
 REMIND_WHOLE_DAY_SCHEDULE_TIME = 6 * 60 * 60  # 6 AM
 """The time to remind the user about the whole day schedule (in seconds since midnight)"""
 
@@ -45,16 +45,17 @@ def getNextRemindTime(schedule: Schedule, currentTimeSec: int) -> RemindTime:
     """
     Gets the next remind time for the schedule in seconds.
     - If we are already past the whole day, get the time for the next day whole day schedule
+    - The last lesson is not counted in, as there is nothing to remind after it
     """
     remindWholeDaySchedule = currentTimeSec <= REMIND_WHOLE_DAY_SCHEDULE_TIME
     if remindWholeDaySchedule:
         return RemindTime(REMIND_WHOLE_DAY_SCHEDULE_TIME, remindWholeDaySchedule=True)
 
-    for lessonTime in schedule.lessonTimes:
-        remindBeforeLesson = lessonTime - REMIND_BEFORE_CLASS_TIME_SEC
-        isLessonTimeSuitable = remindBeforeLesson > currentTimeSec
+    for lessonTime in schedule.lessonTimes[:-1]:
+        remindAfterLesson = lessonTime + REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC
+        isLessonTimeSuitable = remindAfterLesson > currentTimeSec
         if isLessonTimeSuitable:
-            return RemindTime(remindBeforeLesson, remindWholeDaySchedule=False)
+            return RemindTime(remindAfterLesson, remindWholeDaySchedule=False)
 
     return RemindTime(FULL_DAY_SECS + REMIND_WHOLE_DAY_SCHEDULE_TIME, remindWholeDaySchedule=True)
 
@@ -92,20 +93,25 @@ def getLessonToRemind(day: Day, lessonTimes: list[int], currentTimeSec: int) -> 
         if isLessonEmpty:
             continue
 
-        isLessonTimeSuitable = lessonTimes[lesson.hour] >= currentTimeSec - REMIND_BEFORE_CLASS_TIME_SEC
+        isLessonTimeSuitable = lessonTimes[lesson.hour] >= currentTimeSec + REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC
         if not isLessonTimeSuitable:
             continue
 
-        hasLessonBeenReminded = (
-            remindedLesson is not None
-            and lesson.hour == remindedLesson.hour
-            and lesson.subject == remindedLesson.subject
-            and lesson.classroom == remindedLesson.classroom
-        )
-        if not hasLessonBeenReminded:
+        hasBeenReminded = hasLessonBeenReminded(lesson, remindedLesson)
+        if not hasBeenReminded:
             return lesson
 
     return None
+
+
+def hasLessonBeenReminded(lesson: Lesson, lastRemindedLesson: Lesson | None) -> bool:
+    """Checks if the lesson has been reminded already, by comparing it to the last reminded lesson"""
+    return (
+        lastRemindedLesson is not None
+        and lesson.hour == lastRemindedLesson.hour
+        and lesson.subject == lastRemindedLesson.subject
+        and lesson.classroom == lastRemindedLesson.classroom
+    )
 
 
 async def remindWholeDaySchedule(day: Day, client: InteractionBot):
