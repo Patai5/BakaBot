@@ -30,6 +30,13 @@ class TestSchedules:
         subject = Subject(f"SubjectLong{day.weekDay}", f"SubjectShort{day.weekDay}")
         day.lessons[3] = Lesson(3, subject, f"Room{day.weekDay}", f"Mr.{day.weekDay}")
 
+    only4thAnd5thLessons = Schedule([], defaultLessonTimes, False)
+    for day in only4thAnd5thLessons.days:
+        subject = Subject(f"SubjectLong{day.weekDay}1", f"SubjectShort{day.weekDay}1")
+        day.lessons[3] = Lesson(3, subject, f"Room{day.weekDay}", f"Mr.{day.weekDay}")
+        subject = Subject(f"SubjectLong{day.weekDay}2", f"SubjectShort{day.weekDay}2")
+        day.lessons[4] = Lesson(4, subject, f"Room{day.weekDay}", f"Mr.{day.weekDay}")
+
     schedules = [emptySchedule, only4thLessons]
     for schedule in schedules:
         for i, day in enumerate(schedule.days, start=1):
