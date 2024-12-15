@@ -20,25 +20,21 @@ FULL_DAY_SECS = 24 * 60 * 60  # 24 hours
 @dataclass
 class RemindTime:
     timeSec: int
+    lessonTimeIndex: int
     remindWholeDaySchedule: bool
 
 
 async def startReminder(client: InteractionBot):
     """Starts an infinite loop for sending the lesson reminders"""
     while True:
-        nextRemindTime = getWaitUntilNextRemindTime(Schedule.db_schedule(), get_sec())
-        await asyncio.sleep(nextRemindTime.timeSec)
+        currentTimeSec = get_sec()
+        nextRemindTime = getNextRemindTime(Schedule.db_schedule(), currentTimeSec)
+
+        sleepSec = nextRemindTime.timeSec - currentTimeSec
+        await asyncio.sleep(sleepSec)
 
         await remind(Schedule.db_schedule(), nextRemindTime, get_week_day(), client)
         await asyncio.sleep(1)
-
-
-def getWaitUntilNextRemindTime(schedule: Schedule, currentTimeSec: int) -> RemindTime:
-    """Gets the time to wait until the next remind time."""
-    nextRemindTime = getNextRemindTime(schedule, currentTimeSec)
-    waitUntilNextRemindTime = nextRemindTime.timeSec - currentTimeSec
-
-    return RemindTime(waitUntilNextRemindTime, nextRemindTime.remindWholeDaySchedule)
 
 
 def getNextRemindTime(schedule: Schedule, currentTimeSec: int) -> RemindTime:
@@ -49,15 +45,16 @@ def getNextRemindTime(schedule: Schedule, currentTimeSec: int) -> RemindTime:
     """
     remindWholeDaySchedule = currentTimeSec <= REMIND_WHOLE_DAY_SCHEDULE_TIME
     if remindWholeDaySchedule:
-        return RemindTime(REMIND_WHOLE_DAY_SCHEDULE_TIME, remindWholeDaySchedule=True)
+        return RemindTime(REMIND_WHOLE_DAY_SCHEDULE_TIME, lessonTimeIndex=0, remindWholeDaySchedule=True)
 
-    for lessonTime in schedule.lessonTimes[:-1]:
+    for lessonTimeIndex, lessonTime in enumerate(schedule.lessonTimes[:-1]):
         remindAfterLesson = lessonTime + REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC
+
         isLessonTimeSuitable = remindAfterLesson > currentTimeSec
         if isLessonTimeSuitable:
-            return RemindTime(remindAfterLesson, remindWholeDaySchedule=False)
+            return RemindTime(remindAfterLesson, lessonTimeIndex, remindWholeDaySchedule=False)
 
-    return RemindTime(FULL_DAY_SECS + REMIND_WHOLE_DAY_SCHEDULE_TIME, remindWholeDaySchedule=True)
+    return RemindTime(FULL_DAY_SECS + REMIND_WHOLE_DAY_SCHEDULE_TIME, lessonTimeIndex=0, remindWholeDaySchedule=True)
 
 
 async def remind(schedule: Schedule, remindTime: RemindTime, weekDay: int, client: InteractionBot):
@@ -75,31 +72,28 @@ async def remind(schedule: Schedule, remindTime: RemindTime, weekDay: int, clien
         if not scheduleDay.empty:
             await remindWholeDaySchedule(scheduleDay, client)
 
-    lesson = getLessonToRemind(scheduleDay, schedule.lessonTimes, remindTime.timeSec)
+    lastRemindedLesson = read_db("lastLesson")
+    lesson = getLessonToRemind(scheduleDay, remindTime.lessonTimeIndex, lastRemindedLesson)
     if lesson:
         await remindLesson(lesson, schedule.lessonTimes[lesson.hour], client)
 
 
-def getLessonToRemind(day: Day, lessonTimes: list[int], currentTimeSec: int) -> Lesson | None:
+def getLessonToRemind(day: Day, lessonTimeIndex: int, lastRemindedLesson: Lesson | None) -> Lesson | None:
     """
     Gets the lesson to remind about. If there is no suitable lesson, return None.
     - Suitable lesson has to be reminded before the class starts and has not been reminded yet
     - Skips over empty lessons by reminding the next lesson already
     """
-    remindedLesson = read_db("lastLesson")
-
-    for lesson in day.lessons:
+    for lesson in day.lessons[lessonTimeIndex:]:
         isLessonEmpty = lesson.empty
         if isLessonEmpty:
             continue
 
-        isLessonTimeSuitable = lessonTimes[lesson.hour] >= currentTimeSec + REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC
-        if not isLessonTimeSuitable:
-            continue
+        hasBeenReminded = hasLessonBeenReminded(lesson, lastRemindedLesson)
+        if hasBeenReminded:
+            return None
 
-        hasBeenReminded = hasLessonBeenReminded(lesson, remindedLesson)
-        if not hasBeenReminded:
-            return lesson
+        return lesson
 
     return None
 
