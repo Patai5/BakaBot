@@ -47,7 +47,7 @@ def getNextRemindTime(schedule: Schedule, currentTimeSec: int) -> RemindTime:
     if remindWholeDaySchedule:
         return RemindTime(REMIND_WHOLE_DAY_SCHEDULE_TIME, lessonTimeIndex=0, remindWholeDaySchedule=True)
 
-    for lessonTimeIndex, lessonTime in enumerate(schedule.lessonTimes[:-1]):
+    for lessonTimeIndex, lessonTime in enumerate(schedule.lessonTimes[:-1], start=1):
         remindAfterLesson = lessonTime + REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC
 
         isLessonTimeSuitable = remindAfterLesson > currentTimeSec
