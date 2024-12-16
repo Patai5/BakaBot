@@ -17,15 +17,20 @@ class Test_getNextRemindTime:
         assert remindTime.lessonTimeIndex == 0
         assert remindTime.remindWholeDaySchedule is True
 
-    def test_remind_second_class(self):
-        """Should remind about the second class"""
-        schedule = TestSchedules.only4thLessons
-        currentTimeSec = TestSchedules.defaultLessonTimes[0] + REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC + 1
-        remindTime = getNextRemindTime(schedule, currentTimeSec)
+    def test_remind_about_upcoming_lessons(self):
+        """Should remind about the upcoming lessons"""
+        schedule = TestSchedules.only4thAnd5thLessons
+        firstLessonRemindTime = TestSchedules.defaultLessonTimes[0] + REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC
 
-        assert remindTime.timeSec == TestSchedules.defaultLessonTimes[1] + REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC
-        assert remindTime.lessonTimeIndex == 1
-        assert remindTime.remindWholeDaySchedule is False
+        remindTime1 = getNextRemindTime(schedule, firstLessonRemindTime - 10)
+        assert remindTime1.timeSec == firstLessonRemindTime
+        assert remindTime1.lessonTimeIndex == 1
+        assert remindTime1.remindWholeDaySchedule is False
+
+        remindTime2 = getNextRemindTime(schedule, firstLessonRemindTime + 10)
+        assert remindTime2.timeSec == TestSchedules.defaultLessonTimes[1] + REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC
+        assert remindTime2.lessonTimeIndex == 2
+        assert remindTime2.remindWholeDaySchedule is False
 
     def test_should_go_over_to_next_day(self):
         """Should go over to the next day if there are no more lessons"""
