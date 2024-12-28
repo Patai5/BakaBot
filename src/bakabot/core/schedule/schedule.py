@@ -13,6 +13,7 @@ from core.schedule.lesson import Lesson
 from core.subjects.subjects_cache import SubjectsCache
 from core.table import ColumnType, Table
 from disnake.ext.commands import InteractionBot
+from feature_manager.feature_manager import FeatureManager
 from utils.utils import getTextChannel, log_html, login, os_environ, rand_rgb, read_db, request, write_db
 
 
@@ -219,14 +220,23 @@ class ChangeDetector:
             self.day = day
 
     @staticmethod
-    async def detect_changes(client: InteractionBot):
-        """Detects any changes in the schedule and sends a discord notification of the changes if there are any"""
+    async def detect_changes(client: InteractionBot) -> bool:
+        """
+        Detects any changes in the schedule and sends a discord notification of the changes if there are any
+
+        :return: A boolean indicating whether the server is online
+        """
         newCurrentWeek = await Schedule.get_schedule(False, client)
         newNextWeek = await Schedule.get_schedule(True, client)
 
         # If bakalari server is down, return
         if newCurrentWeek is None or newNextWeek is None:
-            return None
+            return False
+
+        hasScheduleDatabase = read_db("schedule1") and read_db("schedule2")
+        if not hasScheduleDatabase:
+            newCurrentWeek.db_save()
+            newNextWeek.db_save()
 
         ChangeDetector.handle_update_subjects_cache((newCurrentWeek, newNextWeek), client)
 
@@ -241,6 +251,8 @@ class ChangeDetector:
             if changed:
                 await ChangeDetector.changed_message(changed, client, schedulePair)
                 schedulePair.new.db_save()
+
+        return True
 
     @staticmethod
     def handle_update_subjects_cache(schedules: tuple[Schedule, Schedule], client: InteractionBot):
@@ -355,11 +367,11 @@ class ChangeDetector:
         await channel.send(embed=changedDetail)
 
     @staticmethod
-    async def start_detecting_changes(interval: int, client: InteractionBot):
+    async def start_detecting_changes(interval: int, featureManager: FeatureManager, client: InteractionBot):
         """Starts an infinite loop for checking changes in the schedule"""
         while True:
             try:
-                await ChangeDetector.detect_changes(client)
+                isServerOnline = await ChangeDetector.detect_changes(client)
             except Exception as e:
                 errorMsgPrefix = "An error occurred while checking for changes in grades"
                 print(f"\n{errorMsgPrefix}:\n{traceback.format_exc()}\n")
@@ -372,4 +384,7 @@ class ChangeDetector:
                     f"{errorMsgPrefix}:\n```{type(e).__name__}: {e}```"
                 )
                 break
+
+            if isServerOnline:
+                asyncio.ensure_future(featureManager.maybe_start_feature("reminder", client))
             await asyncio.sleep(interval)
