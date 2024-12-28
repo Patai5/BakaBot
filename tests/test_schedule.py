@@ -1,10 +1,9 @@
-import os
-
-from bs4 import BeautifulSoup
 from core.schedule.lesson import Lesson
 from core.schedule.parse_schedule import parseSchedule
 from core.schedule.schedule import Schedule
 from core.subjects.subject import Subject
+
+from tests.utils import open_html
 
 
 class TestSchedules:
@@ -43,17 +42,17 @@ class TestSchedules:
             day.date = f"{i}.1."
 
 
-templatesPath = os.path.join("tests", "schedule_response_templates")
+def handle_open_schedule(filename: str, nextWeek: bool) -> Schedule:
+    schedule = open_schedule(filename, nextWeek)
+    if not schedule:
+        raise ValueError("Schedule is None")
+
+    return schedule
 
 
-def open_schedule(filename: str, nextWeek: bool) -> Schedule:
-    with open(os.path.join(templatesPath, filename), "r", encoding="utf-8") as f:
-        parsedSchedule = parseSchedule(BeautifulSoup(f.read(), "html.parser"), nextWeek)
-
-        if parsedSchedule is None:
-            raise ValueError("Schedule is None")
-
-        return parsedSchedule
+def open_schedule(filename: str, nextWeek: bool) -> Schedule | None:
+    html = open_html(filename)
+    return parseSchedule(html, nextWeek)
 
 
 def print_schedule_differences(schedule1: Schedule, schedule2: Schedule):
@@ -66,10 +65,15 @@ def print_schedule_differences(schedule1: Schedule, schedule2: Schedule):
                     print(f"\tInput:    {lesson1}\n\tExpected: {lesson2}\n")
 
 
-empty_schedule = open_schedule("schedule_empty.html", False)
-normal_schedule = open_schedule("schedule_normal.html", False)
-empty_holiday_day_schedule = open_schedule("schedule_holiday_day.html", False)
-one_time_lesson_schedule = open_schedule("schedule_one_time_lesson.html", False)
+empty_schedule = handle_open_schedule("schedule_empty.html", False)
+normal_schedule = handle_open_schedule("schedule_normal.html", False)
+empty_holiday_day_schedule = handle_open_schedule("schedule_holiday_day.html", False)
+one_time_lesson_schedule = handle_open_schedule("schedule_one_time_lesson.html", False)
+bugged_schedule = open_schedule("schedule_bugged_script.html", False)
+
+
+def test_bugged_schedule():
+    assert bugged_schedule == None
 
 
 def test_empty_schedule():

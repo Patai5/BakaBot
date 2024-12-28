@@ -4,7 +4,8 @@ from core.reminder import (
     getLessonToRemind,
     getNextRemindTime,
 )
-from test_schedule import TestSchedules
+
+from tests.test_schedule import TestSchedules
 
 
 class Test_getNextRemindTime:
