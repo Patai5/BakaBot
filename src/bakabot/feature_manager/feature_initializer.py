@@ -1,9 +1,8 @@
 from core.grades.grades import Grades
 from core.reminder import startReminder
 from core.schedule.schedule import ChangeDetector
+from feature_manager.feature_manager import Feature, FeatureManager
 from utils.utils import read_db
-
-from bakabot.feature_manager.feature_manager import Feature, FeatureManager
 
 
 def getFeatureManager() -> FeatureManager:

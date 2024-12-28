@@ -6,13 +6,18 @@ from constants import DAYS, SCHOOL_DAYS_IN_WEEK
 from core.schedule.day import Day
 from core.schedule.lesson import Lesson
 from core.schedule.schedule import Schedule
+from core.shared_parsers import isBuggedBakalariScript
 from core.subjects.subject import Subject
 
 
-def parseSchedule(body: BeautifulSoup, nextWeek: bool) -> Schedule | None:
+def parseSchedule(scheduleHtml: str, nextWeek: bool) -> Schedule | None:
     """Parses a schedule object from the html. Returns None on bakalari's bugs. Throws ValueError on parsing errors"""
+    if isBuggedBakalariScript(scheduleHtml):
+        return None
 
-    scheduleEl = body.select_one("div#schedule")
+    scheduleSoup = BeautifulSoup(scheduleHtml, "html.parser")
+
+    scheduleEl = scheduleSoup.select_one("div#schedule")
     if scheduleEl is None:
         raise ValueError("Couldn't find schedule element")
 
@@ -22,7 +27,7 @@ def parseSchedule(body: BeautifulSoup, nextWeek: bool) -> Schedule | None:
     if encounteredTwoWeeksBug:
         return None
 
-    lessonTimes = parseLessonTimes(body)
+    lessonTimes = parseLessonTimes(scheduleSoup)
 
     return Schedule(parseDays(daysEls), lessonTimes, nextWeek)
 

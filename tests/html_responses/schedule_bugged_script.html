@@ -1,0 +1,185 @@
+
+<!DOCTYPE html>
+
+<html>
+<head data-pageinfo="{&quot;user_id&quot;:&quot;2720ZGV0PQ&quot;,&quot;dimension1&quot;:&quot;student&quot;,&quot;dimension2&quot;:&quot;1.69.1204.1&quot;,&quot;dimension3&quot;:&quot;2720&quot;,&quot;app_version&quot;:&quot;1.69.1204.1&quot;,&quot;app_name&quot;:&quot;cz.bakalari.web&quot;,&quot;user_properties&quot;:{&quot;user_type&quot;:&quot;student&quot;,&quot;app_version&quot;:&quot;1.69.1204.1&quot;,&quot;evnumber&quot;:&quot;2720&quot;,&quot;study_years&quot;:13},&quot;page_path&quot;:&quot;/next/rozvrh.aspx&quot;}"><link href="../App_Themes/NextBlueTheme/Basicstyl.css?v=20241204" type="text/css" rel="stylesheet" /><link href="../App_Themes/NextBlueTheme/Editors/sprite.css?v=20241204" type="text/css" rel="stylesheet" /><link href="../App_Themes/NextBlueTheme/Editors/styles.css?v=20241204" type="text/css" rel="stylesheet" /><link href="../App_Themes/NextBlueTheme/GridView/sprite.css?v=20241204" type="text/css" rel="stylesheet" /><link href="../App_Themes/NextBlueTheme/GridView/styles.css?v=20241204" type="text/css" rel="stylesheet" /><link href="../App_Themes/NextBlueTheme/HtmlEditor/sprite.css?v=20241204" type="text/css" rel="stylesheet" /><link href="../App_Themes/NextBlueTheme/HtmlEditor/styles.css?v=20241204" type="text/css" rel="stylesheet" /><link href="../App_Themes/NextBlueTheme/layout-elements.css?v=20241204" type="text/css" rel="stylesheet" /><link href="../App_Themes/NextBlueTheme/SpellChecker/styles.css?v=20241204" type="text/css" rel="stylesheet" /><link href="../App_Themes/NextBlueTheme/Web/sprite.css?v=20241204" type="text/css" rel="stylesheet" /><link href="../App_Themes/NextBlueTheme/Web/styles.css?v=20241204" type="text/css" rel="stylesheet" /><title>
+	Bakaláři - mezi školou a rodinou
+</title><meta id="bkViewport" name="viewport" content="width=device-width" />
+
+    <!--DX Styles -->
+    <link rel="stylesheet" href="/DXR.axd?r=1_73,1_67,1_68,1_69,1_72,1_252,1_251-CIbnk" /><link rel="stylesheet" href="/DXR.axd?r=1_83,1_209,1_206,1_208,1_205,4_118,4_120,4_111,4_112,4_116,4_121,5_4,5_3,7_13,7_11,7_12-GIbnk" />
+    <!-- Master styles -->
+    <link rel="shortcut icon" href="images/favicon.ico" /><link rel="stylesheet" href="css/main.css?v=20241204" /><link rel="stylesheet" href="css/masterpage.css?v=20241204" /><link rel="stylesheet" href="css/header_obsah.css?v=20241204" /><link rel="stylesheet" href="css/header_barvy.css?v=20241204" /><link rel="stylesheet" href="css/colors.css?v=20241204" /><link rel="stylesheet" type="text/css" href="css/fonty.css?v=20241204" /><link rel="stylesheet" href="css/jquery-ui.min.css?v=20241204" /><link rel="stylesheet" type="text/css" href="css/noty.css?v=20241204" /><link rel="stylesheet" type="text/css" href="css/bubble.css?v=20241204" /><link href="css/DXGrid.css?v=20241204" rel="stylesheet" /><link href="css/customScroll.css?v=20241204" rel="stylesheet" />
+    <!-- Icon font -->
+    <link href="icons/baka-webicons-modul/style-modul.css?v=20241204" rel="stylesheet" /><link href="icons/baka-webicons/style.css?v=20241204" rel="stylesheet" /><link href="icons/baka-webicons-20/style.css?v=20241204" rel="stylesheet" /><link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" type="text/css" />
+    <!--Bootstrap CSS-->
+    <link href="libs/bootstrap/bootstrap-modal.css?v=20241204" rel="stylesheet" /><link href="libs/bootstrap-collapse/bootstrap-collapse.css?v=20241204" rel="stylesheet" />
+    <!--JQuery-->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.1/jquery.validate.min.js" type="text/javascript"></script>
+    <script src="js/jquery.scrollbar.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-ajax-unobtrusive/3.2.6/jquery.unobtrusive-ajax.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@2.2.1/src/js.cookie.min.js"></script>
+    <!--Axios-->
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <!-- Include Scripts -->    
+    <script type="text/javascript" src="js/select.js"></script>
+    <script type="text/javascript" src="libs/jsrender.js"></script>
+    <!-- SimpleBar - plugin for custom scrollbar -->
+    <script src="https://cdn.jsdelivr.net/npm/simplebar@5.3.6/dist/simplebar.min.js"></script>
+    <!--Fastclisk.js - fix double tap on iOS-->
+    <script type="application/javascript" src="js/fastclick.js"></script>
+    <!--Knockout.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout-sortable/1.2.0/knockout-sortable.min.js" type="text/javascript"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout.mapping/2.4.1/knockout.mapping.min.js" type="text/javascript"></script>
+    <script src="libs/knockout-jqueryui.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.3/umd/popper.min.js" integrity="sha384-ZMP7rVo3mIykV+2+9J3UJ46jBk0WLaUAdn689aCwoqbBJiSnjAK/l8WvCWPIPm49" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.6.0/js/bootstrap.min.js"></script>
+    <!-- DevExtreme themes -->
+    <link rel="stylesheet" type="text/css" href="https://cdn3.devexpress.com/jslib/19.2.8/css/dx.common.css" /><link rel="stylesheet" type="text/css" href="https://cdn3.devexpress.com/jslib/19.2.8/css/dx.light.css" /><link href="css/NextBlueDX.css?v=20241204" rel="stylesheet" />
+    <!-- Selects -->
+    <link rel="stylesheet" href="css/select.css?v=20241204" />
+    <!-- Cldr -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/cldrjs/0.5.0/cldr.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/cldrjs/0.5.0/cldr/event.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/cldrjs/0.5.0/cldr/supplemental.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery-scrollTo/2.1.2/jquery.scrollTo.min.js"></script>
+    
+    <!-- Globalize -->
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/globalize/1.4.0/globalize.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/globalize/1.4.0/globalize/message.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/globalize/1.4.0/globalize/number.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/globalize/1.4.0/globalize/currency.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/globalize/1.4.0/globalize/date.min.js"></script>
+    <!-- A DevExtreme library -->
+    <script type="text/javascript" src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script> 
+    <script type="text/javascript" src="https://cdn3.devexpress.com/jslib/19.2.8/js/dx.all.js"></script>
+    <!-- Localization - DevExpress -->
+    <script type="text/javascript" src="libs/localization/localization.cs.js?v=20241204"></script>
+    <script type="text/javascript" src="libs/localization/localization.en.js?v=20241204"></script>
+    <script type="text/javascript" src="libs/localization/localization.vi.js?v=20241204"></script>
+    <script type="text/javascript" src="libs/localization/localization.uk.js?v=20241204"></script>
+    <!-- DX Scripts -->
+    <script id="dxis_1711673499" src="/DXR.axd?r=1_11,1_12,1_23,1_63,1_13,1_14,1_15,1_16,1_20,1_182,1_204,1_181,1_183,1_184,1_21,1_22,1_193,1_202,1_187,1_185,1_189,1_197,1_17,1_41,1_198,1_199,1_200,1_192,1_191,1_61,1_194,1_188,1_212,1_210,1_239,1_249,1_19,1_223,1_224,1_211,1_217,1_215,1_218,1_219,1_216,1_220,1_213,1_221,1_222,1_226,1_235,1_237,1_238,1_225,1_230,1_231,1_232,1_214,1_227,1_228,1_229,1_233,1_234,1_236,1_196,1_40,1_190,1_203,1_201,1_24,1_33,1_250,1_195,1_34,1_39,1_8,1_48,1_9,1_30,1_27,1_31,1_54,1_53,1_55,1_46,1_47,1_52,1_51,1_60,1_42,1_32,1_59,1_57,1_56,1_58,1_49,1_35,1_36,1_50,1_62,1_38,1_43,1_44,1_45,1_65,1_37,1_66,4_0,1_18,5_1,5_2,4_115,4_98,4_100,4_99,4_101,4_102,4_105,4_108,4_109,4_107,4_106,4_104,4_103,4_110,4_1,4_34,4_113,4_3,4_31,4_2,4_24,4_22,4_23,4_27,4_28,4_32,4_29,4_35,4_47,4_48,4_42,4_80,4_36,4_37,4_38,4_39,4_40,4_43,4_44,4_45,4_46,4_49,4_50,4_51,4_52,4_41,4_53,4_54,4_55,4_56,4_57,4_58,4_59,4_60,4_61,4_62,4_67,4_68,4_69,4_70,4_71,4_72,4_73,4_74,4_75,4_76,4_77,4_63,4_64,4_65,4_66,4_78,4_79,4_86,4_87,4_89,4_93,4_88,4_90,4_91,4_81,4_84,4_83,4_85,4_82,4_15,4_16,4_17,4_18,4_19,4_20,4_92,4_25,4_26,4_30,4_14,4_6,4_8,4_7,4_9,4_10,4_11,4_21,4_12,4_4,4_5,4_13,4_94,4_95,4_96,4_33,4_97,1_271,4_114,1_64,7_7,7_5,7_6,7_9,7_4,7_10,7_8-GIbnk&amp;p=b95fa534"></script><script id="dxss_675495866">
+<!--
+(function(){
+var a = {'currNegPattern':8,'currGroupSeparator':' ','abbrDayNames':['ne','po','út','st','čt','pá','so'],'monthNames':['leden','únor','březen','duben','květen','červen','červenec','srpen','září','říjen','listopad','prosinec',''],'numGroupSeparator':' ','shortTime':'H:mm','longTime':'H:mm:ss','currDecimalPoint':',','currPosPattern':3,'ds':'.','longDate':'dddd d. MMMM yyyy','abbrMonthNames':['led','úno','bře','dub','kvě','čvn','čvc','srp','zář','říj','lis','pro',''],'pm':'odp.','twoDigitYearMax':2049,'numPosInf':'∞','numNegInf':'-∞','am':'dop.','monthDay':'d. MMMM','currency':'Kč','numDecimalPoint':',','dayNames':['neděle','pondělí','úterý','středa','čtvrtek','pátek','sobota'],'genMonthNames':['ledna','února','března','dubna','května','června','července','srpna','září','října','listopadu','prosince',''],'shortDate':'dd.MM.yyyy'};
+for(var b in a) ASPx.CultureInfo[b] = a[b];
+})();
+
+ASPx.NumberDecimalSeparator = ',';
+
+var __dxLastScrollY = -1;
+function backtotop(anchorStr, offsetY){
+  scrollY = (document.documentElement.scrollTop || document.body.scrollTop);
+  if (__dxLastScrollY != scrollY){
+    location.href=anchorStr;
+    scrollX = (document.documentElement.scrollLeft || document.body.scrollLeft);
+    scrollY = (document.documentElement.scrollTop || document.body.scrollTop);
+    __dxLastScrollY = scrollY - offsetY;
+    window.scrollTo(scrollX, __dxLastScrollY);
+  }
+}
+
+
+//-->
+</script>
+    <script type="text/javascript" src="js/master_core.js?v=20241204"></script>
+    <script type="text/javascript" src="js/MasterPage.js?v=20241204"></script>
+    <script type="text/javascript" src="js/QRUtils.js?v=20241204"></script>
+    <script type="text/javascript" src="js/noty.js"></script>
+    <script type="text/javascript" src="js/jquery.scrollbar.min.js"></script>
+    <!-- CookieConsent -->
+    <script type="text/javascript" src="libs/cookieconsent/cookieconsent.js?v=20241204" defer></script>
+    <script type="text/javascript" src="libs/cookieconsent/cookieconsent-app.js?v=20241204" defer></script>
+    <!-- WebComponents Begin -->
+    
+    <!--
+        WebComponents registrace, FrontEnd build stáhne a vloží scripty na správné místo
+    -->
+    <script type="module" src="libs/session-popup/session-popup.es.js"></script>
+    
+    <!-- WebComponents End -->
+    <!--Begin page specific -->
+    
+    <link rel="stylesheet" href="css/rozvrhy.css?v=20241204">
+    <link rel="stylesheet" href="css/rozvrhy_responsive.css?v=20241204">
+    <link rel="stylesheet" href="css/GeneralTable.css?v=20241204">
+    <link rel="stylesheet" href="css/popup_obecny.css?v=20241204">
+    <script src="//cdn.jsdelivr.net/npm/jquery.marquee@1.5.0/jquery.marquee.min.js" type="text/javascript"></script>
+    <style>
+#schedule {width:966px !important;}
+#hours .day-name, .day-row .day-name {width: 4.24% !important;}
+#hours .item, .day-row .day-item {width: 7.35% !important;}
+.day-item-volno {width:95.45%; float:left; border-left-width: 1px; border-right: 1px; min-height: 71px; background-color: #61B0FF; }
+</style>
+    
+
+    <!--End page specific -->
+
+    <script type="text/javascript">
+        $(function () {
+            LoadMenuState();
+            SetViewport();
+
+            if ($('#panelprepni').hasClass('aspNetDisabled')) {
+                $('a[target="panelprepni"]').addClass('aspNetDisabled');
+            }
+
+            $('body').toggleClass('mobile', isTabletDevice());
+
+            // selected je reseno v cs. tedy (prozatim) js reseni
+            var item = $('.has-sub > ul li.selected').parentUntil('.has-sub');
+            item.toggleClass('has-active-item', item.length > 0);
+        });
+
+        $(function () {
+            FastClick.attach(document.body);
+        });
+
+        $(function () {
+            $('.dxeListBoxItem_NextBlueTheme, #button_vybrat, .dxeCalendarDay_NextBlueTheme, .dxp-comboBox, .dxp-dropDownButton').addClass('needsclick');
+            $('.dx > table > tbody > tr > td').addClass('needsclick');
+        });
+
+        /** Defaultní hodnoty pro DxDataGrid */
+        DevExpress.ui.dxDataGrid.defaultOptions({
+            options: {
+                onDataErrorOccurred: (e) => {
+                    setTimeout(() => {
+                        const errMessage = DevExpress.localization.formatMessage("dxDataGrid-timeoutMessage", null);
+                        e.component.element().find(".dx-error-message").text(errMessage);
+                    });
+                }
+            }
+        });
+
+    </script>
+
+    <script id="dxss_1875391213">
+<!--
+var dxo = ASPx.GetGlobalEvents();
+dxo.SetEvents({'EndCallback':OnGlobalEndCallback});
+
+//-->
+</script></head>
+<body>
+    
+        <!--Google Analytics-->
+            <script async type="text/plain" data-cookiecategory="analytics" src="https://www.googletagmanager.com/gtag/js?id=G-JJ74ZPC651"></script>
+            <script type="text/plain" data-cookiecategory="analytics">
+                window.dataLayer = window.dataLayer || [];
+                function gtag() { dataLayer.push(arguments); }
+                gtag('js', new Date());
+                var gaInfo = $('head').data('pageinfo');  // JSON vrácený z GetGAInfoJson()
+                gtag('set', gaInfo);
+                gtag('config', 'G-JJ74ZPC651');
+            </script>
+        <!-- End Google Analytics -->
+    
+    <!--App root for scripts-->
+    <script type="text/javascript">
+        
