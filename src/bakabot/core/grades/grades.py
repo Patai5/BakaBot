@@ -220,18 +220,20 @@ class Grades:
                     )
                 )
 
-        # The main detection code
-        # Gets the new Grade object
         gradesNew = await Grades.getGrades(client)
-        # Gets the old Grades object
-        gradesOld = Grades.db_grades()
+
         # If bakalari server is down
         if gradesNew is None:
             return None
 
+        hasGrades = read_db("grades")
+        if not hasGrades:
+            write_db("grades", gradesNew)
+
         Grades.handle_update_subjects_cache(gradesNew.grades, client)
 
         # Detects any changes and sends the message and saves the schedule if needed
+        gradesOld = Grades.db_grades()
         changed = find_changes(gradesOld, gradesNew)
         if changed:
             await changed_message(changed, gradesNew, client)

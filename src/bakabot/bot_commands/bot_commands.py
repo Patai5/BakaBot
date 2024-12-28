@@ -1,17 +1,22 @@
 import core.predictor as predictor
 import disnake
+from constants import CHANNELS, FEATURES
 from core.grades.grades import Grades
 from core.schedule.schedule import Schedule
 from core.subjects.subjects_cache import SubjectsCache
 from disnake.ext import commands
 from disnake.ext.commands import InteractionBot
+from feature_manager.feature_manager import FeatureManager
 from utils.utils import os_environ, write_db
 
 
-class General(commands.Cog):
-    def __init__(self, client: InteractionBot):
+class CustomCog(commands.Cog):
+    def __init__(self, client: InteractionBot, featureManager: FeatureManager | None = None):
         self.client = client
+        self.featureManager = featureManager
 
+
+class General(CustomCog):
     async def scheduleCommand(
         self,
         inter: disnake.ApplicationCommandInteraction,
@@ -132,10 +137,7 @@ def admin_user_check(inter: disnake.ApplicationCommandInteraction) -> bool:
     return inter.author.id == os_environ("adminID")
 
 
-class Admin(commands.Cog):
-    def __init__(self, client: InteractionBot):
-        self.client = client
-
+class Admin(CustomCog):
     group = commands.group(name="admin", description="Admin commands")
 
     async def updateScheduleDatabase(self, inter: disnake.ApplicationCommandInteraction):
@@ -192,9 +194,8 @@ class Admin(commands.Cog):
     )
 
 
-class Settings(commands.Cog):
-    def __init__(self, client: InteractionBot):
-        self.client = client
+class Settings(CustomCog):
+    featureManager: FeatureManager
 
     group = commands.group(name="settings", description="Edits the bot's settings")
 
@@ -256,14 +257,16 @@ class Settings(commands.Cog):
         ],
     )
 
-    channels = ["Grades", "Schedule", "Reminder", "Status"]
+    async def channel(self, inter: disnake.ApplicationCommandInteraction, function: str):
+        write_db(CHANNELS[function], inter.channel_id)
+        await inter.response.send_message(f"channel `{function}` changed to this channel", ephemeral=True)
 
-    async def channelSchedule(self, inter: disnake.ApplicationCommandInteraction, function: str):
-        write_db(f"channel{function}", inter.channel_id)
-        await inter.response.send_message(f"channel_{function.lower()} changed to this channel", ephemeral=True)
+        isFunctionAFeature = function in FEATURES
+        if isFunctionAFeature:
+            await self.featureManager.maybe_start_feature(function, self.client)
 
-    slashChannelSchedule = commands.InvokableSlashCommand(
-        channelSchedule,
+    slashChannel = commands.InvokableSlashCommand(
+        channel,
         name="channel",
         description="Use this command in the channel where you want to have the bot's functions to send messages",
         checks=[admin_user_check],
@@ -272,19 +275,32 @@ class Settings(commands.Cog):
             disnake.Option(
                 name="function",
                 description="Select the function for this channel",
-                choices=[disnake.OptionChoice(name=channel, value=channel) for channel in channels],
+                choices=[disnake.OptionChoice(name=channel, value=channel) for channel in CHANNELS.keys()],
                 type=disnake.OptionType.string,
                 required=True,
             ),
         ],
     )
 
+    async def setup(self, inter: disnake.ApplicationCommandInteraction):
+        setupMessage = f"Setup the function channels for the bot with the following command in the desired channels:\n"
+        setupMessage += "\n".join([f'"/channel function:{channel}"' for channel in CHANNELS.keys()])
+
+        await inter.response.send_message(setupMessage, ephemeral=True)
+
+    slashSetup = commands.InvokableSlashCommand(
+        setup,
+        name="setup",
+        description="Start the setup process",
+        checks=[admin_user_check],
+    )
+
 
 COGS: list[commands.CogMeta] = [General, Admin, Settings]
 
 
-def setupBotInteractions(client: commands.InteractionBot):
+def setupBotInteractions(client: commands.InteractionBot, featureManager: FeatureManager):
     """Sets up the bot's interactions (commands)"""
 
     for cog in COGS:
-        client.add_cog(cog(client))
+        client.add_cog(cog(client, featureManager))
