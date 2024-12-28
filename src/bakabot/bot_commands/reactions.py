@@ -3,9 +3,9 @@ from __future__ import annotations
 import asyncio
 import datetime
 
-import core.predictor as Predictor
 import disnake
-from core.grades.grades import Grades
+from constants import PREDICTOR_EMOJI
+from core.predictor import create_prediction, get_stage, update_grade, update_weight
 from disnake.ext.commands import InteractionBot
 from message_timers import MessageTimer, MessageTimers
 from utils.utils import read_db
@@ -64,11 +64,11 @@ class Reactions:
         # Executes the method for of this function
         @classmethod
         async def execute(cls, reaction: Reactions):
-            stage = Predictor.get_stage(reaction.message)
+            stage = get_stage(reaction.message)
             if stage == 1:
-                await Predictor.update_grade(reaction, reaction.client)
+                await update_grade(reaction, reaction.client)
             elif stage == 2:
-                await Predictor.update_weight(reaction, reaction.client)
+                await update_weight(reaction, reaction.client)
 
     class Grades:
         queryMessagesDatabase = "gradesMessages"
@@ -82,14 +82,14 @@ class Reactions:
                     createdFromNowSec = (datetime.datetime.now(datetime.timezone.utc) - message.created_at).seconds
                     if createdFromNowSec > 5400:
                         await MessageTimers.delete_message_reaction(
-                            message, cls.queryMessagesDatabase, Grades.PREDICTOR_EMOJI, client
+                            message, cls.queryMessagesDatabase, PREDICTOR_EMOJI, client
                         )
                     else:
                         asyncio.ensure_future(
                             MessageTimers.delete_message_reaction(
                                 message,
                                 cls.queryMessagesDatabase,
-                                Grades.PREDICTOR_EMOJI,
+                                PREDICTOR_EMOJI,
                                 client,
                                 5400 - createdFromNowSec,
                             )
@@ -98,8 +98,8 @@ class Reactions:
         # Executes the method for of this function
         @classmethod
         async def execute(cls, reaction: Reactions):
-            if reaction.emoji.name == Grades.PREDICTOR_EMOJI:
-                await Grades.create_prediction(reaction.message, reaction.client)
+            if reaction.emoji.name == PREDICTOR_EMOJI:
+                await create_prediction(reaction.message, reaction.client)
 
     REACTIONS = {Predictor, Grades}
 

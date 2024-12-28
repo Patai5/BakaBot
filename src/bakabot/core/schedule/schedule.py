@@ -6,7 +6,6 @@ import traceback
 
 import disnake
 from attr import dataclass
-from bs4 import BeautifulSoup
 from constants import NUM_OF_LESSONS_IN_DAY, SCHOOL_DAYS_IN_WEEK
 from core.schedule.day import Day
 from core.schedule.lesson import Lesson
@@ -91,7 +90,7 @@ class Schedule:
             self.days.insert(weekDay + 1, Day([], weekDay, None))
 
     @staticmethod
-    async def request_schedule(nextWeek: bool, client: InteractionBot) -> BeautifulSoup | None:
+    async def request_schedule(nextWeek: bool, client: InteractionBot) -> str | None:
         """Returns a BeautifulSoup object from response of the schedule page"""
         # Gets response from the server
         session = await login(client)
@@ -107,15 +106,13 @@ class Schedule:
         # If bakalari server is down
         if not response:
             return None
-        responseHtml = await response.text()
+        html = await response.text()
 
         await session.close()
 
         loggingName = "schedule"
-        log_html(responseHtml, loggingName)
+        log_html(html, loggingName)
 
-        # Making an BS html parser object from the response
-        html = BeautifulSoup(responseHtml, "html.parser")
         return html
 
     @staticmethod

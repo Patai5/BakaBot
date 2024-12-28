@@ -4,10 +4,15 @@ import re
 from bs4 import BeautifulSoup
 from core.grades.grade import Grade
 from core.grades.grades import Grades
+from core.shared_parsers import isBuggedBakalariScript
 
 
-def parseGrades(gradesHtml: str) -> Grades:
-    """Returns a Grades object with the extracted information from the server"""
+def parseGrades(gradesHtml: str) -> Grades | None:
+    """Returns a Grades object with the extracted information from the server. Returns None on bakalari's bugs."""
+    isBuggedResponse = isBuggedBakalariScript(gradesHtml)
+    if isBuggedResponse:
+        return None
+
     gradesSoup = BeautifulSoup(gradesHtml, "html.parser")
 
     jsonDataScript = gradesSoup.select_one("div#cphmain_DivByTime > script")

@@ -20,3 +20,5 @@ CHANNELS = {
 
 FeaturesType = Literal["grades", "schedule", "reminder"]
 FEATURES: list[FeaturesType] = ["grades", "schedule", "reminder"]
+
+PREDICTOR_EMOJI = "📊"

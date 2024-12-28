@@ -4,8 +4,8 @@ import asyncio
 import copy
 import traceback
 
-import core.predictor as predictor
 import disnake
+from constants import PREDICTOR_EMOJI
 from core.grades.grade import Grade
 from core.subjects.subject import Subject
 from core.subjects.subjects_cache import SubjectsCache
@@ -113,7 +113,6 @@ class Grades:
         from core.grades.parse_grades import parseGrades
 
         gradesResponse = await Grades.request_grades(client)
-
         if gradesResponse is None:
             return None
 
@@ -121,32 +120,6 @@ class Grades:
 
     # Variable to store running timers
     message_remove_timers: list[list[int]] = []
-
-    PREDICTOR_EMOJI = "📊"
-
-    @staticmethod
-    async def create_prediction(message: disnake.Message, client: InteractionBot):
-        """Generates a predict message with the current subject"""
-        # Subject
-        embed = message.embeds[0].to_dict()
-
-        embedAuthor = embed.get("author")
-        if embedAuthor is None:
-            raise Exception("No author in prediction embed")
-
-        subjectFromEmbed = embedAuthor.get("name")
-
-        subject = SubjectsCache.getSubjectByName(subjectFromEmbed) or subjectFromEmbed
-
-        # Removes the reaction
-        await MessageTimers.delete_message_reaction(message, "gradesMessages", Grades.PREDICTOR_EMOJI, client)
-
-        messageChannel = message.channel
-        if not isinstance(messageChannel, disnake.TextChannel):
-            raise Exception("Message channel is not a TextChannel")
-
-        # Sends the grade predictor
-        await predictor.predict_embed(subject.fullName, messageChannel, client)
 
     @staticmethod
     async def delete_grade_reaction(message: disnake.Message, emoji: disnake.message.EmojiInputType, delay: int):
@@ -211,13 +184,11 @@ class Grades:
                 message = await getTextChannel(channelId, client).send(embed=embed)
 
                 # Adds the reaction emoji
-                await message.add_reaction(Grades.PREDICTOR_EMOJI)
+                await message.add_reaction(PREDICTOR_EMOJI)
 
                 # Removes the emoji after 1.5 hours of inactivity
                 asyncio.ensure_future(
-                    MessageTimers.delete_message_reaction(
-                        message, "gradesMessages", Grades.PREDICTOR_EMOJI, client, 5400
-                    )
+                    MessageTimers.delete_message_reaction(message, "gradesMessages", PREDICTOR_EMOJI, client, 5400)
                 )
 
         gradesNew = await Grades.getGrades(client)

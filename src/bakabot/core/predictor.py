@@ -1,10 +1,15 @@
+from typing import TYPE_CHECKING
+
 import disnake
-from bot_commands.reactions import Reactions
+from constants import PREDICTOR_EMOJI
 from core.grades.grade import Grade
 from core.grades.grades import Grades
 from core.subjects.subjects_cache import SubjectsCache
 from disnake.ext.commands import InteractionBot
 from message_timers import MessageTimers
+
+if TYPE_CHECKING:
+    from bot_commands.reactions import Reactions
 
 GRADES_EMOJIS = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣"]
 MINUS_EMOJI = "➖"
@@ -43,7 +48,7 @@ async def predict_embed(subject: str, channel: disnake.TextChannel, client: Inte
     await MessageTimers.delete_message(message, "predictorMessages", client, 300)
 
 
-async def update_grade(reaction: Reactions, client: InteractionBot):
+async def update_grade(reaction: "Reactions", client: InteractionBot):
     """Edits the embed with the reacted grade"""
     for loopReaction in reaction.userReactions:
         # If reacted with the right emoji
@@ -80,7 +85,7 @@ async def update_grade(reaction: Reactions, client: InteractionBot):
                 await MessageTimers.delete_message(reaction.message, "predictorMessages", client, 300)
 
 
-async def update_weight(reaction: Reactions, client: InteractionBot):
+async def update_weight(reaction: "Reactions", client: InteractionBot):
     """Edits the embed with the updated weight and shows the new grade average"""
     for loopReaction in reaction.userReactions:
         # If reacted with the right emoji
@@ -132,6 +137,30 @@ async def update_weight(reaction: Reactions, client: InteractionBot):
 
                 # Removes the message after 5 minutes of inactivity
                 await MessageTimers.delete_message(reaction.message, "predictorMessages", client, 300)
+
+
+async def create_prediction(message: disnake.Message, client: InteractionBot):
+    """Generates a predict message with the current subject"""
+    # Subject
+    embed = message.embeds[0].to_dict()
+
+    embedAuthor = embed.get("author")
+    if embedAuthor is None:
+        raise Exception("No author in prediction embed")
+
+    subjectFromEmbed = embedAuthor.get("name")
+
+    subject = SubjectsCache.getSubjectByName(subjectFromEmbed) or subjectFromEmbed
+
+    # Removes the reaction
+    await MessageTimers.delete_message_reaction(message, "gradesMessages", PREDICTOR_EMOJI, client)
+
+    messageChannel = message.channel
+    if not isinstance(messageChannel, disnake.TextChannel):
+        raise Exception("Message channel is not a TextChannel")
+
+    # Sends the grade predictor
+    await predict_embed(subject.fullName, messageChannel, client)
 
 
 def get_stage(message: disnake.Message):

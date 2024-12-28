@@ -3,9 +3,8 @@ from __future__ import annotations
 import asyncio
 from typing import Awaitable, Callable
 
+from constants import FeaturesType
 from disnake.ext.commands import InteractionBot
-
-from bakabot.constants import FeaturesType
 
 FeatureCallableType = Callable[[InteractionBot], Awaitable[None]]
 
