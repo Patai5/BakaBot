@@ -9,7 +9,7 @@ from ..core.predictor import predict_embed
 from ..core.schedule.schedule import Schedule
 from ..core.subjects.subjects_cache import SubjectsCache
 from ..feature_manager.feature_manager import FeatureManager
-from ..utils.utils import os_environ, write_db
+from ..utils.utils import os_environ, read_db, write_db
 
 
 class CustomCog(commands.Cog):
@@ -285,8 +285,13 @@ class Settings(CustomCog):
     )
 
     async def setup(self, inter: ApplicationCommandInteraction) -> None:
+        channelsToSetup = [channel for channel in CHANNELS.keys() if read_db(CHANNELS[channel]) is None]
+        if len(channelsToSetup) == 0:
+            await inter.response.send_message("All channels are already set up", ephemeral=True)
+            return
+
         setupMessage = f"Setup the function channels for the bot with the following command in the desired channels:\n"
-        setupMessage += "\n".join([f'"/channel function:{channel}"' for channel in CHANNELS.keys()])
+        setupMessage += "\n".join([f'"/channel function:{channel}"' for channel in channelsToSetup])
 
         await inter.response.send_message(setupMessage, ephemeral=True)
 
