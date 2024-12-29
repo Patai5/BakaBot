@@ -16,9 +16,19 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-types = ["types-setuptools", "types-pytz", "types-beautifulsoup4"]
-test = ["pytest", "pytest-mock"]
-format = ["black", "mypy", "autoflake"]
+dev = [
+    # Types
+    "mypy",
+    "types-setuptools",
+    "types-pytz",
+    "types-beautifulsoup4",
+    # Pytest
+    "pytest",
+    "pytest-mock",
+    # Linters
+    "black",
+    "autoflake",
+]
 
 [tool.black]
 line-length = 120

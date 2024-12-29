@@ -41,34 +41,36 @@ And urls in these:
 
 1. Clone the repository
 2. Setup your `.env` file from `.env.example`
-   * Guide on how to get the YOUR DISCORD TOKEN can be found [here](https://www.writebots.com/discord-bot-token/).
-     * Aditionally you have to turn on all three options under "Privileged Gateway Intents" which can be found under the Bot option on left hand side.
-   * Guide on how to get the YOUR DISCORD ID can be found [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
-3. Create a virtual environment *(not required, but well recommended)*
+    - Guide on how to get the YOUR DISCORD TOKEN can be found [here](https://www.writebots.com/discord-bot-token/).
+        - Aditionally you have to turn on all three options under "Privileged Gateway Intents" which can be found under the Bot option on left hand side.
+    - Guide on how to get the YOUR DISCORD ID can be found [here](https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID).
+3. Create a virtual environment _(not required, but well recommended)_
+
 ```sh
 python -m venv env
 ```
+
 4. Start the virtual environment
+
 ```sh
 env\Scripts\activate.bat
 ```
-5. Install all dependencies
+
+5. Install dependencies
 ```sh
 pip install -e .
 ```
+    _(If you're contributing to the project, install development dependencies:)_
+    ```sh
+    pip install -e .[dev]
+    ```
 6. Install Playwright
+
 ```sh
 playwright install
 ```
+
 7. Start the bot
 ```sh
 python -m src.main
 ```
-
-
-
-
-
-
-
-
