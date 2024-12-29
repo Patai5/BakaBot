@@ -1,8 +1,30 @@
-[build-system]
-requires = ["setuptools>=42", "wheel"]
-build-backend = "setuptools.build_meta"
+[project]
+name = "bakabot"
+description = "Discord bot used for extracting information from Bakalari"
+authors = [{ name = "Lukáš Průša" }]
+license = { file = "LICENSE" }
+requires-python = ">=3.8"
+dynamic = ["version"]
 
-[tool.pytest.ini_options]
-pythonpath = [
-  "src/bakabot"
+dependencies = [
+    "playwright",
+    "disnake",
+    "bs4",
+    "python-dotenv",
+    "pytz",
+    "setuptools",
 ]
+
+[project.optional-dependencies]
+types = ["types-setuptools", "types-pytz", "types-beautifulsoup4"]
+test = ["pytest", "pytest-mock"]
+format = ["black", "mypy", "autoflake"]
+
+[tool.black]
+line-length = 120
+
+[tool.mypy]
+strict = true
+
+[tool.autoflake]
+remove-all-unused-imports = true
