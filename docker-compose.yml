@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+    bakabot:
+        build:
+            context: .
+        image: bakabot-image
+        container_name: bakabot-container
+        volumes:
+            - bakabot-volume:/app/db
+        restart: always
+        tty: true
+
+volumes:
+    bakabot-volume:
+        driver: local
