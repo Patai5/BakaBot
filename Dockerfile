@@ -7,4 +7,4 @@ COPY src /app/src
 
 RUN pip install -e .
 
-CMD ["python3", "src/bakabot/main.py"]
+CMD ["python3", "-m", "src.main"]

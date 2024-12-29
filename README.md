@@ -62,7 +62,7 @@ playwright install
 ```
 7. Start the bot
 ```sh
-python src/BakaBot/main.py
+python -m src.main
 ```
 
 
