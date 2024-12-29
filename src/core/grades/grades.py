@@ -5,20 +5,30 @@ import copy
 import traceback
 
 import disnake
-from constants import PREDICTOR_EMOJI
-from core.grades.grade import Grade
-from core.subjects.subject import Subject
-from core.subjects.subjects_cache import SubjectsCache
 from disnake.ext.commands import InteractionBot
-from message_timers import MessageTimers
-from utils.utils import get_sec, getTextChannel, log_html, login, os_environ, read_db, request, write_db
+
+from ...constants import PREDICTOR_EMOJI
+from ...message_timers import MessageTimers
+from ...utils.utils import (
+    get_sec,
+    getTextChannel,
+    log_html,
+    login,
+    os_environ,
+    read_db,
+    request,
+    write_db,
+)
+from ..subjects.subject import Subject
+from ..subjects.subjects_cache import SubjectsCache
+from .grade import Grade
 
 
 class Grades:
     def __init__(self, grades: list[Grade]):
         self.grades = list(grades)
 
-    def by_subject_name(self, subjectName: str):
+    def by_subject_name(self, subjectName: str) -> Grades:
         """Returns only Grades with the wanted subject name"""
 
         gradesBySubject = filter(lambda grade: grade.subjectName == subjectName, self.grades)
@@ -31,7 +41,7 @@ class Grades:
         # Total amount of grades
         gradesTotal = 0
         # Total amount of grades included with their weights
-        gradesWeightsTotal = 0
+        gradesWeightsTotal: int | float = 0
 
         for grade in self.grades:
             if grade.gradeValue is None:
@@ -46,7 +56,7 @@ class Grades:
         # Rounds the average and returns it
         return self.round_average(gradesWeightsTotal / gradesTotal)
 
-    def future_average(self, grade: Grade):
+    def future_average(self, grade: Grade) -> float | None:
         """Returns the possible future average with the given grade"""
         # Copies itself to work with a Grades object without damaging the original
         grades = copy.deepcopy(self)
@@ -58,7 +68,7 @@ class Grades:
         return grades.average()
 
     @staticmethod
-    def round_average(average: float):
+    def round_average(average: float) -> int | float:
         """Rounds the average to some normal nice looking finite number"""
         if average % 1 == 0:
             return int(average)
@@ -77,7 +87,7 @@ class Grades:
 
         return grades
 
-    def db_save(self):
+    def db_save(self) -> None:
         """Saves the grades to the database"""
         write_db("grades", self)
 
@@ -110,7 +120,7 @@ class Grades:
     @staticmethod
     async def getGrades(client: InteractionBot) -> Grades | None:
         """Requests grades from bakalari server and parses them into a Grades object"""
-        from core.grades.parse_grades import parseGrades
+        from ..grades.parse_grades import parseGrades
 
         gradesResponse = await Grades.request_grades(client)
         if gradesResponse is None:
@@ -122,7 +132,9 @@ class Grades:
     message_remove_timers: list[list[int]] = []
 
     @staticmethod
-    async def delete_grade_reaction(message: disnake.Message, emoji: disnake.message.EmojiInputType, delay: int):
+    async def delete_grade_reaction(
+        message: disnake.Message, emoji: disnake.message.EmojiInputType, delay: int
+    ) -> None:
         """Deletes the reaction from the message after some delay"""
         # Puts the message into the timer variable
         Grades.message_remove_timers.append([message.id, get_sec() + delay])
@@ -147,7 +159,7 @@ class Grades:
                     pass
 
     @staticmethod
-    def handle_update_subjects_cache(grades: list[Grade], client: InteractionBot):
+    def handle_update_subjects_cache(grades: list[Grade], client: InteractionBot) -> None:
         """Updates the SubjectsCache with the new subjects, if needed"""
 
         subjects = [Subject(grade.subjectName, None) for grade in grades]
@@ -157,7 +169,7 @@ class Grades:
             SubjectsCache.updateCommandsWithSubjects(client)
 
     @staticmethod
-    async def detect_changes(client: InteractionBot):
+    async def detect_changes(client: InteractionBot) -> None:
         """Detects changes in grades and sends them to discord"""
 
         # Finds and returns the actual changes
@@ -171,7 +183,7 @@ class Grades:
             return newGrades
 
         # Discord message with the information about the changes
-        async def changed_message(changed: list[Grade], grades: Grades, client: InteractionBot):
+        async def changed_message(changed: list[Grade], grades: Grades, client: InteractionBot) -> None:
             channelId: int | None = read_db("channelGrades")
             if channelId is None:
                 raise Exception("No channelGrades in database")
@@ -211,7 +223,7 @@ class Grades:
             gradesNew.db_save()
 
     @staticmethod
-    async def start_detecting_changes(interval: int, client: InteractionBot):
+    async def start_detecting_changes(interval: int, client: InteractionBot) -> None:
         """Starts an infinite loop for checking changes in the grades"""
         while True:
             try:

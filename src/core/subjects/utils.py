@@ -1,4 +1,4 @@
-from core.subjects.subject import Subject
+from .subject import Subject
 
 
 def deduplicateSubjects(subjects: list[Subject]) -> list[Subject]:

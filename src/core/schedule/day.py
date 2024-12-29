@@ -1,7 +1,9 @@
-from constants import DAYS_REVERSED, NUM_OF_LESSONS_IN_DAY
-from core.schedule.lesson import Lesson
-from core.table import ColumnType, Table
-from utils.utils import read_db
+import disnake
+
+from ...constants import DAYS_REVERSED, NUM_OF_LESSONS_IN_DAY
+from ...utils.utils import read_db
+from ..table import ColumnType, Table
+from .lesson import Lesson
 
 
 class Day:
@@ -16,7 +18,7 @@ class Day:
         return self._lessons
 
     @lessons.setter
-    def lessons(self, lessons: list[Lesson]):
+    def lessons(self, lessons: list[Lesson]) -> None:
         # Adds empty lessons if there have been none given
         if lessons == []:
             lessons = [Lesson(i) for i in range(NUM_OF_LESSONS_IN_DAY)]
@@ -26,7 +28,7 @@ class Day:
     def empty(self) -> bool:
         return all([lesson.empty for lesson in self.lessons])
 
-    def change_lesson(self, index: int, lesson: Lesson):
+    def change_lesson(self, index: int, lesson: Lesson) -> None:
         """Changes the lesson at the given index to the given lesson. This function is needed for property setter"""
         self._lessons[index] = lesson
 
@@ -48,14 +50,14 @@ class Day:
                 return False
         return True
 
-    def render(
+    async def render(
         self,
         shortName: bool = True,
         showDay: bool | None = None,
         showClassroom: bool | None = None,
         renderStyle: Table.Style | None = None,
         file_name: str = "day.png",
-    ):
+    ) -> disnake.File:
         """Renders the day as an rendered image"""
         if showClassroom == None:
             # TODO: Add mongo db and db typing support
@@ -73,7 +75,7 @@ class Day:
 
         dayTableToRender = self.buildDayTable(showClassroom, shortName, showDay)
 
-        return Table(dayTableToRender).render(file_name=file_name, style=renderStyle)
+        return await Table(dayTableToRender).render(file_name=file_name, style=renderStyle)
 
     def buildDayTable(self, showClassroom: bool, shortName: bool, showDay: bool) -> ColumnType:
         """Builds a `Table` object of the day."""
@@ -108,14 +110,14 @@ class Day:
         return startHour, endHour
 
     # Gets the first non empty lesson of the day. If none then returns None
-    def first_non_empty_lesson(self):
+    def first_non_empty_lesson(self) -> Lesson | None:
         for lesson in self.lessons:
             if not lesson.empty:
                 return lesson
         return None
 
     # Gets the last non empty lesson of the day. If none then returns None
-    def last_non_empty_lesson(self):
+    def last_non_empty_lesson(self) -> Lesson | None:
         for lesson in reversed(self.lessons):
             if not lesson.empty:
                 return lesson

@@ -2,11 +2,20 @@ import asyncio
 
 import disnake
 from attr import dataclass
-from core.schedule.day import Day
-from core.schedule.lesson import Lesson
-from core.schedule.schedule import Schedule
 from disnake.ext.commands import InteractionBot
-from utils.utils import from_sec_to_time, get_sec, get_week_day, getTextChannel, rand_rgb, read_db, write_db
+
+from ..utils.utils import (
+    from_sec_to_time,
+    get_sec,
+    get_week_day,
+    getTextChannel,
+    rand_rgb,
+    read_db,
+    write_db,
+)
+from .schedule.day import Day
+from .schedule.lesson import Lesson
+from .schedule.schedule import Schedule
 
 REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC = 10 * 60  # 10 minutes
 """The time after the previous class has started to remind about the next class (in seconds)"""
@@ -24,7 +33,7 @@ class RemindTime:
     remindWholeDaySchedule: bool
 
 
-async def startReminder(client: InteractionBot):
+async def startReminder(client: InteractionBot) -> None:
     """Starts an infinite loop for sending the lesson reminders"""
     while True:
         currentTimeSec = get_sec()
@@ -45,7 +54,11 @@ def getNextRemindTime(schedule: Schedule, currentTimeSec: int) -> RemindTime:
     """
     remindWholeDaySchedule = currentTimeSec <= REMIND_WHOLE_DAY_SCHEDULE_TIME
     if remindWholeDaySchedule:
-        return RemindTime(REMIND_WHOLE_DAY_SCHEDULE_TIME, lessonTimeIndex=0, remindWholeDaySchedule=True)
+        return RemindTime(
+            REMIND_WHOLE_DAY_SCHEDULE_TIME,
+            lessonTimeIndex=0,
+            remindWholeDaySchedule=True,
+        )
 
     for lessonTimeIndex, lessonTime in enumerate(schedule.lessonTimes[:-1], start=1):
         remindAfterLesson = lessonTime + REMIND_AFTER_PREVIOUS_CLASS_TIME_SEC
@@ -54,10 +67,14 @@ def getNextRemindTime(schedule: Schedule, currentTimeSec: int) -> RemindTime:
         if isLessonTimeSuitable:
             return RemindTime(remindAfterLesson, lessonTimeIndex, remindWholeDaySchedule=False)
 
-    return RemindTime(FULL_DAY_SECS + REMIND_WHOLE_DAY_SCHEDULE_TIME, lessonTimeIndex=0, remindWholeDaySchedule=True)
+    return RemindTime(
+        FULL_DAY_SECS + REMIND_WHOLE_DAY_SCHEDULE_TIME,
+        lessonTimeIndex=0,
+        remindWholeDaySchedule=True,
+    )
 
 
-async def remind(schedule: Schedule, remindTime: RemindTime, weekDay: int, client: InteractionBot):
+async def remind(schedule: Schedule, remindTime: RemindTime, weekDay: int, client: InteractionBot) -> None:
     """
     Reminds the user about the next lesson or also the whole day schedule.
     - If it's the right time, remind about the whole day schedule + the next lesson
@@ -108,7 +125,7 @@ def hasLessonBeenReminded(lesson: Lesson, lastRemindedLesson: Lesson | None) -> 
     )
 
 
-async def remindWholeDaySchedule(day: Day, client: InteractionBot):
+async def remindWholeDaySchedule(day: Day, client: InteractionBot) -> None:
     """Sends the whole day schedule"""
     # Creates the embed with today's schedule
     embed = disnake.Embed(color=disnake.Color.from_rgb(*rand_rgb()))
@@ -127,7 +144,7 @@ async def remindWholeDaySchedule(day: Day, client: InteractionBot):
     await getTextChannel(channelId, client).send(file=scheduleImg, embed=embed)
 
 
-async def remindLesson(lesson: Lesson, lessonStartTimeSec: int, client: InteractionBot):
+async def remindLesson(lesson: Lesson, lessonStartTimeSec: int, client: InteractionBot) -> None:
     """Sends a reminder of the lesson to the discord channel"""
 
     # Creates the embed with the reminder info

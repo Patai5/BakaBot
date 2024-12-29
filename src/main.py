@@ -1,13 +1,14 @@
 import logging
 
 import disnake
-from bot_commands.bot_commands import setupBotInteractions
-from bot_commands.reactions import Reactions
 from disnake.ext import commands
-from feature_manager.feature_initializer import getFeatureManager
-from message_timers import MessageTimers
-from utils.first_time_setup import initializeDatabase
-from utils.utils import env_load, getTextChannel, os_environ
+
+from .bot_commands.bot_commands import setupBotInteractions
+from .bot_commands.reactions import Reactions
+from .feature_manager.feature_initializer import getFeatureManager
+from .message_timers import MessageTimers
+from .utils.first_time_setup import initializeDatabase
+from .utils.utils import env_load, getTextChannel, os_environ
 
 logger = logging.getLogger("discord")
 logger.setLevel(level=logging.INFO)
@@ -16,12 +17,12 @@ handler.setFormatter(logging.Formatter("%(asctime)s %(levelname)-8s [%(filename)
 logger.addHandler(handler)
 
 
-def main():
+def main() -> None:
     env_load()
 
     client = commands.InteractionBot(intents=disnake.Intents.all())
 
-    async def on_ready():
+    async def on_ready() -> None:
         print("Ready!")
 
         initializeDatabase()
@@ -33,7 +34,7 @@ def main():
         await featureManager.initialize(client)
 
     @client.event
-    async def on_raw_reaction_add(reaction: disnake.RawReactionActionEvent):
+    async def on_raw_reaction_add(reaction: disnake.RawReactionActionEvent) -> None:
         for message in MessageTimers.cached_messages_react:
             if reaction.message_id == message.id:
                 if reaction.member is None:

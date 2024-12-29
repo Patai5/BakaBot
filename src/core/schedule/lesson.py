@@ -1,8 +1,10 @@
 from typing import Union
 
-from core.subjects.subject import Subject
-from core.table import Table
-from utils.utils import read_db
+import disnake
+
+from ...utils.utils import read_db
+from ..subjects.subject import Subject
+from ..table import Table
 
 
 class Lesson:
@@ -36,13 +38,13 @@ class Lesson:
             and self.changeInfo == other.changeInfo
         )
 
-    def render(
+    async def render(
         self,
         shortName: bool = False,
         showClassroom: bool | None = None,
         renderStyle: Table.Style | None = None,
         file_name: str = "temp.png",
-    ):
+    ) -> disnake.File:
         """Returns a lesson rendered as an image"""
         if showClassroom == None:
             showClassroom = read_db("showClassroom")
@@ -51,7 +53,7 @@ class Lesson:
 
         lessonCell = self.buildLessonTableCell(showClassroom, shortName)
 
-        return Table([[lessonCell]]).render(file_name=file_name, style=renderStyle)
+        return await Table([[lessonCell]]).render(file_name=file_name, style=renderStyle)
 
     def buildLessonTableCell(
         self,
@@ -60,10 +62,20 @@ class Lesson:
     ) -> Table.Cell:
         """Builds a `Table.Cell` object of the lesson."""
 
-        lessonNameText = self.subject and (shortName and self.subject.shortName or self.subject.fullName)
+        lessonNameText = self.getLessonName(shortName)
         lessonCell = Table.Cell([Table.Cell.Item(lessonNameText)])
 
         if showClassroom:
             lessonCell.items.append(Table.Cell.Item(self.classroom))
 
         return lessonCell
+
+    def getLessonName(self, shortName: bool = False) -> str | None:
+        """
+        Returns the lesson name.
+        - If the lesson is empty, returns None, otherwise returns either the short name or the full name of the subject.
+        """
+        if not self.subject:
+            return None
+
+        return shortName and self.subject.shortOrFullName or self.subject.fullName

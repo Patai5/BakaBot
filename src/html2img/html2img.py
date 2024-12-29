@@ -44,7 +44,7 @@ class Html2img:
     browser: Browser | None = None
 
     @classmethod
-    async def getBrowserInstance(cls):
+    async def getBrowserInstance(cls) -> Browser:
         """Returns an initialized browser instance"""
         playwright = await async_playwright().start()
         browser = await playwright.chromium.launch(headless=True)

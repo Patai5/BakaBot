@@ -6,14 +6,15 @@ import traceback
 
 import disnake
 from attr import dataclass
-from constants import NUM_OF_LESSONS_IN_DAY, SCHOOL_DAYS_IN_WEEK
-from core.schedule.day import Day
-from core.schedule.lesson import Lesson
-from core.subjects.subjects_cache import SubjectsCache
-from core.table import ColumnType, Table
 from disnake.ext.commands import InteractionBot
-from feature_manager.feature_manager import FeatureManager
-from utils.utils import getTextChannel, log_html, login, os_environ, rand_rgb, read_db, request, write_db
+
+from ...constants import NUM_OF_LESSONS_IN_DAY, SCHOOL_DAYS_IN_WEEK
+from ...feature_manager.feature_manager import FeatureManager
+from ...utils.utils import getTextChannel, log_html, login, os_environ, rand_rgb, read_db, request, write_db
+from ..subjects.subjects_cache import SubjectsCache
+from ..table import ColumnType, Table
+from .day import Day
+from .lesson import Lesson
 
 
 class Schedule:
@@ -61,21 +62,21 @@ class Schedule:
     @staticmethod
     def db_schedule(nextWeek: bool = False) -> Schedule:
         """Gets schedule from the database"""
-        schedule = read_db("schedule1") if not nextWeek else read_db("schedule2")
+        schedule: Schedule | None = read_db("schedule1") if not nextWeek else read_db("schedule2")
 
         if schedule is None:
             raise Exception("Schedule not found in database")
 
         return schedule
 
-    def db_save(self):
+    def db_save(self) -> None:
         """Saves the schedule to the database"""
         if not self.nextWeek:
             write_db("schedule1", self)
         else:
             write_db("schedule2", self)
 
-    def insert_missing_days(self):
+    def insert_missing_days(self) -> None:
         """Inserts missing days into the schedule to make it a full week"""
         if self.days:
             start = self.days[0].weekDay
@@ -118,7 +119,7 @@ class Schedule:
     @staticmethod
     async def get_schedule(nextWeek: bool, client: InteractionBot) -> Schedule | None:
         """Returns a Schedule object with the extracted information"""
-        from core.schedule.parse_schedule import parseSchedule
+        from .parse_schedule import parseSchedule
 
         html = await Schedule.request_schedule(nextWeek, client)
 
@@ -127,7 +128,7 @@ class Schedule:
 
         return parseSchedule(html, nextWeek)
 
-    def render(
+    async def render(
         self,
         dayStart: int,
         dayEnd: int,
@@ -136,7 +137,7 @@ class Schedule:
         exclusives: list[list[bool]] | None = None,
         renderStyle: Table.Style | None = None,
         file_name: str = "table.png",
-    ):
+    ) -> disnake.File:
         """Renders the schedule into an image"""
         # Uses the setting if inputted else tries looking into the database
         if showDay == None:
@@ -189,9 +190,14 @@ class Schedule:
                 # Adds the actual lessons to the table
                 for day_i, day in enumerate(schedule.days):
                     lessonSubject = day.lessons[i].subject
-                    subjectName = lessonSubject.shortName if lessonSubject else None
+                    subjectName = lessonSubject.shortOrFullName if lessonSubject else None
 
-                    column.append(Table.Cell([Table.Cell.Item(subjectName)], exclusives[day_i][day.lessons[i].hour]))
+                    column.append(
+                        Table.Cell(
+                            [Table.Cell.Item(subjectName)],
+                            exclusives[day_i][day.lessons[i].hour],
+                        )
+                    )
                     if showClassroom:
                         column[-1].items.append(Table.Cell.Item(day.lessons[i].classroom))
                 columns.append(column)
@@ -200,7 +206,7 @@ class Schedule:
             table = Table([[Table.Cell([Table.Cell.Item("Rozvrh je prázdný")])]])
 
         # Returns a rendered table image
-        return table.render(file_name=file_name, style=renderStyle)
+        return await table.render(file_name=file_name, style=renderStyle)
 
 
 @dataclass
@@ -252,7 +258,7 @@ class ChangeDetector:
         return True
 
     @staticmethod
-    def handle_update_subjects_cache(schedules: tuple[Schedule, Schedule], client: InteractionBot):
+    def handle_update_subjects_cache(schedules: tuple[Schedule, Schedule], client: InteractionBot) -> None:
         """Updates the subjects cache with the subjects from the schedule"""
 
         subjects = [
@@ -268,7 +274,9 @@ class ChangeDetector:
             SubjectsCache.updateCommandsWithSubjects(client)
 
     @staticmethod
-    def find_changes(oldNewSchedule: OldNewSchedule) -> list[ChangeDetector.Changed] | None:
+    def find_changes(
+        oldNewSchedule: OldNewSchedule,
+    ) -> list[ChangeDetector.Changed] | None:
         """Finds any changes in the schedule"""
         changedList: list[ChangeDetector.Changed] = []
         # Iterates over the days
@@ -294,7 +302,7 @@ class ChangeDetector:
         changed: list[ChangeDetector.Changed],
         client: InteractionBot,
         oldNewSchedule: OldNewSchedule,
-    ):
+    ) -> None:
         """Sends the changed schedules over discord"""
         embedsColor = disnake.Color.from_rgb(*rand_rgb())
         # Makes the two embeds containing the changed schedule images
@@ -336,7 +344,7 @@ class ChangeDetector:
                     raise ValueError("Old outdated lesson is None")
 
                 changedStr += (
-                    f"**{lessonOld.subject.shortName}{' ' + lessonOld.classroom if lessonOld.classroom else ''}**"
+                    f"**{lessonOld.subject.shortOrFullName}{' ' + lessonOld.classroom if lessonOld.classroom else ''}**"
                 )
             changedStr += " -> "
             if lessonNew.empty:
@@ -346,7 +354,7 @@ class ChangeDetector:
                     raise ValueError("New updated lesson is None")
 
                 changedStr += (
-                    f"**{lessonNew.subject.shortName}{' ' + lessonNew.classroom if lessonNew.classroom else ''}**"
+                    f"**{lessonNew.subject.shortOrFullName}{' ' + lessonNew.classroom if lessonNew.classroom else ''}**"
                 )
             if lessonNew.changeInfo is not None:
                 changedStr += f"; *{lessonNew.changeInfo}*"
@@ -364,7 +372,7 @@ class ChangeDetector:
         await channel.send(embed=changedDetail)
 
     @staticmethod
-    async def start_detecting_changes(interval: int, featureManager: FeatureManager, client: InteractionBot):
+    async def start_detecting_changes(interval: int, featureManager: FeatureManager, client: InteractionBot) -> None:
         """Starts an infinite loop for checking changes in the schedule"""
         while True:
             try:

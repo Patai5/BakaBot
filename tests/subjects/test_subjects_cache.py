@@ -1,11 +1,12 @@
 import disnake
 import pytest
-from core.subjects.subject import Subject
-from core.subjects.subjects_cache import SubjectsCache
 from pytest_mock import MockerFixture
 
+from src.core.subjects.subject import Subject
+from src.core.subjects.subjects_cache import SubjectsCache
 
-def test_initialize(mocker: MockerFixture):
+
+def test_initialize(mocker: MockerFixture) -> None:
     """Should initialize from the database"""
 
     spy = mocker.patch.object(SubjectsCache, "_dbLoad")
@@ -13,7 +14,7 @@ def test_initialize(mocker: MockerFixture):
     spy.assert_called_once()
 
 
-def test_getSubjectByName():
+def test_getSubjectByName() -> None:
     """Should return the subject by its name and raise an error if not found"""
 
     SubjectsCache.subjects = [Subject("subject1", None)]
@@ -23,7 +24,7 @@ def test_getSubjectByName():
     pytest.raises(ValueError, SubjectsCache.getSubjectByName, "subject2")
 
 
-def test_tryGetSubjectByName():
+def test_tryGetSubjectByName() -> None:
     """Should return the subject by its name and None if not found"""
 
     SubjectsCache.subjects = [Subject("subject1", None)]
@@ -36,7 +37,7 @@ def test_tryGetSubjectByName():
 
 
 class Test_HandleUpdateSubjects:
-    def test_ignore_existing_subjects(self, mocker: MockerFixture):
+    def test_ignore_existing_subjects(self, mocker: MockerFixture) -> None:
         """Should ignore already existing subjects"""
 
         SubjectsCache.subjects = [Subject("subject1", None)]
@@ -48,7 +49,7 @@ class Test_HandleUpdateSubjects:
         assert SubjectsCache.subjects == [Subject("subject1", None)]
         spy.assert_not_called()
 
-    def test_add_new_subjects(self, mocker: MockerFixture):
+    def test_add_new_subjects(self, mocker: MockerFixture) -> None:
         """Should add new subjects"""
 
         SubjectsCache.subjects = [Subject("subject1", None)]
@@ -63,7 +64,7 @@ class Test_HandleUpdateSubjects:
         ]
         spy.assert_called_once()
 
-    def test_update_subjects(self, mocker: MockerFixture):
+    def test_update_subjects(self, mocker: MockerFixture) -> None:
         """Should update subjects"""
 
         SubjectsCache.subjects = [Subject("subject1", None)]
@@ -75,7 +76,7 @@ class Test_HandleUpdateSubjects:
         assert SubjectsCache.subjects == [Subject("subject1", "short1")]
         spy.assert_called_once()
 
-    def test_multiple_changes(self, mocker: MockerFixture):
+    def test_multiple_changes(self, mocker: MockerFixture) -> None:
         """Should handle ignoring, adding and updating deduplicating subjects"""
 
         SubjectsCache.subjects = [Subject("subject1", None), Subject("subject2", None)]
@@ -100,7 +101,7 @@ class Test_HandleUpdateSubjects:
         spy.assert_called_once()
 
 
-def test_getSlashCommandSubjectChoices():
+def test_getSlashCommandSubjectChoices() -> None:
     """Should return the subject choices for the slash commands"""
 
     SubjectsCache.subjects = [

@@ -1,8 +1,8 @@
-from core.subjects.subject import Subject
-from core.subjects.utils import deduplicateSubjects
+from src.core.subjects.subject import Subject
+from src.core.subjects.utils import deduplicateSubjects
 
 
-def test_deduplicateSubjects():
+def test_deduplicateSubjects() -> None:
     """Should deduplicate subjects"""
 
     subjects = [

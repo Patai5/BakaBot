@@ -15,17 +15,7 @@ class Subject:
         return self.fullName == other.fullName and self.shortName == other.shortName
 
     @property
-    def shortName(self) -> str:
-        """Short name of the subject. If not set, fallbacks to the full name"""
+    def shortOrFullName(self) -> str:
+        """Returns the short name if set, otherwise the full name"""
 
-        return self._shortName or self.fullName
-
-    @shortName.setter
-    def shortName(self, shortName: str | None):
-        self._shortName = shortName
-
-    @property
-    def hasShortName(self) -> bool:
-        """Returns True if the subject has a short name"""
-
-        return self._shortName is not None
+        return self.shortName or self.fullName

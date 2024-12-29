@@ -4,11 +4,12 @@ import asyncio
 import datetime
 
 import disnake
-from constants import PREDICTOR_EMOJI
-from core.predictor import create_prediction, get_stage, update_grade, update_weight
 from disnake.ext.commands import InteractionBot
-from message_timers import MessageTimer, MessageTimers
-from utils.utils import read_db
+
+from ..constants import PREDICTOR_EMOJI
+from ..core.predictor import create_prediction, get_stage, update_grade, update_weight
+from ..message_timers import MessageTimer, MessageTimers
+from ..utils.utils import read_db
 
 
 class Reactions:
@@ -29,7 +30,7 @@ class Reactions:
         queryMessagesDatabase = "predictorMessages"
 
         @classmethod
-        async def query(cls, client: InteractionBot):
+        async def query(cls, client: InteractionBot) -> None:
             # Deletes some removed messages from the database while the bot was off
             messages = await MessageTimers.query_messages(cls.queryMessagesDatabase, client)
             if messages:
@@ -63,7 +64,7 @@ class Reactions:
 
         # Executes the method for of this function
         @classmethod
-        async def execute(cls, reaction: Reactions):
+        async def execute(cls, reaction: Reactions) -> None:
             stage = get_stage(reaction.message)
             if stage == 1:
                 await update_grade(reaction, reaction.client)
@@ -74,7 +75,7 @@ class Reactions:
         queryMessagesDatabase = "gradesMessages"
 
         @classmethod
-        async def query(cls, client: InteractionBot):
+        async def query(cls, client: InteractionBot) -> None:
             # Deletes some removed messages from the database while the bot was off
             messages = await MessageTimers.query_messages_reactions(cls.queryMessagesDatabase, client)
             if messages:
@@ -97,14 +98,14 @@ class Reactions:
 
         # Executes the method for of this function
         @classmethod
-        async def execute(cls, reaction: Reactions):
+        async def execute(cls, reaction: Reactions) -> None:
             if reaction.emoji.name == PREDICTOR_EMOJI:
                 await create_prediction(reaction.message, reaction.client)
 
-    REACTIONS = {Predictor, Grades}
+    REACTIONS: set[type[Predictor] | type[Grades]] = {Predictor, Grades}
 
     # Executes the message's command
-    async def execute(self):
+    async def execute(self) -> None:
         for user in self.message.reactions:
             if user.me:
                 for reaction in Reactions.REACTIONS:
@@ -119,7 +120,7 @@ class Reactions:
                                 return
 
     @staticmethod
-    async def query(client: InteractionBot):
+    async def query(client: InteractionBot) -> None:
         for reaction in Reactions.REACTIONS:
             if reaction.queryMessagesDatabase:
                 asyncio.ensure_future(reaction.query(client))

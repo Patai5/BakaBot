@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 import disnake
-from core.subjects.subject import Subject
-from core.subjects.utils import deduplicateSubjects
 from disnake.ext.commands import InteractionBot
-from utils.utils import read_db, write_db
+
+from ...utils.utils import read_db, write_db
+from .subject import Subject
+from .utils import deduplicateSubjects
 
 
 class SubjectsCache:
@@ -18,7 +19,7 @@ class SubjectsCache:
     subjects: list[Subject] = []
 
     @classmethod
-    def initialize(cls):
+    def initialize(cls) -> None:
         """Initializes the SubjectsCache"""
 
         cls.subjects = cls._dbLoad()
@@ -60,11 +61,13 @@ class SubjectsCache:
             if subject.fullName == subjectName:
                 return subject
 
+        return None
+
     @classmethod
-    def updateCommandsWithSubjects(cls, client: InteractionBot):
+    def updateCommandsWithSubjects(cls, client: InteractionBot) -> None:
         """Updates the commands with the subjects"""
 
-        from bot_commands.bot_commands import General
+        from ...bot_commands.bot_commands import General
 
         subjectChoices = cls.getSlashCommandSubjectChoices()
 
@@ -121,7 +124,7 @@ class SubjectsCache:
         return cachedSubject.shortName != subject.shortName
 
     @classmethod
-    def _updateSubject(cls, subject: Subject):
+    def _updateSubject(cls, subject: Subject) -> None:
         """Updates the subject in the cache"""
 
         cachedSubject = cls.tryGetSubjectByName(subject.fullName)
@@ -142,7 +145,7 @@ class SubjectsCache:
         return subjects
 
     @classmethod
-    def _dbSave(cls):
+    def _dbSave(cls) -> None:
         """Saves the Subject objects to the database"""
 
         write_db("subjects", cls.subjects)

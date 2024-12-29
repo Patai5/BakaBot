@@ -4,7 +4,8 @@ from typing import TYPE_CHECKING
 
 import disnake
 from disnake.ext.commands import InteractionBot
-from utils.utils import get_sec, getTextChannel, read_db, write_db
+
+from .utils.utils import get_sec, getTextChannel, read_db, write_db
 
 # TODO: Reformat this file
 
@@ -61,7 +62,7 @@ class MessageTimers:
         database: str,
         client: InteractionBot,
         delay: int = 0,
-    ):
+    ) -> None:
         """Deletes the specified message from the chat after some delay"""
         linkedMessage = unionizeMessage(message)
 
@@ -89,8 +90,9 @@ class MessageTimers:
                 # Checks if the message remove time was changed while sleeping
                 if remove_at == timer.removeAt:
                     try:
-                        message = await getTextChannel(linkedMessage.channelId, client).fetch_message(linkedMessage.id)
-                        await message.delete()
+                        textChannel = getTextChannel(linkedMessage.channelId, client)
+                        fetchedMessage = await textChannel.fetch_message(linkedMessage.id)
+                        await fetchedMessage.delete()
                     except:
                         print(
                             f"""Couldn't get the desired message! Was probably removed!:\n
@@ -112,7 +114,7 @@ class MessageTimers:
                         return
 
     @staticmethod
-    def stop_message_removal(message: MessageUnionType, database: str):
+    def stop_message_removal(message: MessageUnionType, database: str) -> None:
         """Stops the specified message from being removed from the chat"""
         linkedMessage = unionizeMessage(message)
 
@@ -136,7 +138,7 @@ class MessageTimers:
         reaction: "EmojiInputType",
         client: InteractionBot,
         delay: int = 0,
-    ):
+    ) -> None:
         """Deletes the specified reaction from the message after some delay"""
         linkedMessage = unionizeMessage(message)
 
@@ -166,7 +168,8 @@ class MessageTimers:
                 # Checks if the message remove time was changed while sleeping
                 if reactionTimer.removeAt == timer.removeAt:
                     try:
-                        message = await getTextChannel(linkedMessage.channelId, client).fetch_message(linkedMessage.id)
+                        textChanel = getTextChannel(linkedMessage.channelId, client)
+                        fetchedMessage = await textChanel.fetch_message(linkedMessage.id)
                     except:
                         print(
                             f"""Couldn't get the desired message! Was probably removed!:\n
@@ -174,7 +177,7 @@ class MessageTimers:
                         )
                     else:
                         try:
-                            await message.clear_reaction(reaction)
+                            await fetchedMessage.clear_reaction(reaction)
                         except:
                             print(
                                 f"""Couldn't find the desired reaction! Was probably removed!:\n
@@ -261,7 +264,7 @@ class MessageTimers:
                     await MessageTimers.message_cache(client, message)
                     foundMessages.append(discordMessage)
                 else:
-                    toRemoveMessages: list[ReactionTimer] | None = read_db(database)
+                    toRemoveMessages = read_db(database)
                     if toRemoveMessages is None:
                         raise Exception(f"Database '{database}' doesn't exist!")
 
@@ -270,7 +273,7 @@ class MessageTimers:
         return foundMessages
 
     @staticmethod
-    async def message_cache(client: InteractionBot, message: MessageUnionType):
+    async def message_cache(client: InteractionBot, message: MessageUnionType) -> None:
         """Adds the message into the clients custom cached messages"""
         if isinstance(message, LinkedMessage):
             try:

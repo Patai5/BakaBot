@@ -3,8 +3,9 @@ from __future__ import annotations
 import asyncio
 from typing import Awaitable, Callable
 
-from constants import FeaturesType
 from disnake.ext.commands import InteractionBot
+
+from ..constants import FeaturesType
 
 FeatureCallableType = Callable[[InteractionBot], Awaitable[None]]
 
@@ -12,19 +13,19 @@ FeatureCallableType = Callable[[InteractionBot], Awaitable[None]]
 class FeatureManager:
     """Manages all features of the bot in an event-driven way."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.features: dict[FeaturesType, Feature] = {}
 
-    def register_feature(self, feature: Feature):
+    def register_feature(self, feature: Feature) -> None:
         """Registers a feature with its initialization logic."""
         self.features[feature.name] = feature
 
-    async def initialize(self, client: InteractionBot):
+    async def initialize(self, client: InteractionBot) -> None:
         """Initializes all registered features."""
         features = (feature.maybeStart(client) for feature in self.features.values())
         await asyncio.gather(*features)
 
-    async def maybe_start_feature(self, featureName: FeaturesType, client: InteractionBot):
+    async def maybe_start_feature(self, featureName: FeaturesType, client: InteractionBot) -> None:
         """Starts a feature by its name if it's not already started."""
         feature = self.features.get(featureName)
         if not feature:
@@ -36,7 +37,12 @@ class FeatureManager:
 class Feature:
     """Represents a feature of the bot."""
 
-    def __init__(self, name: FeaturesType, canStart: Callable[..., bool], initializer: FeatureCallableType):
+    def __init__(
+        self,
+        name: FeaturesType,
+        canStart: Callable[..., bool],
+        initializer: FeatureCallableType,
+    ):
         self.name: FeaturesType = name
         self.canStart = canStart
         """A function that returns whether the feature can be started."""
@@ -44,7 +50,7 @@ class Feature:
 
         self.isStarted = False
 
-    async def maybeStart(self, client: InteractionBot):
+    async def maybeStart(self, client: InteractionBot) -> None:
         """Starts the feature if it can be started and it's not already running."""
         canStart = self.canStart() and not self.isStarted
         if canStart:

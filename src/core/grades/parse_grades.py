@@ -2,9 +2,10 @@ import json
 import re
 
 from bs4 import BeautifulSoup
-from core.grades.grade import Grade
-from core.grades.grades import Grades
-from core.shared_parsers import isBuggedBakalariScript
+
+from ..shared_parsers import isBuggedBakalariScript
+from .grade import Grade
+from .grades import Grades
 
 
 def parseGrades(gradesHtml: str) -> Grades | None:

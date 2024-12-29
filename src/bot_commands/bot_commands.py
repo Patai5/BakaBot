@@ -1,13 +1,15 @@
-import core.predictor as predictor
 import disnake
-from constants import CHANNELS, FEATURES
-from core.grades.grades import Grades
-from core.schedule.schedule import Schedule
-from core.subjects.subjects_cache import SubjectsCache
 from disnake.ext import commands
 from disnake.ext.commands import InteractionBot
-from feature_manager.feature_manager import FeatureManager
-from utils.utils import os_environ, write_db
+from disnake.interactions import ApplicationCommandInteraction
+
+from ..constants import CHANNELS, FEATURES
+from ..core.grades.grades import Grades
+from ..core.predictor import predict_embed
+from ..core.schedule.schedule import Schedule
+from ..core.subjects.subjects_cache import SubjectsCache
+from ..feature_manager.feature_manager import FeatureManager
+from ..utils.utils import os_environ, write_db
 
 
 class CustomCog(commands.Cog):
@@ -19,13 +21,13 @@ class CustomCog(commands.Cog):
 class General(CustomCog):
     async def scheduleCommand(
         self,
-        inter: disnake.ApplicationCommandInteraction,
+        inter: ApplicationCommandInteraction,
         day_start: int = 1,
         day_end: int = 5,
         week: int = 1,
         show_day: bool | None = None,
         show_classroom: bool | None = None,
-    ):
+    ) -> None:
         await inter.response.defer()
         await inter.followup.send(
             file=await Schedule.db_schedule(bool(week - 1)).render(day_start, day_end, show_day, show_classroom)
@@ -69,9 +71,9 @@ class General(CustomCog):
 
     async def gradesPrediction(
         self,
-        inter: disnake.ApplicationCommandInteraction,
+        inter: ApplicationCommandInteraction,
         subject_name: str,
-    ):
+    ) -> None:
         if not isinstance(inter.channel, disnake.TextChannel):
             raise Exception("Channel is not a text channel")
 
@@ -80,7 +82,7 @@ class General(CustomCog):
             return await inter.response.send_message(f'Předmět "{subject_name}" neexistuje.')
 
         await inter.response.send_message("Sending predictor embed message", delete_after=0)
-        await predictor.predict_embed(subject_name, inter.channel, self.client)
+        await predict_embed(subject_name, inter.channel, self.client)
 
     slashGradePrediction = commands.InvokableSlashCommand(
         gradesPrediction,
@@ -99,9 +101,9 @@ class General(CustomCog):
 
     async def gradesAverage(
         self,
-        inter: disnake.ApplicationCommandInteraction,
+        inter: ApplicationCommandInteraction,
         subject_name: str,
-    ):
+    ) -> None:
         subject = SubjectsCache.tryGetSubjectByName(subject_name)
         if subject is None:
             return await inter.response.send_message(f'Předmět "{subject_name}" neexistuje.')
@@ -110,10 +112,10 @@ class General(CustomCog):
         if average == None:
             return await inter.response.send_message(f'Pro předmět "{subject_name}" nemáte dosud žádné známky.')
 
-        embed = disnake.Embed()
+        title = str(average)
+        color = disnake.Color.from_rgb(0, 255, 255)
+        embed = disnake.Embed(title=title, color=color)
         embed.set_author(name=f"Průměr z {subject.fullName}:")
-        embed.title = str(average)
-        embed.color = disnake.Color.from_rgb(0, 255, 255)
 
         await inter.response.send_message(embed=embed)
 
@@ -133,14 +135,14 @@ class General(CustomCog):
     )
 
 
-def admin_user_check(inter: disnake.ApplicationCommandInteraction) -> bool:
+def admin_user_check(inter: ApplicationCommandInteraction) -> bool:
     return inter.author.id == os_environ("adminID")
 
 
 class Admin(CustomCog):
     group = commands.group(name="admin", description="Admin commands")
 
-    async def updateScheduleDatabase(self, inter: disnake.ApplicationCommandInteraction):
+    async def updateScheduleDatabase(self, inter: ApplicationCommandInteraction) -> None:
         await inter.response.defer(ephemeral=True)
 
         schedule1 = await Schedule.get_schedule(False, self.client)
@@ -161,7 +163,7 @@ class Admin(CustomCog):
         group=group,
     )
 
-    async def updateGradesDatabase(self, inter: disnake.ApplicationCommandInteraction):
+    async def updateGradesDatabase(self, inter: ApplicationCommandInteraction) -> None:
         await inter.response.defer(ephemeral=True)
 
         grades = await Grades.getGrades(self.client)
@@ -179,10 +181,10 @@ class Admin(CustomCog):
         group=group,
     )
 
-    async def getSubjects(self, inter: disnake.ApplicationCommandInteraction):
+    async def getSubjects(self, inter: ApplicationCommandInteraction) -> None:
         """Gets all cached subjects"""
 
-        subjects = [f"{subject.shortName}: {subject.fullName}" for subject in SubjectsCache.subjects]
+        subjects = [f"{subject.shortOrFullName}: {subject.fullName}" for subject in SubjectsCache.subjects]
         await inter.send("\n".join(subjects))
 
     slashGetSubjects = commands.InvokableSlashCommand(
@@ -203,10 +205,10 @@ class Settings(CustomCog):
 
     async def scheduleSettingsCommand(
         self,
-        inter: disnake.ApplicationCommandInteraction,
+        inter: ApplicationCommandInteraction,
         setting: str,
         bool: bool,
-    ):
+    ) -> None:
         write_db(self.scheduleSettings[setting], bool)
         await inter.response.send_message(f"Setting {setting} set to {bool}", ephemeral=True)
 
@@ -235,9 +237,9 @@ class Settings(CustomCog):
 
     async def reminderShortSettings(
         self,
-        inter: disnake.ApplicationCommandInteraction,
+        inter: ApplicationCommandInteraction,
         bool: bool,
-    ):
+    ) -> None:
         write_db("reminderShort", bool)
         await inter.response.send_message(f"Setting Reminder_short set to {bool}", ephemeral=True)
 
@@ -257,13 +259,13 @@ class Settings(CustomCog):
         ],
     )
 
-    async def channel(self, inter: disnake.ApplicationCommandInteraction, function: str):
+    async def channel(self, inter: ApplicationCommandInteraction, function: str) -> None:
         write_db(CHANNELS[function], inter.channel_id)
         await inter.response.send_message(f"channel `{function}` changed to this channel", ephemeral=True)
 
         isFunctionAFeature = function in FEATURES
         if isFunctionAFeature:
-            await self.featureManager.maybe_start_feature(function, self.client)
+            await self.featureManager.maybe_start_feature(function, self.client)  # type: ignore[arg-type]
 
     slashChannel = commands.InvokableSlashCommand(
         channel,
@@ -282,7 +284,7 @@ class Settings(CustomCog):
         ],
     )
 
-    async def setup(self, inter: disnake.ApplicationCommandInteraction):
+    async def setup(self, inter: ApplicationCommandInteraction) -> None:
         setupMessage = f"Setup the function channels for the bot with the following command in the desired channels:\n"
         setupMessage += "\n".join([f'"/channel function:{channel}"' for channel in CHANNELS.keys()])
 
@@ -299,8 +301,7 @@ class Settings(CustomCog):
 COGS: list[commands.CogMeta] = [General, Admin, Settings]
 
 
-def setupBotInteractions(client: commands.InteractionBot, featureManager: FeatureManager):
+def setupBotInteractions(client: commands.InteractionBot, featureManager: FeatureManager) -> None:
     """Sets up the bot's interactions (commands)"""
-
     for cog in COGS:
         client.add_cog(cog(client, featureManager))

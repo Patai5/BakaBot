@@ -2,12 +2,13 @@ import json
 import re
 
 from bs4 import BeautifulSoup, Tag
-from constants import DAYS, SCHOOL_DAYS_IN_WEEK
-from core.schedule.day import Day
-from core.schedule.lesson import Lesson
-from core.schedule.schedule import Schedule
-from core.shared_parsers import isBuggedBakalariScript
-from core.subjects.subject import Subject
+
+from ...constants import DAYS, SCHOOL_DAYS_IN_WEEK
+from ..shared_parsers import isBuggedBakalariScript
+from ..subjects.subject import Subject
+from .day import Day
+from .lesson import Lesson
+from .schedule import Schedule
 
 
 def parseSchedule(scheduleHtml: str, nextWeek: bool) -> Schedule | None:
@@ -50,9 +51,9 @@ def parseDay(day: Tag) -> Day:
         raise ValueError("Couldn't parse day info")
 
     weekDay, date = dayInfoGroups
-    weekDay = DAYS[weekDay]
+    weekDayIndex = DAYS[weekDay]
 
-    return Day(parseLessons(day), weekDay, date)
+    return Day(parseLessons(day), weekDayIndex, date)
 
 
 def parseLessons(dayEl: Tag) -> list[Lesson]:

@@ -4,8 +4,9 @@ import functools
 import random
 
 import disnake
-from constants import TABLE_CSS_PATH
-from html2img.html2img import Html2img
+
+from ..constants import TABLE_CSS_PATH
+from ..html2img.html2img import Html2img
 
 
 class Table:
@@ -21,7 +22,7 @@ class Table:
 
             self.set_background_angle()
 
-        def set_background_angle(self):
+        def set_background_angle(self) -> None:
             self.background = self.background.replace("{ANGLE}", str(self.backgroundAngle))
 
         backgrounds = [
