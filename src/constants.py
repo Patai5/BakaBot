@@ -9,7 +9,7 @@ DAYS_REVERSED: dict[int, str] = {}
 for key, value in zip(DAYS.keys(), DAYS.values()):
     DAYS_REVERSED.update({value: key})
 
-TABLE_CSS_PATH = "src/bakabot/html2img/css/table.css"
+TABLE_CSS_PATH = "src/html2img/css/table.css"
 
 CHANNELS = {
     "grades": "channelGrades",
