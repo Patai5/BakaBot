@@ -1,7 +1,7 @@
-from core.grades.grades import Grades
-from core.grades.parse_grades import parseGrades
+from src.core.grades.grades import Grades
+from src.core.grades.parse_grades import parseGrades
 
-from tests.utils import open_html
+from .utils import open_html
 
 
 def get_grades(filename: str) -> Grades | None:
@@ -10,6 +10,6 @@ def get_grades(filename: str) -> Grades | None:
     return parseGrades(html)
 
 
-def test_bugged_grades():
+def test_bugged_grades() -> None:
     grades = get_grades("grades_bugged_script.html")
     assert grades is None

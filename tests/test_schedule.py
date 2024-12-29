@@ -1,9 +1,9 @@
-from core.schedule.lesson import Lesson
-from core.schedule.parse_schedule import parseSchedule
-from core.schedule.schedule import Schedule
-from core.subjects.subject import Subject
+from src.core.schedule.lesson import Lesson
+from src.core.schedule.parse_schedule import parseSchedule
+from src.core.schedule.schedule import Schedule
+from src.core.subjects.subject import Subject
 
-from tests.utils import open_html
+from .utils import open_html
 
 
 class TestSchedules:
@@ -55,7 +55,7 @@ def open_schedule(filename: str, nextWeek: bool) -> Schedule | None:
     return parseSchedule(html, nextWeek)
 
 
-def print_schedule_differences(schedule1: Schedule, schedule2: Schedule):
+def print_schedule_differences(schedule1: Schedule, schedule2: Schedule) -> None:
     for day1, day2 in zip(schedule1.days, schedule2.days):
         if day1 != day2:
             print(f"Day {day1.weekDay} is different:")
@@ -72,16 +72,16 @@ one_time_lesson_schedule = handle_open_schedule("schedule_one_time_lesson.html",
 bugged_schedule = open_schedule("schedule_bugged_script.html", False)
 
 
-def test_bugged_schedule():
+def test_bugged_schedule() -> None:
     assert bugged_schedule == None
 
 
-def test_empty_schedule():
+def test_empty_schedule() -> None:
     print_schedule_differences(empty_schedule, TestSchedules.emptySchedule)
     assert empty_schedule == TestSchedules.emptySchedule
 
 
-def test_holiday_day_extraction():
+def test_holiday_day_extraction() -> None:
     """Should extract an empty holiday day correctly"""
 
     holidayDay = empty_holiday_day_schedule.days[2]
@@ -93,19 +93,19 @@ def test_holiday_day_extraction():
     assert holidayDay.lessons[0].subject == None
 
 
-def test_one_time_lesson_extraction():
+def test_one_time_lesson_extraction() -> None:
     """Should extract a one time special lesson correctly"""
 
     lesson = one_time_lesson_schedule.days[0].lessons[4]
     assert lesson.hour == 4
     assert lesson.empty == False
-    assert lesson.subject == Subject("Před", None)
+    assert lesson.subject == Subject("Před", "Před")
     assert lesson.classroom == None
     assert lesson.teacher == None
     assert lesson.changeInfo == None
 
 
-def test_days_extraction():
+def test_days_extraction() -> None:
     """Tests if the days are parsed correctly"""
 
     days = normal_schedule.days
@@ -120,14 +120,14 @@ def test_days_extraction():
     assert days[4].weekDay == 4
 
 
-def test_lessons_extraction():
+def test_lessons_extraction() -> None:
     """Should extract lessons correctly"""
 
     lessons = normal_schedule.days[0].lessons
     assert len(lessons) == 13
 
 
-def test_regular_lesson():
+def test_regular_lesson() -> None:
     """Should extract a regular lesson correctly"""
 
     lesson = normal_schedule.days[4].lessons[8]
@@ -139,7 +139,7 @@ def test_regular_lesson():
     assert lesson.changeInfo == None
 
 
-def test_empty_lessons():
+def test_empty_lessons() -> None:
     """Should extract an empty lesson correctly"""
 
     lesson = normal_schedule.days[0].lessons[0]
@@ -151,7 +151,7 @@ def test_empty_lessons():
     assert lesson.changeInfo == None
 
 
-def test_changed_lesson():
+def test_changed_lesson() -> None:
     """Should extract a changed lesson correctly"""
 
     lesson = normal_schedule.days[0].lessons[3]
@@ -163,7 +163,7 @@ def test_changed_lesson():
     assert lesson.changeInfo == "Zrušeno (Bi, Pecová Barbora)"
 
 
-def test_removed_lesson():
+def test_removed_lesson() -> None:
     """Should extract a removed lesson correctly"""
 
     lesson = normal_schedule.days[0].lessons[4]
@@ -175,7 +175,7 @@ def test_removed_lesson():
     assert lesson.changeInfo == "Zrušeno (Zsv, Coufalová Lucie)"
 
 
-def test_lesson_times():
+def test_lesson_times() -> None:
     """Should extract lesson times correctly"""
 
     lessonTimes = normal_schedule.lessonTimes
