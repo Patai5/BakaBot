@@ -3,15 +3,6 @@ import os
 from .utils import read_db, write_db
 
 
-# Prints the error to console
-def setup_channel_error_message(channel: str) -> None:
-    errorMessage = (
-        f"Setup the bot setting channel{channel} to a specific channel by typing the command: "
-        f'"/channel function:{channel}" in your desired discord channel'
-    )
-    print(errorMessage)
-
-
 def initializeDatabase() -> bool:
     """Initializes the database (if the files can even be called that...)"""
 

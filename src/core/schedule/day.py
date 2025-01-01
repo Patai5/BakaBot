@@ -28,10 +28,6 @@ class Day:
     def empty(self) -> bool:
         return all([lesson.empty for lesson in self.lessons])
 
-    def change_lesson(self, index: int, lesson: Lesson) -> None:
-        """Changes the lesson at the given index to the given lesson. This function is needed for property setter"""
-        self._lessons[index] = lesson
-
     def __str__(self) -> str:
         return f"Day(WeekDay: {self.weekDay}, NameShort: {self.nameShort}, Date: {self.date}, Empty: {self.empty})"
 

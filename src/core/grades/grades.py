@@ -4,21 +4,11 @@ import asyncio
 import copy
 import traceback
 
-import disnake
 from disnake.ext.commands import InteractionBot
 
 from ...constants import PREDICTOR_EMOJI
 from ...message_timers import MessageTimers
-from ...utils.utils import (
-    get_sec,
-    getTextChannel,
-    log_html,
-    login,
-    os_environ,
-    read_db,
-    request,
-    write_db,
-)
+from ...utils.utils import getTextChannel, log_html, login, os_environ, read_db, request, write_db
 from ..subjects.subject import Subject
 from ..subjects.subjects_cache import SubjectsCache
 from .grade import Grade
@@ -127,36 +117,6 @@ class Grades:
             return None
 
         return parseGrades(gradesResponse)
-
-    # Variable to store running timers
-    message_remove_timers: list[list[int]] = []
-
-    @staticmethod
-    async def delete_grade_reaction(
-        message: disnake.Message, emoji: disnake.message.EmojiInputType, delay: int
-    ) -> None:
-        """Deletes the reaction from the message after some delay"""
-        # Puts the message into the timer variable
-        Grades.message_remove_timers.append([message.id, get_sec() + delay])
-        # Sleeps for the time of the delay
-        await asyncio.sleep(delay)
-
-        for timer in Grades.message_remove_timers:
-            # Checks if the timer is still active
-            if message.id == timer[0]:
-                try:
-                    # Removes the reaction
-                    await message.clear_reaction(emoji)
-                    Grades.message_remove_timers.remove(timer)
-
-                    toRemoveMessages: list[list[int]] | None = read_db("gradesMessages")
-                    if toRemoveMessages is None:
-                        raise Exception("No gradesMessages in database")
-
-                    toRemoveMessages.remove([message.id, message.channel.id])
-                    write_db("gradesMessages", toRemoveMessages)
-                except:
-                    pass
 
     @staticmethod
     def handle_update_subjects_cache(grades: list[Grade], client: InteractionBot) -> None:

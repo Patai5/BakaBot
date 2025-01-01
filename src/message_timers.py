@@ -114,24 +114,6 @@ class MessageTimers:
                         return
 
     @staticmethod
-    def stop_message_removal(message: MessageUnionType, database: str) -> None:
-        """Stops the specified message from being removed from the chat"""
-        linkedMessage = unionizeMessage(message)
-
-        messagesDatabase: list[MessageTimer] | None = read_db(database)
-        if messagesDatabase is None:
-            raise Exception(f"Database '{database}' doesn't exist!")
-
-        for messageTimer in messagesDatabase[:]:
-            if linkedMessage.id == messageTimer.message.id:
-                messagesDatabase.remove(messageTimer)
-        write_db(database, messagesDatabase)
-
-        for messageTimer in MessageTimers.timers[:]:
-            if linkedMessage.id == messageTimer.message.id:
-                MessageTimers.timers.remove(messageTimer)
-
-    @staticmethod
     async def delete_message_reaction(
         message: MessageUnionType,
         database: str,
