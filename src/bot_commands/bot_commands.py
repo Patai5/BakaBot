@@ -21,7 +21,7 @@ class CustomCog(commands.Cog):
 class General(CustomCog):
     async def scheduleCommand(
         self,
-        inter: ApplicationCommandInteraction,
+        inter: ApplicationCommandInteraction[InteractionBot],
         day_start: int = 1,
         day_end: int = 5,
         week: int = 1,
@@ -71,7 +71,7 @@ class General(CustomCog):
 
     async def gradesPrediction(
         self,
-        inter: ApplicationCommandInteraction,
+        inter: ApplicationCommandInteraction[InteractionBot],
         subject_name: str,
     ) -> None:
         if not isinstance(inter.channel, disnake.TextChannel):
@@ -101,7 +101,7 @@ class General(CustomCog):
 
     async def gradesAverage(
         self,
-        inter: ApplicationCommandInteraction,
+        inter: ApplicationCommandInteraction[InteractionBot],
         subject_name: str,
     ) -> None:
         subject = SubjectsCache.tryGetSubjectByName(subject_name)
@@ -135,14 +135,14 @@ class General(CustomCog):
     )
 
 
-def admin_user_check(inter: ApplicationCommandInteraction) -> bool:
+def admin_user_check(inter: ApplicationCommandInteraction[InteractionBot]) -> bool:
     return inter.author.id == os_environ("adminID")
 
 
 class Admin(CustomCog):
     group = commands.group(name="admin", description="Admin commands")
 
-    async def updateScheduleDatabase(self, inter: ApplicationCommandInteraction) -> None:
+    async def updateScheduleDatabase(self, inter: ApplicationCommandInteraction[InteractionBot]) -> None:
         await inter.response.defer(ephemeral=True)
 
         schedule1 = await Schedule.get_schedule(False, self.client)
@@ -163,7 +163,7 @@ class Admin(CustomCog):
         group=group,
     )
 
-    async def updateGradesDatabase(self, inter: ApplicationCommandInteraction) -> None:
+    async def updateGradesDatabase(self, inter: ApplicationCommandInteraction[InteractionBot]) -> None:
         await inter.response.defer(ephemeral=True)
 
         grades = await Grades.getGrades(self.client)
@@ -181,7 +181,7 @@ class Admin(CustomCog):
         group=group,
     )
 
-    async def getSubjects(self, inter: ApplicationCommandInteraction) -> None:
+    async def getSubjects(self, inter: ApplicationCommandInteraction[InteractionBot]) -> None:
         """Gets all cached subjects"""
 
         subjects = [f"{subject.shortOrFullName}: {subject.fullName}" for subject in SubjectsCache.subjects]
@@ -205,7 +205,7 @@ class Settings(CustomCog):
 
     async def scheduleSettingsCommand(
         self,
-        inter: ApplicationCommandInteraction,
+        inter: ApplicationCommandInteraction[InteractionBot],
         setting: str,
         bool: bool,
     ) -> None:
@@ -237,7 +237,7 @@ class Settings(CustomCog):
 
     async def reminderShortSettings(
         self,
-        inter: ApplicationCommandInteraction,
+        inter: ApplicationCommandInteraction[InteractionBot],
         bool: bool,
     ) -> None:
         write_db("reminderShort", bool)
@@ -259,7 +259,7 @@ class Settings(CustomCog):
         ],
     )
 
-    async def channel(self, inter: ApplicationCommandInteraction, function: str) -> None:
+    async def channel(self, inter: ApplicationCommandInteraction[InteractionBot], function: str) -> None:
         write_db(CHANNELS[function], inter.channel_id)
         await inter.response.send_message(f"channel `{function}` changed to this channel", ephemeral=True)
 
@@ -284,7 +284,7 @@ class Settings(CustomCog):
         ],
     )
 
-    async def setup(self, inter: ApplicationCommandInteraction) -> None:
+    async def setup(self, inter: ApplicationCommandInteraction[InteractionBot]) -> None:
         channelsToSetup = [channel for channel in CHANNELS.keys() if read_db(CHANNELS[channel]) is None]
         if len(channelsToSetup) == 0:
             await inter.response.send_message("All channels are already set up", ephemeral=True)
