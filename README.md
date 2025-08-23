@@ -2,6 +2,33 @@
 
 **BakaBot** is a Discord bot and web scraper designed for the Czech online schooling system **Bakaláři**. Receive real-time updates on new grades, schedule changes, and more directly in your Discord server!
 
+---
+
+## ⚠️ Not Maintained Anymore
+
+This project is no longer maintained as I no longer have access to the Bakaláři system... Feel free to fork and modify it for your own use though :)
+
+Anyway, here are some of the funniest bits of code I somehow managed to write along the way :P I started on this project back when I was just learning to code, so there are still some _gems_ left inside:
+
+-   <details><summary>`return min(fieldsLen, 4) - 1` the professional way 😎</summary>
+    https://github.com/Patai5/BakaBot/blob/913958aa1cae584fb6816ae8d932bb299efb5443/src/core/predictor.py#L169-L178
+    </details>
+-   <details><summary>Files >>> PostgreSQL + MongoDB combined 🗿</summary>
+    https://github.com/Patai5/BakaBot/blob/913958aa1cae584fb6816ae8d932bb299efb5443/src/utils/utils.py#L23-L26
+    https://github.com/Patai5/BakaBot/blob/913958aa1cae584fb6816ae8d932bb299efb5443/src/utils/utils.py#L14-L20
+    </details>
+-   <details><summary>🪜🎢 `tab`➡️`tab`➡️`tab`➡️ (only 8 indentation deep 🥱)</summary>
+    https://github.com/Patai5/BakaBot/blob/913958aa1cae584fb6816ae8d932bb299efb5443/src/bot_commands/reactions.py#L108-L119
+    honorable mentions 🥀
+    https://github.com/Patai5/BakaBot/blob/913958aa1cae584fb6816ae8d932bb299efb5443/src/bot_commands/reactions.py#L35-L46
+    https://github.com/Patai5/BakaBot/blob/913958aa1cae584fb6816ae8d932bb299efb5443/src/message_timers.py#L148-L159
+    </details>
+-   <details><summary>Old commit from when main.py was still at its peak 😭🙏</summary>
+    https://github.com/Patai5/BakaBot/blob/b4135ae91a26ff9ddba22b9bcb29909373093431/main.py
+    </details>
+
+---
+
 ## Features
 
 -   📅 **Schedule Notifications**: Get real-time Discord notifications when your school schedule changes.
